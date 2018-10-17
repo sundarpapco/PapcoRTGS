@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Papco RTGS</string>
+    <string name="authority">com.papco.sundar.papcortgs.fileprovider</string>
+</resources>

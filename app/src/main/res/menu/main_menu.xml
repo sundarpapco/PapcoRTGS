@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:title="Senders"
+        android:id="@+id/action_senders"
+        app:showAsAction="never"/>
+
+    <item android:title="Receivers"
+        android:id="@+id/action_receivers"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/action_dropbox"
+        android:title="DropBox Backup"
+        app:showAsAction="never"/>
+
+</menu>

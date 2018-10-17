@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/action_export"
+        android:icon="@drawable/ic_export_file"
+        android:title="Export excel file"
+        app:showAsAction="always"/>
+
+    <item android:id="@+id/action_sms_all"
+        android:title="Send SMS to all"
+        android:icon="@drawable/ic_sms"
+        app:showAsAction="always"/>
+
+</menu>
