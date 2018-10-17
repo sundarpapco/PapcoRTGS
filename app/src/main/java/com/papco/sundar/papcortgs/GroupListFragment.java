@@ -99,7 +99,7 @@ public class GroupListFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        View ui=inflater.inflate(R.layout.transaction_list_fragment,container,false);
+        View ui=inflater.inflate(R.layout.fragment_group_list,container,false);
         recycler=ui.findViewById(R.id.transaction_recycler);
         fab=ui.findViewById(R.id.transaction_fab);
 

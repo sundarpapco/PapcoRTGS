@@ -30,8 +30,10 @@ public class DividerDecoration extends RecyclerView.ItemDecoration {
 
         //leftmargin=context.getResources().getDimensionPixelSize(R.dimen.fab_margin);
         //rightmargin=(parent.getWidth()-parent.getPaddingEnd())-leftmargin;
-        leftmargin=sixteen_dp;
-        rightmargin=parent.getWidth()-sixteen_dp;
+        //leftmargin=sixteen_dp;
+        //rightmargin=parent.getWidth()-sixteen_dp;
+        leftmargin=0;
+        rightmargin=parent.getWidth();
 
         for(int i=0;i<parent.getChildCount();++i){
 

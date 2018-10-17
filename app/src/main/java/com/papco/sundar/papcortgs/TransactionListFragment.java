@@ -41,6 +41,7 @@ public class TransactionListFragment extends Fragment {
     TransactionAdapter adapter=null;
     TransactionActivityVM viewmodel;
     CoordinatorLayout rootView;
+    TextView totalTextView;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -59,7 +60,7 @@ public class TransactionListFragment extends Fragment {
                     tot=tot+t.amount;
                 }
 
-                ((TransactionActivity)getActivity()).getSupportActionBar().setSubtitle(Transaction.formatAmountAsString(tot));
+                totalTextView.setText(Transaction.formatAmountAsString(tot));
 
                 if(adapter!=null)
                     adapter.setData(transactionForLists);
@@ -118,6 +119,7 @@ public class TransactionListFragment extends Fragment {
         View ui=inflater.inflate(R.layout.transaction_list_fragment,container,false);
         rootView=ui.findViewById(R.id.main_layout);
         recycler=ui.findViewById(R.id.transaction_recycler);
+        totalTextView=ui.findViewById(R.id.transaction_list_total);
         fab=ui.findViewById(R.id.transaction_fab);
 
         fab.setOnClickListener(new View.OnClickListener() {
@@ -135,7 +137,7 @@ public class TransactionListFragment extends Fragment {
         if(adapter==null)
             adapter= new TransactionAdapter(new ArrayList<TransactionForList>());
         recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recycler.addItemDecoration(new DividerDecoration(getActivity(),(GradientDrawable)getResources().getDrawable(R.drawable.divider)));
+        recycler.addItemDecoration(new DividerDecoration(getActivity(),(GradientDrawable)getResources().getDrawable(R.drawable.divider_grey)));
         recycler.setAdapter(adapter);
 
         return ui;
