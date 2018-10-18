@@ -41,7 +41,6 @@ public class TransactionListFragment extends Fragment {
     TransactionAdapter adapter=null;
     TransactionActivityVM viewmodel;
     CoordinatorLayout rootView;
-    TextView totalTextView;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -60,7 +59,8 @@ public class TransactionListFragment extends Fragment {
                     tot=tot+t.amount;
                 }
 
-                totalTextView.setText(Transaction.formatAmountAsString(tot));
+                if(adapter!=null)
+                    adapter.setTotal(tot);
 
                 if(adapter!=null)
                     adapter.setData(transactionForLists);
@@ -119,7 +119,6 @@ public class TransactionListFragment extends Fragment {
         View ui=inflater.inflate(R.layout.transaction_list_fragment,container,false);
         rootView=ui.findViewById(R.id.main_layout);
         recycler=ui.findViewById(R.id.transaction_recycler);
-        totalTextView=ui.findViewById(R.id.transaction_list_total);
         fab=ui.findViewById(R.id.transaction_fab);
 
         fab.setOnClickListener(new View.OnClickListener() {
@@ -219,9 +218,13 @@ public class TransactionListFragment extends Fragment {
 
     }
 
-    class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.TransactionVH>{
+    class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
+
+        public static final int VIEW_TYPE_TOTAL=1;
+        public static final int VIEW_TYPE_TRANSACTION=2;
 
         List<TransactionForList> data;
+        int total=0;
 
         TransactionAdapter(List<TransactionForList> data){
             this.data=data;
@@ -230,30 +233,59 @@ public class TransactionListFragment extends Fragment {
 
         @Override
         public long getItemId(int position) {
-            return data.get(position).id;
+
+            if(position==0)
+                return -1;
+            else
+                return data.get(position-1).id;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+
+            if(position==0)
+                return VIEW_TYPE_TOTAL;
+            else
+                return VIEW_TYPE_TRANSACTION;
+
         }
 
         @NonNull
         @Override
-        public TransactionVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new TransactionVH(getLayoutInflater().inflate(R.layout.transaction_list_item,parent,false));
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+
+            if(viewType==VIEW_TYPE_TOTAL)
+                return new TotalVH(getLayoutInflater().inflate(R.layout.list_item_transaction_total_heading,parent,false));
+            else
+                return new TransactionVH(getLayoutInflater().inflate(R.layout.transaction_list_item,parent,false));
         }
 
         @Override
-        public void onBindViewHolder(@NonNull TransactionVH holder, int position) {
-            holder.from.setText(data.get(holder.getAdapterPosition()).sender);
-            holder.to.setText(data.get(holder.getAdapterPosition()).receiver);
-            holder.amount.setText(data.get(holder.getAdapterPosition()).getAmountAsString());
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+
+            if(holder instanceof TotalVH)
+                ((TotalVH) holder).total.setText(Transaction.formatAmountAsString(total));
+            else {
+                ((TransactionVH)holder).from.setText(data.get(holder.getAdapterPosition()-1).sender);
+                ((TransactionVH)holder).to.setText(data.get(holder.getAdapterPosition()-1).receiver);
+                ((TransactionVH)holder).amount.setText(data.get(holder.getAdapterPosition()-1).getAmountAsString());
+            }
         }
 
         @Override
         public int getItemCount() {
-            return data.size();
+            return data.size()+1;
         }
 
         public void setData(List<TransactionForList> data){
             this.data=data;
             notifyDataSetChanged();
+        }
+
+        public void setTotal(int total){
+
+            this.total=total;
+            notifyItemChanged(0);
         }
 
         class TransactionVH extends RecyclerView.ViewHolder{
@@ -281,6 +313,16 @@ public class TransactionListFragment extends Fragment {
                     }
                 });
 
+            }
+        }
+
+        class TotalVH extends RecyclerView.ViewHolder{
+
+            TextView total;
+
+            public TotalVH(View itemView) {
+                super(itemView);
+                total=itemView.findViewById(R.id.transaction_list_total);
             }
         }
     }

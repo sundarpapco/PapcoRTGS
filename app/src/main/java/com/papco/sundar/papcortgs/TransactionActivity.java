@@ -34,7 +34,6 @@ public class TransactionActivity extends AppCompatActivity implements FileExport
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
         setContentView(R.layout.container_layout);
         viewmodel=ViewModelProviders.of(this).get(TransactionActivityVM.class);
 

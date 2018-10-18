@@ -59,9 +59,7 @@ public class DividerDecoration extends RecyclerView.ItemDecoration {
         }
 
         if(parent.getChildAdapterPosition(view)==state.getItemCount()-1) {
-            Log.d("decoration:", "view position: "+Integer.toString(parent.getChildAdapterPosition(view)));
-            Log.d("decoration:", "child count: "+Integer.toString(parent.getChildCount()));
-            outRect.bottom=context.getResources().getDimensionPixelSize(R.dimen.sixteen_dp);
+            outRect.bottom=context.getResources().getDimensionPixelSize(R.dimen.sixteen_dp)*4;
             return;
         }
 
