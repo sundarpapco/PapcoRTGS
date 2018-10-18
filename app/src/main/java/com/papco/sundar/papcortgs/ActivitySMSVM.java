@@ -4,7 +4,6 @@ import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import java.util.List;
 
@@ -15,6 +14,7 @@ public class ActivitySMSVM extends AndroidViewModel {
     boolean sendingSms=false;
     MasterDatabase db;
     TransactionForList currentlySendingTransaction=null;
+    boolean mBound=false;
 
     public ActivitySMSVM(@NonNull Application application) {
         super(application);

@@ -6,8 +6,6 @@ import android.os.Environment;
 import android.util.Log;
 
 import com.dropbox.core.v2.DbxClientV2;
-import com.dropbox.core.v2.files.FileMetadata;
-import com.dropbox.core.v2.files.Metadata;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,7 +15,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ExecutionException;
 
 import jxl.Cell;
 import jxl.Sheet;

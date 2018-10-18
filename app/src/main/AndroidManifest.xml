@@ -26,9 +26,14 @@
                 android:resource="@xml/file_path" />
         </provider>
 
-        <activity android:name=".SenderActivity"/>
-        <activity android:name=".ReceiverActivity"/>
-        <activity android:name=".TransactionActivity"/>
+        <service android:name=".SmsService"
+            android:exported="false"/>
+        <activity android:name=".SenderActivity"
+            android:parentActivityName=".GroupActivity"/>
+        <activity android:name=".ReceiverActivity"
+            android:parentActivityName=".GroupActivity"/>
+        <activity android:name=".TransactionActivity"
+            android:parentActivityName=".GroupActivity"/>
         <activity android:name=".GroupActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,9 +43,11 @@
 
         </activity>
         <activity android:name=".ActivitySMS"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:parentActivityName=".TransactionActivity"/>
         <activity android:name=".ActivityDropBox"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:parentActivityName=".GroupActivity"/>
 
         <activity
             android:name="com.dropbox.core.android.AuthActivity"
