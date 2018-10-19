@@ -57,6 +57,7 @@ public class ActivitySMS extends AppCompatActivity {
     TextView progress;
     SmsService smsService=null;
     smsServiceConnection connection;
+    boolean mbound=false;
 
 
     @Override
@@ -166,9 +167,18 @@ public class ActivitySMS extends AppCompatActivity {
         intent.putExtras(ex);
         intent.setAction(SmsService.ACTION_START_SERVICE);
         startService(intent);
-        if(!viewmodel.mBound)
-            bindToService();
+        bindToService();
 
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if(mbound){
+            unbindFromTheService();
+        }
 
     }
 
@@ -187,7 +197,17 @@ public class ActivitySMS extends AppCompatActivity {
         smsService.getWorkingStatus().removeObservers(this);
         smsService.getTransactions().removeObservers(this);
         unbindService(connection);
-        viewmodel.mBound=false;
+        mbound=false;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if(SmsService.IS_SERVICE_RUNNING && !mbound){
+
+            bindToService();
+        }
     }
 
     private boolean weHaveSMSPermission() {
@@ -355,7 +375,7 @@ public class ActivitySMS extends AppCompatActivity {
             });
             smsService.setListAndStartSending(viewmodel.getTransactions().getValue());
 
-            viewmodel.mBound=true;
+            mbound=true;
 
         }
 
@@ -363,7 +383,7 @@ public class ActivitySMS extends AppCompatActivity {
         public void onServiceDisconnected(ComponentName componentName) {
             Log.d("SUNDAR","SERVICE DISCONNECTING");
             smsService=null;
-            viewmodel.mBound=false;
+            mbound=false;
 
         }
     }

@@ -20,8 +20,11 @@ import android.telephony.SmsManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class SmsService extends Service {
 
@@ -44,6 +47,7 @@ public class SmsService extends Service {
     private static final int SMS_STATUS_GENERIC_FAILURE=7;
     private static final int SMS_STATUS_UNKNOWN_ERROR=8;
 
+    public static final int WORK_STATUS_WAITING_FOR_LIST=3;
     public static final int WORK_STATUS_WORKING=1;
     public static final int WORK_STATUS_COMPLETED=2;
 
@@ -56,27 +60,27 @@ public class SmsService extends Service {
     private MutableLiveData<List<TransactionForList>> transactions;
     private MutableLiveData<Integer> workingStatus;
     private SmsResultReceiver receiver;
-    private ServiceConnection currentConnection=null;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         if(intent.getAction().equals(ACTION_START_SERVICE)){
 
-            if(IS_SERVICE_RUNNING)
+            if(IS_SERVICE_RUNNING) //ignore if the service is being started for the second time
                 return START_STICKY;
 
-            if(intent.getExtras()!=null)
+            if(intent.getExtras()!=null) //group id needed for preparing the pendingIntent of notification
                 currentGroupId=intent.getExtras().getInt("groupId",-1);
 
-            showNotification();
             IS_SERVICE_RUNNING=true;
+            showNotification(); //this will make the service forground
+
             if(transactions==null)
                 transactions=new MutableLiveData<>();
 
             if(workingStatus==null){
                 workingStatus=new MutableLiveData<>();
-                workingStatus.setValue(WORK_STATUS_WORKING);
+                workingStatus.setValue(WORK_STATUS_WAITING_FOR_LIST);
             }
             smsManager=SmsManager.getDefault();
             receiver=new SmsResultReceiver();
@@ -126,6 +130,9 @@ public class SmsService extends Service {
 
     public void setListAndStartSending(List<TransactionForList> list){
 
+        if(transactions.getValue()!=null) //just ignore this call if a list has been already set
+            return;
+
         transactions.setValue(list);
         this.smsList=list;
         workingStatus.setValue(WORK_STATUS_WORKING);
@@ -149,8 +156,6 @@ public class SmsService extends Service {
         NotificationManagerCompat.from(this).notify(NOTIFICATION_ID,builder.build());
 
     }
-
-
 
     private boolean isValidMobileNumber(String number){
 
@@ -245,14 +250,7 @@ public class SmsService extends Service {
         }
 
         //Stop the service here since the sms has been sent already
-        IS_SERVICE_RUNNING=false;
-        workingStatus.setValue(WORK_STATUS_COMPLETED);
-        if(currentConnection!=null) {
-            unbindService(currentConnection);
-            currentConnection=null;
-        }
-        stopForeground(true);
-        stopSelf();
+        stopTheService();
         showSuccessNotification();
 
     }
@@ -267,6 +265,15 @@ public class SmsService extends Service {
         builder.setPriority(NotificationCompat.PRIORITY_LOW);
         builder.setAutoCancel(true);
         NotificationManagerCompat.from(this).notify(NOTIFICATION_ID_SUCCESS,builder.build());
+
+    }
+
+    private void stopTheService(){
+
+        IS_SERVICE_RUNNING=false;
+        workingStatus.postValue(WORK_STATUS_COMPLETED);
+        stopForeground(true);
+        stopSelf();
 
     }
 
@@ -287,9 +294,7 @@ public class SmsService extends Service {
         return binder;
     }
 
-    public void setConnection(ServiceConnection connection){
-        currentConnection=connection;
-    }
+
 
     public class SmsBinder extends Binder{
 
@@ -332,8 +337,11 @@ public class SmsService extends Service {
 
             }
 
-            if (mode.equals("multi"))
-                sendNextMessage();
+            if (mode.equals("multi")) {
+                Timer timer=new Timer();
+                long delay=2000;
+                timer.schedule(new NextMessageTask(),delay);
+            }
             //result = number + ", " + message + "\n" + result;
             //Toast.makeText(context, result, Toast.LENGTH_LONG).show();
         }
@@ -353,6 +361,15 @@ public class SmsService extends Service {
                 default:
                     return SMS_STATUS_UNKNOWN_ERROR;
             }
+        }
+    }
+
+    class NextMessageTask extends TimerTask {
+
+
+        @Override
+        public void run() {
+            sendNextMessage();
         }
     }
 
