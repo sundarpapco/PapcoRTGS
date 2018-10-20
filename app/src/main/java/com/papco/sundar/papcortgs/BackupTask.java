@@ -33,15 +33,8 @@ import jxl.write.WritableWorkbook;
 
 public class BackupTask extends AsyncTask<Void, String, Boolean> {
 
-    private String PATH_RECEIVER_XL_FILE;
-    private String PATH_SENDER_XL_FILE;
-    private String PATH_GROUP_XL_FILE;
-    private String PATH_TRANSACTION_XL_FILE;
-
-    private String PATH_DBX_RECEIVER_FILE="/apps/papcortgs/receivers.xls";
-    private String PATH_DBX_SENDER_FILE="/apps/papcortgs/senders.xls";
-    private String PATH_DBX_GROUP_XL_FILE="/apps/papcortgs/groups.xls";
-    private String PATH_DBX_TRANSACTION_FILE="/apps/papcortgs/transactions.xls";
+    private String PATH_BACKUP_XL_FILE;
+    private String PATH_DBX_BACKUP_XL_FILE="/apps/papcortgs/papcortgsbackup.xls";
 
     BackupOperation operation;
     DbxClientV2 client;
@@ -68,10 +61,7 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
         if(!sdDir.isDirectory())
             sdDir.mkdirs();
 
-        PATH_RECEIVER_XL_FILE=dirPath+"/receivers.xls";
-        PATH_SENDER_XL_FILE=dirPath+"/senders.xls";
-        PATH_GROUP_XL_FILE=dirPath+"/groups.xls";
-        PATH_TRANSACTION_XL_FILE=dirPath+"/transactions.xls";
+        PATH_BACKUP_XL_FILE=dirPath+"/papcortgsbackup.xls";
 
     }
 
@@ -94,39 +84,35 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
 
     private boolean backupFile() throws Exception {
 
-        if(!createReceiverXLFile())
-            return false;
+        //Create the backup file in local drive
+        File receiversFile=new File(PATH_BACKUP_XL_FILE);
 
-        if(!createSenderXLFile())
-            return false;
+        //prepare and create the workbook and writable sheet
+        WritableWorkbook workbook;
+        WorkbookSettings wbSettings = new WorkbookSettings();
+        wbSettings.setLocale(new Locale("en", "EN"));
+        workbook = Workbook.createWorkbook(receiversFile, wbSettings);
 
-        if(!createGroupXLFile())
-            return false;
+        publishProgress("Backing up Receivers...");
+        writeReceiverToWorkbook(workbook);
 
-        if(!createTransactionXLFile())
-            return false;
+        publishProgress("Backing up Senders...");
+        writeSendersToWorkbook(workbook);
 
+        publishProgress("Backing up XL Sheets");
+        writeGroupsToWorkBook(workbook);
 
-        publishProgress("Backing up receivers...");
-        if(!backupReceiverFile())
-            return false;
+        publishProgress("Backing up Transactions");
+        writeTransactionsToWorkBook(workbook);
 
-        publishProgress("Backing up senders...");
-        if(!backupSenderFile())
-            return false;
+        workbook.write();
+        workbook.close();
 
-        publishProgress("Backing up XL sheets...");
-        if(!backupGroupFile())
-            return false;
-
-        publishProgress("Backing up Transactions...");
-        if(!backupTransactionFile())
-            return false;
+        publishProgress("Backing up to dropbox...");
+        backupToDropBox();
 
         publishProgress("Clearing up temp files");
-        if(!deleteTempFiles())
-            return false;
-
+        deleteTempFiles();
 
         return true;
 
@@ -134,43 +120,27 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
 
     private boolean restoreFile() throws Exception {
 
-        publishProgress("Downloading receivers...");
-        if(!downloadReceiversFile())
-            return false;
-
-        publishProgress("Downloading senders...");
-        if(!downloadSendersFile())
-            return false;
-
-        publishProgress("Downloading XL Sheets...");
-        if(!downloadGroupsFile())
-            return false;
-
-        publishProgress("Downloading transactions...");
-        if(!downloadTransactionsFile())
-            return false;
+        publishProgress("Downloading the backup file...");
+        downloadFromDropBox();
 
         clearAllTables();
 
-        publishProgress("Restoring receivers...");
-        if(!restoreReceivers())
-            return false;
+        Workbook workbook=Workbook.getWorkbook(new File(PATH_BACKUP_XL_FILE));
 
-        publishProgress("Restoring senders...");
-        if(!restoreSenders())
-            return false;
+        publishProgress("Restoring Receivers...");
+        restoreReceivers(workbook);
 
-        publishProgress("Restoring XL Sheets...");
-        if(!restoreGroups())
-            return false;
+        publishProgress("Restoring Senders...");
+        restoreSenders(workbook);
 
-        publishProgress("Restoring Transactions...");
-        if(!restoreTransactions())
-            return false;
+        publishProgress("Restoring Groups...");
+        restoreGroups(workbook);
 
-        publishProgress("Clearing temp files");
-        if(!deleteTempFiles())
-            return false;
+        publishProgress("Restoring Transactions");
+        restoreTransactions(workbook);
+
+        publishProgress("Clearing up temp files");
+        deleteTempFiles();
 
         return true;
     }
@@ -186,19 +156,11 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
 
     }
 
-    private boolean createReceiverXLFile() throws Exception{
+    private void writeReceiverToWorkbook(WritableWorkbook workbook) throws Exception{
 
         //prepare the list of receivers to backup
         List<Receiver> receivers=db.getReceiverDao().getAllReceiversNonLive();
 
-        //prepare and create the xl file to write receivers
-        File receiversFile=new File(PATH_RECEIVER_XL_FILE);
-
-        //prepare and create the workbook and writable sheet
-        WritableWorkbook workbook = null;
-        WorkbookSettings wbSettings = new WorkbookSettings();
-        wbSettings.setLocale(new Locale("en", "EN"));
-        workbook = Workbook.createWorkbook(receiversFile, wbSettings);
         WritableSheet sheet = workbook.createSheet("receivers", 0);
 
         //prepare the cellformat for writing
@@ -224,27 +186,18 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
         }
         sheet.addCell(new Label(0,row,"--end--",contentformat));
 
-        //write the workbook and close it
-        workbook.write();
-        workbook.close();
+        //write to the workbook
+        //workbook.write();
+        //workbook.close();
 
-        return true;
     }
 
-    private boolean createSenderXLFile() throws Exception{
+    private void writeSendersToWorkbook(WritableWorkbook workbook) throws Exception{
 
         //prepare the list of senders to backup
         List<Sender> senders=db.getSenderDao().getAllSendersNonLive();
 
-        //prepare and create the xl file to write senders
-        File sendersFile=new File(PATH_SENDER_XL_FILE);
-
-        //prepare and create the workbook and writable sheet
-        WritableWorkbook workbook = null;
-        WorkbookSettings wbSettings = new WorkbookSettings();
-        wbSettings.setLocale(new Locale("en", "EN"));
-        workbook = Workbook.createWorkbook(sendersFile, wbSettings);
-        WritableSheet sheet = workbook.createSheet("senders", 0);
+        WritableSheet sheet = workbook.createSheet("senders", 1);
 
         //prepare the cellformat for writing
         WritableFont contentFont = new WritableFont(WritableFont.ARIAL, 10, WritableFont.NO_BOLD);
@@ -269,28 +222,19 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
         }
         sheet.addCell(new Label(0,row,"--end--",contentformat));
 
-        //write the workbook and close it
-        workbook.write();
-        workbook.close();
+        //write to the workbook
+        //workbook.write();
+        //workbook.close();
 
-        return true;
 
     }
 
-    private boolean createTransactionXLFile() throws Exception{
+    private void writeTransactionsToWorkBook(WritableWorkbook workbook) throws Exception{
 
         //prepare the list of transactions to backup
         List<Transaction> transactions=db.getTransactionDao().getAllTransactionsNonLive();
 
-        //prepare and create the xl file to write transactions
-        File transFile=new File(PATH_TRANSACTION_XL_FILE);
-
-        //prepare and create the workbook and writable sheet
-        WritableWorkbook workbook;
-        WorkbookSettings wbSettings = new WorkbookSettings();
-        wbSettings.setLocale(new Locale("en", "EN"));
-        workbook = Workbook.createWorkbook(transFile, wbSettings);
-        WritableSheet sheet = workbook.createSheet("transactions", 0);
+        WritableSheet sheet = workbook.createSheet("transactions", 3);
 
         //prepare the cellformat for writing
         WritableFont contentFont = new WritableFont(WritableFont.ARIAL, 10, WritableFont.NO_BOLD);
@@ -315,26 +259,17 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
         sheet.addCell(new Label(0,row,"--end--",contentformat));
 
         //write the workbook and close it
-        workbook.write();
-        workbook.close();
+        //workbook.write();
+        //workbook.close();
 
-        return true;
     }
 
-    private boolean createGroupXLFile() throws Exception{
+    private void writeGroupsToWorkBook(WritableWorkbook workbook) throws Exception{
 
         //prepare the list of groups to backup
         List<TransactionGroup> groups=db.getTransactionGroupDao().getAllGroupsNonLive();
 
-        //prepare and create the xl file to write groups
-        File groupsFile=new File(PATH_GROUP_XL_FILE);
-
-        //prepare and create the workbook and writable sheet
-        WritableWorkbook workbook = null;
-        WorkbookSettings wbSettings = new WorkbookSettings();
-        wbSettings.setLocale(new Locale("en", "EN"));
-        workbook = Workbook.createWorkbook(groupsFile, wbSettings);
-        WritableSheet sheet = workbook.createSheet("groups", 0);
+        WritableSheet sheet = workbook.createSheet("groups", 2);
 
         //prepare the cellformat for writing
         WritableFont contentFont = new WritableFont(WritableFont.ARIAL, 10, WritableFont.NO_BOLD);
@@ -355,124 +290,45 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
         sheet.addCell(new Label(0,row,"--end--",contentformat));
 
         //write the workbook and close it
-        workbook.write();
-        workbook.close();
+        //workbook.write();
+        //workbook.close();
 
-        return true;
     }
 
-    private boolean backupReceiverFile() throws Exception{
+    private boolean backupToDropBox() throws Exception{
 
-        File file=new File(PATH_RECEIVER_XL_FILE);
+        File file=new File(PATH_BACKUP_XL_FILE);
         if(!file.exists())
             return false;
         InputStream in=new FileInputStream(file);
 
-        UploadBuilder builder=client.files().uploadBuilder(PATH_DBX_RECEIVER_FILE);
+        UploadBuilder builder=client.files().uploadBuilder(PATH_DBX_BACKUP_XL_FILE);
         builder.withMode(WriteMode.OVERWRITE);
         builder.uploadAndFinish(in);
 
         return true;
     }
 
-    private boolean backupSenderFile() throws Exception{
-
-        File file=new File(PATH_SENDER_XL_FILE);
-        if(!file.exists())
-            return false;
-        InputStream in=new FileInputStream(file);
-
-        UploadBuilder builder=client.files().uploadBuilder(PATH_DBX_SENDER_FILE);
-        builder.withMode(WriteMode.OVERWRITE);
-        builder.uploadAndFinish(in);
-
-        return true;
-
-    }
-
-    private boolean backupGroupFile() throws Exception{
-
-        File file=new File(PATH_GROUP_XL_FILE);
-        if(!file.exists())
-            return false;
-        InputStream in=new FileInputStream(file);
-
-        UploadBuilder builder=client.files().uploadBuilder(PATH_DBX_GROUP_XL_FILE);
-        builder.withMode(WriteMode.OVERWRITE);
-        builder.uploadAndFinish(in);
-
-        return true;
-    }
-
-    private boolean backupTransactionFile() throws Exception{
-
-        File file=new File(PATH_TRANSACTION_XL_FILE);
-        if(!file.exists())
-            return false;
-        InputStream in=new FileInputStream(file);
-
-        UploadBuilder builder=client.files().uploadBuilder(PATH_DBX_TRANSACTION_FILE);
-        builder.withMode(WriteMode.OVERWRITE);
-        builder.uploadAndFinish(in);
-
-        return true;
-
-    }
 
 
-    private boolean downloadReceiversFile()throws Exception{
+    private void downloadFromDropBox()throws Exception{
 
         //create the local file for downloading
-        File file=new File(PATH_RECEIVER_XL_FILE);
+        File file=new File(PATH_BACKUP_XL_FILE);
         OutputStream out=new FileOutputStream(file);
 
-        client.files().download(PATH_DBX_RECEIVER_FILE).download(out);
-
-        return true;
-    }
-
-    private boolean downloadSendersFile() throws Exception{
-
-        //create the local file for downloading
-        File file=new File(PATH_SENDER_XL_FILE);
-        OutputStream out=new FileOutputStream(file);
-
-        client.files().download(PATH_DBX_SENDER_FILE).download(out);
-
-        return true;
+        client.files().download(PATH_DBX_BACKUP_XL_FILE).download(out);
 
     }
 
-    private boolean downloadGroupsFile() throws Exception{
 
-        //create the local file for downloading
-        File file=new File(PATH_GROUP_XL_FILE);
-        OutputStream out=new FileOutputStream(file);
-
-        client.files().download(PATH_DBX_GROUP_XL_FILE).download(out);
-
-        return true;
-    }
-
-    private boolean downloadTransactionsFile() throws Exception{
-
-        //create the local file for downloading
-        File file=new File(PATH_TRANSACTION_XL_FILE);
-        OutputStream out=new FileOutputStream(file);
-
-        client.files().download(PATH_DBX_TRANSACTION_FILE).download(out);
-
-        return true;
-    }
-
-    private boolean restoreReceivers() throws Exception{
+    private void restoreReceivers(Workbook workbook) throws Exception{
 
         List<Receiver> receivers =new ArrayList<>();
         boolean notReachedEnd;
         Cell currentCell;
         Receiver currentReceiver;
 
-        Workbook workbook=Workbook.getWorkbook(new File(PATH_RECEIVER_XL_FILE));
         Sheet sheet=workbook.getSheet(0);
 
         notReachedEnd=true;
@@ -501,19 +357,16 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
 
         db.getReceiverDao().addAllReceivers(receivers);
 
-
-        return true;
     }
 
-    private boolean restoreSenders() throws Exception{
+    private void restoreSenders(Workbook workbook) throws Exception{
 
         List<Sender> senders =new ArrayList<>();
         boolean notReachedEnd;
         Cell currentCell;
         Sender currentSender;
 
-        Workbook workbook=Workbook.getWorkbook(new File(PATH_SENDER_XL_FILE));
-        Sheet sheet=workbook.getSheet(0);
+        Sheet sheet=workbook.getSheet(1);
 
         notReachedEnd=true;
         int row=0;
@@ -540,19 +393,17 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
         }
 
         db.getSenderDao().addAllSenders(senders);
-        return true;
 
     }
 
-    private boolean restoreGroups() throws Exception{
+    private void restoreGroups(Workbook workbook) throws Exception{
 
         List<TransactionGroup> groups =new ArrayList<>();
         boolean notReachedEnd;
         Cell currentCell;
         TransactionGroup currentGroup;
 
-        Workbook workbook=Workbook.getWorkbook(new File(PATH_GROUP_XL_FILE));
-        Sheet sheet=workbook.getSheet(0);
+        Sheet sheet=workbook.getSheet(2);
 
         notReachedEnd=true;
         int row=0;
@@ -574,18 +425,16 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
         }
 
         db.getTransactionGroupDao().addAllTransactionGroups(groups);
-        return true;
     }
 
-    private boolean restoreTransactions()throws Exception{
+    private void restoreTransactions(Workbook workbook)throws Exception{
 
         List<Transaction> transactions =new ArrayList<>();
         boolean notReachedEnd;
         Cell currentCell;
         Transaction currentTrans;
 
-        Workbook workbook=Workbook.getWorkbook(new File(PATH_TRANSACTION_XL_FILE));
-        Sheet sheet=workbook.getSheet(0);
+        Sheet sheet=workbook.getSheet(3);
 
         notReachedEnd=true;
         int row=0;
@@ -610,29 +459,15 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
         }
 
         db.getTransactionDao().addAllTransactions(transactions);
-        return true;
     }
 
-    private boolean deleteTempFiles() throws Exception{
+    private void deleteTempFiles() throws Exception{
 
         File file;
-        file=new File(PATH_RECEIVER_XL_FILE);
+        file=new File(PATH_BACKUP_XL_FILE);
         if(file.exists())
             file.delete();
 
-        file=new File(PATH_SENDER_XL_FILE);
-        if(file.exists())
-            file.delete();
-
-        file=new File(PATH_GROUP_XL_FILE);
-        if(file.exists())
-            file.delete();
-
-        file=new File(PATH_TRANSACTION_XL_FILE);
-        if(file.exists())
-            file.delete();
-
-        return true;
 
     }
 
