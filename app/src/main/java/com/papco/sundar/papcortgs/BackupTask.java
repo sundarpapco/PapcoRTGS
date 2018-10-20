@@ -6,6 +6,8 @@ import android.os.Environment;
 import android.util.Log;
 
 import com.dropbox.core.v2.DbxClientV2;
+import com.dropbox.core.v2.files.UploadBuilder;
+import com.dropbox.core.v2.files.WriteMode;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -366,7 +368,9 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
             return false;
         InputStream in=new FileInputStream(file);
 
-        client.files().uploadBuilder(PATH_DBX_RECEIVER_FILE).uploadAndFinish(in);
+        UploadBuilder builder=client.files().uploadBuilder(PATH_DBX_RECEIVER_FILE);
+        builder.withMode(WriteMode.OVERWRITE);
+        builder.uploadAndFinish(in);
 
         return true;
     }
@@ -378,7 +382,9 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
             return false;
         InputStream in=new FileInputStream(file);
 
-        client.files().uploadBuilder(PATH_DBX_SENDER_FILE).uploadAndFinish(in);
+        UploadBuilder builder=client.files().uploadBuilder(PATH_DBX_SENDER_FILE);
+        builder.withMode(WriteMode.OVERWRITE);
+        builder.uploadAndFinish(in);
 
         return true;
 
@@ -391,7 +397,9 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
             return false;
         InputStream in=new FileInputStream(file);
 
-        client.files().uploadBuilder(PATH_DBX_GROUP_XL_FILE).uploadAndFinish(in);
+        UploadBuilder builder=client.files().uploadBuilder(PATH_DBX_GROUP_XL_FILE);
+        builder.withMode(WriteMode.OVERWRITE);
+        builder.uploadAndFinish(in);
 
         return true;
     }
@@ -403,7 +411,9 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
             return false;
         InputStream in=new FileInputStream(file);
 
-        client.files().uploadBuilder(PATH_DBX_TRANSACTION_FILE).uploadAndFinish(in);
+        UploadBuilder builder=client.files().uploadBuilder(PATH_DBX_TRANSACTION_FILE);
+        builder.withMode(WriteMode.OVERWRITE);
+        builder.uploadAndFinish(in);
 
         return true;
 

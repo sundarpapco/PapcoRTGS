@@ -30,7 +30,6 @@ public class SmsService extends Service {
     public static final String ACTION_STOP_SERVICE="com.papco.sundar.papcortgs.stopsmsservice";
     public static boolean IS_SERVICE_RUNNING=false;
     private static final int NOTIFICATION_ID=1;
-    public static final int NOTIFICATION_ID_SUCCESS=2;
 
     private static final String SMS_SENT_ACTION = "com.papco.sundar.papcortgs.SMS_SENT";
     private static final String EXTRA_MODE = "mode";

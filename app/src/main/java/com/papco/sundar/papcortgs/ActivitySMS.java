@@ -190,6 +190,7 @@ public class ActivitySMS extends AppCompatActivity {
         smsService.getWorkingStatus().removeObservers(this);
         smsService.getTransactions().removeObservers(this);
         unbindService(connection);
+        progress.setText("");
         mbound=false;
     }
 
@@ -344,7 +345,7 @@ public class ActivitySMS extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
 
-            Log.d("SUNDAR","Connection established");
+            progress.setText("Sending sms. Please wait...");
             smsService=((SmsService.SmsBinder)iBinder).getService();
             smsService.getTransactions().observe(ActivitySMS.this, new Observer<List<TransactionForList>>() {
                 @Override
