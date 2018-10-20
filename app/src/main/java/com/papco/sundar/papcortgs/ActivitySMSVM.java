@@ -11,7 +11,7 @@ public class ActivitySMSVM extends AndroidViewModel {
 
     private LiveData<List<TransactionForList>> transactions;
     int currentGroupId=-1;
-    boolean sendingSms=false;
+    String currentGroupName=null;
     MasterDatabase db;
     TransactionForList currentlySendingTransaction=null;
 

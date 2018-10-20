@@ -95,6 +95,13 @@ public class TransactionListFragment extends Fragment {
 
         if(item.getItemId()==R.id.action_sms_all){
 
+            if(SmsService.IS_SERVICE_RUNNING){ //if the sms service is already running, dont allow user to open the activity again
+
+                Toast.makeText(getActivity(),"Already sending SMS in progress. Please tap on notification",Toast.LENGTH_LONG).show();
+                return true;
+
+            }
+
             if(viewmodel.getTransactions().getValue().size()>0)
                 ((TransactionActivity)getActivity()).showSMSActivity();
             else

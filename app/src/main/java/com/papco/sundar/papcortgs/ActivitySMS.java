@@ -44,12 +44,6 @@ public class ActivitySMS extends AppCompatActivity {
 
     static final int PERMISSION_REQUEST_SMS=2;
 
-    private static final int SMS_STATUS_SENT=1;
-    private static final int SMS_STATUS_NOT_ATTEMPTED=-1;
-    private static final int SMS_STATUS_RECEIVER_NUMBER_INVALID=4;
-    private static final int SMS_STATUS_NO_SERVICE=6;
-
-
     RecyclerView recycler;
     SMSAdapter adapter;
     ActivitySMSVM viewmodel;
@@ -77,6 +71,7 @@ public class ActivitySMS extends AppCompatActivity {
 
             if (b != null) {
                 viewmodel.currentGroupId = b.getInt("groupId");
+                viewmodel.currentGroupName=b.getString("groupName");
             }
         }
 
@@ -86,7 +81,8 @@ public class ActivitySMS extends AppCompatActivity {
                 if(transactionForLists==null)
                     return;
 
-                adapter.setData(transactionForLists);
+                if(adapter.getItemCount()==0)
+                    adapter.setData(transactionForLists);
                 viewmodel.getTransactions().removeObservers(ActivitySMS.this);
 
             }
@@ -96,13 +92,9 @@ public class ActivitySMS extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                if(SmsService.IS_SERVICE_RUNNING){
-                    stopSmsService();
-                }else{
+                if(!SmsService.IS_SERVICE_RUNNING)
                     checkPermissionAndStartService();
-                }
-                //sendSms.setEnabled(false);
-                //sendSMS();
+
             }
         });
 
@@ -164,6 +156,7 @@ public class ActivitySMS extends AppCompatActivity {
         Intent intent=new Intent(ActivitySMS.this,SmsService.class);
         Bundle ex=new Bundle();
         ex.putInt("groupId",viewmodel.currentGroupId);
+        ex.putString("groupName",viewmodel.currentGroupName);
         intent.putExtras(ex);
         intent.setAction(SmsService.ACTION_START_SERVICE);
         startService(intent);
@@ -176,7 +169,7 @@ public class ActivitySMS extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
-        if(mbound){
+        if(SmsService.IS_SERVICE_RUNNING && mbound){
             unbindFromTheService();
         }
 
@@ -228,13 +221,10 @@ public class ActivitySMS extends AppCompatActivity {
         ActivityCompat.requestPermissions(this,permissions,PERMISSION_REQUEST_SMS);
     }
 
-
-
-
     private void clearAllSmsStatus(){
 
         for(TransactionForList trans:viewmodel.getTransactions().getValue()){
-            trans.smsStatus=SMS_STATUS_NOT_ATTEMPTED;
+            trans.smsStatus=SmsService.SMS_STATUS_NOT_ATTEMPTED;
         }
         adapter.refresh();
     }
@@ -287,7 +277,7 @@ public class ActivitySMS extends AppCompatActivity {
                 holder.mobilenumer.setText(data.get(holder.getAdapterPosition()).receiverMobile);
             }
 
-            if(data.get(holder.getAdapterPosition()).smsStatus!=SMS_STATUS_SENT)
+            if(data.get(holder.getAdapterPosition()).smsStatus!=SmsService.SMS_STATUS_SENT)
                 holder.status.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
             else
                 holder.status.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
@@ -312,17 +302,20 @@ public class ActivitySMS extends AppCompatActivity {
 
             switch (smsStatus){
 
-                case SMS_STATUS_NOT_ATTEMPTED:
+                case SmsService.SMS_STATUS_NOT_ATTEMPTED:
                     return "";
 
-                case SMS_STATUS_SENT:
+                case SmsService.SMS_STATUS_SENT:
                     return "SMS SENT";
 
-                case SMS_STATUS_NO_SERVICE:
+                case SmsService.SMS_STATUS_NO_SERVICE:
                     return "NO SERVICE";
 
-                case SMS_STATUS_RECEIVER_NUMBER_INVALID:
+                case SmsService.SMS_STATUS_RECEIVER_NUMBER_INVALID:
                     return "INVALID PHONE NO";
+
+                case SmsService.SMS_STATUS_TIMEOUT:
+                    return "TIMEOUT";
 
             }
 
@@ -368,7 +361,11 @@ public class ActivitySMS extends AppCompatActivity {
 
                     if(integer==smsService.WORK_STATUS_COMPLETED){
 
+                        Log.d("SUNDAR","Getting the final result and setting it");
+                        adapter.setData(smsService.getTransactions().getValue()); //get the result and stop the service
+                        Log.d("SUNDAR",Integer.toString(smsService.getTransactions().getValue().size()));
                         unbindFromTheService();
+                        stopSmsService();
                     }
 
                 }
@@ -387,8 +384,5 @@ public class ActivitySMS extends AppCompatActivity {
 
         }
     }
-
-
-
 
 }

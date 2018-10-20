@@ -129,6 +129,7 @@ public class TransactionActivity extends AppCompatActivity implements FileExport
         Intent intent=new Intent(this,ActivitySMS.class);
         Bundle b=new Bundle();
         b.putInt("groupId",viewmodel.currentGroup.id);
+        b.putString("groupName",viewmodel.currentGroup.name);
         intent.putExtras(b);
         startActivity(intent);
     }

@@ -8,7 +8,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -20,7 +19,6 @@ import android.telephony.SmsManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -38,14 +36,14 @@ public class SmsService extends Service {
     private static final String EXTRA_MODE = "mode";
     private static final String EXTRA_TRANS_ID="transId";
 
-    private static final int SMS_STATUS_SENT=1;
-    private static final int SMS_STATUS_FAILED=2;
-    private static final int SMS_STATUS_NOT_ATTEMPTED=-1;
-    private static final int SMS_STATUS_RECEIVER_NUMBER_INVALID=4;
-    private static final int SMS_STATUS_PERMISSION_ERROR=5;
-    private static final int SMS_STATUS_NO_SERVICE=6;
-    private static final int SMS_STATUS_GENERIC_FAILURE=7;
-    private static final int SMS_STATUS_UNKNOWN_ERROR=8;
+    public static final int SMS_STATUS_SENT=1;
+    public static final int SMS_STATUS_NOT_ATTEMPTED=-1;
+    public static final int SMS_STATUS_RECEIVER_NUMBER_INVALID=4;
+    public static final int SMS_STATUS_PERMISSION_ERROR=5;
+    public static final int SMS_STATUS_NO_SERVICE=6;
+    public static final int SMS_STATUS_GENERIC_FAILURE=7;
+    public static final int SMS_STATUS_UNKNOWN_ERROR=8;
+    public static final int SMS_STATUS_TIMEOUT=9;
 
     public static final int WORK_STATUS_WAITING_FOR_LIST=3;
     public static final int WORK_STATUS_WORKING=1;
@@ -53,6 +51,7 @@ public class SmsService extends Service {
 
     private List<TransactionForList> smsList=null;
     private int currentGroupId=-1; //for creating the pending Intent to launch when tap notification
+    private String currentGroupName=null;
 
     SmsBinder binder;
     private SmsManager smsManager;
@@ -60,6 +59,8 @@ public class SmsService extends Service {
     private MutableLiveData<List<TransactionForList>> transactions;
     private MutableLiveData<Integer> workingStatus;
     private SmsResultReceiver receiver;
+    private boolean encounteredError=false;
+    private Timer timer;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -69,8 +70,10 @@ public class SmsService extends Service {
             if(IS_SERVICE_RUNNING) //ignore if the service is being started for the second time
                 return START_STICKY;
 
-            if(intent.getExtras()!=null) //group id needed for preparing the pendingIntent of notification
-                currentGroupId=intent.getExtras().getInt("groupId",-1);
+            if(intent.getExtras()!=null) { //group id needed for preparing the pendingIntent of notification
+                currentGroupId = intent.getExtras().getInt("groupId", -1);
+                currentGroupName=intent.getExtras().getString("groupName");
+            }
 
             IS_SERVICE_RUNNING=true;
             showNotification(); //this will make the service forground
@@ -83,17 +86,34 @@ public class SmsService extends Service {
                 workingStatus.setValue(WORK_STATUS_WAITING_FOR_LIST);
             }
             smsManager=SmsManager.getDefault();
-            receiver=new SmsResultReceiver();
-            registerReceiver(receiver,new IntentFilter(SMS_SENT_ACTION));
 
         }
 
         if(intent.getAction().equals(ACTION_STOP_SERVICE)){
-            stopForeground(true);
+            stopTheService();
         }
 
         return START_STICKY;
     }
+
+    @Override
+    public void onDestroy() {
+        Log.d("SUNDAR","On destroy");
+        IS_SERVICE_RUNNING=false;
+        unregisterReceiver(receiver);
+        super.onDestroy();
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        if(binder==null)
+            binder=new SmsBinder();
+
+        return binder;
+    }
+
+
 
     private void showNotification() {
 
@@ -109,7 +129,7 @@ public class SmsService extends Service {
         Intent transactionIntent=taskBuilder.editIntentAt(1);
         Bundle options=new Bundle();
         options.putInt("groupId",currentGroupId);
-        options.putString("groupName","first transaction");
+        options.putString("groupName",currentGroupName);
         transactionIntent.putExtras(options);
         PendingIntent resultPendingIntent=taskBuilder.getPendingIntent(0,PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -135,8 +155,17 @@ public class SmsService extends Service {
 
         transactions.setValue(list);
         this.smsList=list;
+        startSendingMessages();
+    }
+
+    private void startSendingMessages(){
+
         workingStatus.setValue(WORK_STATUS_WORKING);
+        if(receiver==null)
+            receiver=new SmsResultReceiver();
+        registerReceiver(receiver,new IntentFilter(SMS_SENT_ACTION));
         sendNextMessage();
+
     }
 
     public MutableLiveData<Integer> getWorkingStatus(){
@@ -147,7 +176,12 @@ public class SmsService extends Service {
 
         if(currentProgress>=smsList.size()){
             builder.setContentTitle("Sending sms complete");
-            builder.setProgress(smsList.size(),currentProgress,false);
+            builder.setProgress(0,0,false); //remove the progressbar
+            if(encounteredError)
+                builder.setContentText("Sending Sms completed with some errors! Tap for info");
+            else
+                builder.setContentText("Successfully sent Sms to beneficiaries");
+
         }else {
             builder.setProgress(smsList.size(), currentProgress, false);
             builder.setContentTitle("Sending sms " + Integer.toString(currentProgress + 1) + " of " + Integer.toString(smsList.size()));
@@ -202,6 +236,7 @@ public class SmsService extends Service {
             if(!isValidMobileNumber(trans.receiverMobile)){
                 trans.smsStatus=SMS_STATUS_RECEIVER_NUMBER_INVALID;
                 transactions.setValue(smsList);
+                encounteredError=true;
                 continue;
             }
 
@@ -238,62 +273,59 @@ public class SmsService extends Service {
                     smsManager.sendTextMessage(number,null,message,sentPI,null);
 
                 }
-
+                //schedule a timer. this timer will explode and finish the work if the
+                //sent sms broadcast was not received within 5 seconds
+                //on receiving an broadcast, this timer will be cancelled there
+                timer=new Timer();
+                timer.schedule(new TimeOutTask(),5000);
                 return;
 
             } catch (Exception e) {
                 trans.smsStatus=SMS_STATUS_PERMISSION_ERROR;
                 transactions.setValue(smsList);
+                encounteredError=true;
                 e.printStackTrace();
 
             }
         }
 
-        //Stop the service here since the sms has been sent already
-        stopTheService();
-        showSuccessNotification();
+        completeWork(true);
 
     }
 
-    private void showSuccessNotification(){
+    private void doTimeoutAndFinish(){
 
-        //NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID);
-        NotificationCompat.Builder builder=new NotificationCompat.Builder(this,GroupActivity.NOTIFICATION_CHANNEL_ID);
-        builder.setSmallIcon(R.drawable.app_icon);
-        builder.setContentTitle("Sms sending complete");
-        builder.setContentText("Successfully sent sms to all the beneficiaries");
-        builder.setPriority(NotificationCompat.PRIORITY_LOW);
-        builder.setAutoCancel(true);
-        NotificationManagerCompat.from(this).notify(NOTIFICATION_ID_SUCCESS,builder.build());
+        //mark all transactions which was never attempted to timeout
+        for(TransactionForList trans:smsList){
+            if(trans.smsStatus==SMS_STATUS_NOT_ATTEMPTED)
+                trans.smsStatus=SMS_STATUS_TIMEOUT;
+        }
+        //mark that we have encountered error during send
+        encounteredError=true;
+        completeWork(false);
 
+    }
+
+    private void completeWork(boolean isMainThread){
+
+        //mention that the work has been completed
+        //but dont stop the service here. SMS Activity will stop the service
+        //after getting the result from it
+        if(isMainThread)
+            workingStatus.setValue(WORK_STATUS_COMPLETED);
+        else
+            workingStatus.postValue(WORK_STATUS_COMPLETED);
+
+        updateProgressBar(smsList.size());
     }
 
     private void stopTheService(){
 
         IS_SERVICE_RUNNING=false;
-        workingStatus.postValue(WORK_STATUS_COMPLETED);
         stopForeground(true);
         stopSelf();
 
     }
-
-    @Override
-    public void onDestroy() {
-        Log.d("SUNDAR","On destroy");
-        IS_SERVICE_RUNNING=false;
-        unregisterReceiver(receiver);
-        super.onDestroy();
-    }
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        if(binder==null)
-            binder=new SmsBinder();
-
-        return binder;
-    }
-
 
 
     public class SmsBinder extends Binder{
@@ -309,6 +341,9 @@ public class SmsService extends Service {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+
+            //First of all, cancel the timeout timer since we got a broadcast
+            timer.cancel();
 
             // A simple result Toast text.
             String mode = null;
@@ -334,14 +369,14 @@ public class SmsService extends Service {
                 int resultCode = getResultCode();
                 foundTrans.smsStatus = translateSentResult(resultCode);
                 transactions.setValue(smsList);
+                if(resultCode!=Activity.RESULT_OK)
+                    encounteredError=true;
 
             }
 
-            if (mode.equals("multi")) {
-                Timer timer=new Timer();
-                long delay=2000;
-                timer.schedule(new NextMessageTask(),delay);
-            }
+            if (mode.equals("multi"))
+                sendNextMessage();
+
             //result = number + ", " + message + "\n" + result;
             //Toast.makeText(context, result, Toast.LENGTH_LONG).show();
         }
@@ -364,13 +399,13 @@ public class SmsService extends Service {
         }
     }
 
-    class NextMessageTask extends TimerTask {
-
+    class TimeOutTask extends TimerTask{
 
         @Override
         public void run() {
-            sendNextMessage();
+            doTimeoutAndFinish();
         }
     }
+
 
 }
