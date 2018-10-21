@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.UploadBuilder;
@@ -14,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -31,22 +33,28 @@ import jxl.write.WritableFont;
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 
-public class BackupTask extends AsyncTask<Void, String, Boolean> {
+public class BackupTask extends AsyncTask<Void, String, Integer> {
 
     private String PATH_BACKUP_XL_FILE;
     private String PATH_DBX_BACKUP_XL_FILE="/apps/papcortgs/papcortgsbackup.xls";
 
+    public static final int RESULT_COMPLETED=1;
+    public static final int RESULT_NO_BACKUP_FOUND=2;
+    public static final int RESULT_OTHER_FAILURE=3;
+
     BackupOperation operation;
     DbxClientV2 client;
-    BackupCallBack callBack = null;
     MasterDatabase db;
+    WeakReference<BackupCallBack> callback;
+    Context context;
 
     public BackupTask(Context context,DbxClientV2 client, BackupOperation opertation, BackupCallBack callBack) {
 
         this.operation = opertation;
         this.client = client;
-        this.callBack = callBack;
+        this.callback = new WeakReference<>(callBack);
         db=MasterDatabase.getInstance(context);
+        this.context=context;
 
     }
 
@@ -66,7 +74,7 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
     }
 
     @Override
-    protected Boolean doInBackground(Void... strings) {
+    protected Integer doInBackground(Void... strings) {
 
         try {
 
@@ -77,12 +85,15 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return RESULT_OTHER_FAILURE;
         }
 
     }
 
-    private boolean backupFile() throws Exception {
+
+    //******** Main calls for backup and restore
+
+    private int backupFile() throws Exception {
 
         //Create the backup file in local drive
         File receiversFile=new File(PATH_BACKUP_XL_FILE);
@@ -114,11 +125,17 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
         publishProgress("Clearing up temp files");
         deleteTempFiles();
 
-        return true;
+        return RESULT_COMPLETED;
 
     }
 
-    private boolean restoreFile() throws Exception {
+    private int restoreFile() throws Exception {
+
+        publishProgress("Checking for valid backup...");
+        if(!whetherValidBackupExists()){
+
+            return RESULT_NO_BACKUP_FOUND;
+        }
 
         publishProgress("Downloading the backup file...");
         downloadFromDropBox();
@@ -142,9 +159,11 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
         publishProgress("Clearing up temp files");
         deleteTempFiles();
 
-        return true;
+        return RESULT_COMPLETED;
     }
 
+
+    //********** Methods for backup
 
     private void clearAllTables() throws Exception{
 
@@ -310,6 +329,27 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
     }
 
 
+    //*********************
+
+
+    //************ Methods for Restore
+
+    private boolean whetherValidBackupExists(){
+
+
+        try{
+
+            client.files().getMetadata(PATH_DBX_BACKUP_XL_FILE);
+
+        }catch (Exception e){
+
+            return false;
+
+        }
+
+        return true;
+
+    }
 
     private void downloadFromDropBox()throws Exception{
 
@@ -320,7 +360,6 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
         client.files().download(PATH_DBX_BACKUP_XL_FILE).download(out);
 
     }
-
 
     private void restoreReceivers(Workbook workbook) throws Exception{
 
@@ -471,34 +510,57 @@ public class BackupTask extends AsyncTask<Void, String, Boolean> {
 
     }
 
-
+    //**********************
 
     @Override
     protected void onProgressUpdate(String... values) {
-        if(callBack==null)
-            return;
 
-        callBack.onProgessChanged(values[0]);
+        if(callback.get()!=null)
+            callback.get().onProgessChanged(values[0]);
     }
 
     @Override
-    protected void onPostExecute(Boolean result) {
+    protected void onPostExecute(Integer result) {
 
-        if (callBack == null)
+        String toastMsg;
+        if(result==RESULT_COMPLETED){
+
+            if(operation==BackupOperation.BACKUP)
+                toastMsg="Backup Successful!";
+            else
+                toastMsg="Restore Successful!";
+
+        }else{
+
+            if(operation==BackupOperation.BACKUP)
+                toastMsg="Backup failed";
+            else
+                toastMsg="Restore failed";
+
+        }
+
+        if(context!=null)
+            Toast.makeText(context,toastMsg,Toast.LENGTH_SHORT).show();
+
+        if(callback.get()!=null){
+
+            if(operation==BackupOperation.BACKUP)
+                callback.get().onBackupComplete(result);
+            else
+                callback.get().onRestoreComplete(result);
+
             return;
 
-        if(operation==BackupOperation.BACKUP)
-            callBack.onBackupComplete(result);
-        else
-            callBack.onRestoreComplete(result);
+        }else
+            Log.d("SUNDAR","ACTIVITY DESTROYED BEFORE BACKUP");
 
     }
 
 
     public static interface BackupCallBack {
 
-        public void onBackupComplete(boolean success);
+        public void onBackupComplete(int resultcode);
         public void onProgessChanged(String progress);
-        public void onRestoreComplete(boolean success);
+        public void onRestoreComplete(int resultcode);
     }
 }

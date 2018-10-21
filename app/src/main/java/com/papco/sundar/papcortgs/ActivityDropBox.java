@@ -45,6 +45,8 @@ public class ActivityDropBox extends AppCompatActivity implements BackupTask.Bac
             @Override
             public void onClick(View view) {
 
+                progress.setText("");
+
                 if(access_token==null)
                     Auth.startOAuth2Authentication(ActivityDropBox.this,"i2owryva8qyt10c");
                 else{
@@ -221,8 +223,7 @@ public class ActivityDropBox extends AppCompatActivity implements BackupTask.Bac
 
         if(client!=null){
 
-            Log.d("START","STARTING BAKUP");
-            new BackupTask(this,client,BackupOperation.BACKUP,ActivityDropBox.this).execute();
+            new BackupTask(getApplication(),client,BackupOperation.BACKUP,ActivityDropBox.this).execute();
 
         }
 
@@ -254,10 +255,10 @@ public class ActivityDropBox extends AppCompatActivity implements BackupTask.Bac
     }
 
     @Override
-    public void onBackupComplete(boolean success) {
+    public void onBackupComplete(int result ) {
 
         flagBackingup=false;
-        if(success)
+        if(result==BackupTask.RESULT_COMPLETED)
             progress.setText("Backup successful!");
         else
             progress.setText("Backup failed");
@@ -272,13 +273,21 @@ public class ActivityDropBox extends AppCompatActivity implements BackupTask.Bac
     }
 
     @Override
-    public void onRestoreComplete(boolean success) {
+    public void onRestoreComplete(int result) {
 
         flagRestoring=false;
-        if(success)
-            progress.setText("Restore successful!");
-        else
-            progress.setText("Restore failed");
+        String resultText="Restore failed";
+        switch (result){
+            case BackupTask.RESULT_COMPLETED:
+                resultText="Restore successful";
+                break;
+
+            case BackupTask.RESULT_NO_BACKUP_FOUND:
+                resultText="No valid backup found in Dropbox";
+                break;
+        }
+
+        progress.setText(resultText);
 
     }
 
