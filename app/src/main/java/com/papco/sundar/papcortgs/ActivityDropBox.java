@@ -195,8 +195,7 @@ public class ActivityDropBox extends AppCompatActivity implements BackupTask.Bac
 
         if(client!=null){
 
-            Log.d("START","STARTING RESTORE");
-            new BackupTask(this,client,BackupOperation.RESTORE,ActivityDropBox.this).execute();
+            new BackupTask(getApplication(),client,BackupOperation.RESTORE,ActivityDropBox.this).execute();
 
         }
 

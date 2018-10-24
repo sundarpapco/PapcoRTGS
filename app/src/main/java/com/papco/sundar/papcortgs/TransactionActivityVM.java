@@ -5,6 +5,7 @@ import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.support.annotation.NonNull;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class TransactionActivityVM extends AndroidViewModel implements TableWork
 
     public void addTransaction(Transaction newTransaction){
 
-        new TransactionTableWorker(getApplication(),TableOperation.CREATE,null).execute(newTransaction);
+        new TransactionTableWorker(getApplication(),TableOperation.CREATE,this).execute(newTransaction);
     }
 
     public void updateTransaction(Transaction updateTransaction){
@@ -71,6 +72,11 @@ public class TransactionActivityVM extends AndroidViewModel implements TableWork
 
     @Override
     public void onCreateComplete(long result) {
+
+        if(result==-1){
+            //duplicate transaction for the same receiver
+            Toast.makeText(getApplication(),"Already this receiver has a transaction.",Toast.LENGTH_SHORT).show();
+        }
 
     }
 

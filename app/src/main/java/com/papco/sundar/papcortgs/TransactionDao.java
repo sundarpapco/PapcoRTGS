@@ -14,8 +14,8 @@ import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 @Dao
 public interface TransactionDao {
 
-    @Query("select * from `Transaction` where groupId=:id")
-    public LiveData<List<Transaction>> getAllTransactions(int id);
+    @Query("select COUNT(*) from `Transaction` where groupId=:id and receiverId=:recId")
+    public int getTransactionCountForReceiverInGroup(int id,int recId);
 
     @Query("select * from `Transaction` where groupId=:id")
     public List<Transaction> getTransactionsNonLive(int id);

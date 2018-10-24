@@ -307,14 +307,14 @@ public class TransactionListFragment extends Fragment {
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        recyclerViewClicked(data.get(getAdapterPosition()));
+                        recyclerViewClicked(data.get(getAdapterPosition()-1));
                     }
                 });
 
                 itemView.setOnLongClickListener(new View.OnLongClickListener() {
                     @Override
                     public boolean onLongClick(View view) {
-                        recyclerItemLongClicked(view,data.get(getAdapterPosition()));
+                        recyclerItemLongClicked(view,data.get(getAdapterPosition()-1));
                         return true;
                     }
                 });

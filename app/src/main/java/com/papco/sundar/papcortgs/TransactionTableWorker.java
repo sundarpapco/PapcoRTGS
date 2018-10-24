@@ -38,9 +38,15 @@ public class TransactionTableWorker extends AsyncTask<Object,Void,Object> {
         return null;
     }
 
-    private long createTransaction(Transaction sender){
+    private long createTransaction(Transaction transaction){
 
-        return db.getTransactionDao().addTransaction(sender);
+        //lets check if the trasaction is valid, meaning In one group, there should be one transaction
+        // for one receiver. Two transactions r not allowed for the same receiver.
+        int count=db.getTransactionDao().getTransactionCountForReceiverInGroup(transaction.groupId,transaction.receiverId);
+        if(count>0)
+            return -1;
+
+        return db.getTransactionDao().addTransaction(transaction);
     }
 
     private Transaction readTransaction(int transactionId){
@@ -69,7 +75,7 @@ public class TransactionTableWorker extends AsyncTask<Object,Void,Object> {
 
         switch (operation){
             case CREATE:
-                callback.onCreateComplete((int)result);
+                callback.onCreateComplete(((Long)result).intValue());
                 break;
             case READ:
                 callback.onReadComplete((Transaction)result);
