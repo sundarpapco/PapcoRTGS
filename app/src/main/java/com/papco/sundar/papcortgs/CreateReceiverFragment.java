@@ -64,9 +64,9 @@ public class CreateReceiverFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        View view=inflater.inflate(R.layout.create_sender,container,false);
+        View view=inflater.inflate(R.layout.fragment_new_edit_person,container,false);
 
-        heading=view.findViewById(R.id.headig_text);
+        heading=view.findViewById(R.id.person_heading);
         editName=view.findViewById(R.id.sender_account_name);
         editAccountNumber=view.findViewById(R.id.sender_account_number);
         editAccountType=view.findViewById(R.id.sender_account_type);
@@ -80,7 +80,7 @@ public class CreateReceiverFragment extends Fragment {
         bankLayout=view.findViewById(R.id.sender_account_bank_layout);
         mobileLayout=view.findViewById(R.id.sender_mobile_layout);
 
-        heading.setText("Receiver details");
+        heading.setText("Create new receiver");
 
         editName.addTextChangedListener(new TextWatcher() {
             @Override
@@ -204,6 +204,7 @@ public class CreateReceiverFragment extends Fragment {
         editIfsc.setText(sender.ifsc);
         editBank.setText(sender.bank);
         editMobile.setText(sender.mobileNumber);
+        heading.setText("Edit receiver details");
     }
 
     private void validateAndSave() {

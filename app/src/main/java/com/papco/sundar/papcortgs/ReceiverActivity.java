@@ -56,8 +56,8 @@ public class ReceiverActivity extends AppCompatActivity {
 
         FragmentManager manager = getSupportFragmentManager();
         android.support.v4.app.FragmentTransaction transaction = manager.beginTransaction();
+        transaction.setCustomAnimations(R.anim.enter_from_right,R.anim.exit_to_left,R.anim.enter_from_left,R.anim.exit_to_right);
         transaction.replace(R.id.container, new CreateReceiverFragment());
-        transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         transaction.addToBackStack("addReceiverFragment");
         transaction.commit();
 

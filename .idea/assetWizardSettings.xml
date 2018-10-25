@@ -3,6 +3,11 @@
   <component name="WizardSettings">
     <option name="children">
       <map>
+        <entry key="imageWizard">
+          <value>
+            <PersistentState />
+          </value>
+        </entry>
         <entry key="vectorWizard">
           <value>
             <PersistentState>
@@ -28,9 +33,10 @@
                         </option>
                         <option name="values">
                           <map>
+                            <entry key="assetSourceType" value="FILE" />
                             <entry key="color" value="f49739" />
-                            <entry key="outputName" value="ic_sms_list" />
-                            <entry key="sourceFile" value="C:\Users\msund" />
+                            <entry key="outputName" value="ic_beneficiary" />
+                            <entry key="sourceFile" value="C:\Users\msund\Desktop\PapcoRTGS Files\receiver.svg" />
                           </map>
                         </option>
                       </PersistentState>

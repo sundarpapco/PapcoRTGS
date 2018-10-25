@@ -74,8 +74,9 @@ public class TransactionActivity extends AppCompatActivity implements FileExport
 
         FragmentManager manager = getSupportFragmentManager();
         android.support.v4.app.FragmentTransaction transaction = manager.beginTransaction();
+        //transaction.setCustomAnimations(R.anim.enter_from_bottom,R.anim.exit_to_top,R.anim.enter_from_top,R.anim.exit_to_bottom);
+        transaction.setCustomAnimations(R.anim.fade_in,R.anim.fade_out,R.anim.fade_in,R.anim.fade_out);
         transaction.replace(R.id.container, new CreateTransactionFragment());
-        transaction.setTransition(FragmentTransaction.TRANSIT_UNSET);
         transaction.addToBackStack("addTransactionFragment");
         transaction.commit();
 
