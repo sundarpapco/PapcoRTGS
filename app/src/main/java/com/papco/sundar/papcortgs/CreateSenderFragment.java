@@ -19,9 +19,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.TextView;
 
 public class CreateSenderFragment extends Fragment {
 
+    TextView heading;
     EditText editName,editAccountNumber,editAccountType,editIfsc,editMobile,editBank;
     TextInputLayout nameLayout,accountNumberLayout,accountTypeLayout,ifscLayout,mobileLayout,bankLayout;
     SenderActivityVM viewModel;
@@ -60,8 +62,9 @@ public class CreateSenderFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        View view=inflater.inflate(R.layout.create_sender,container,false);
+        View view=inflater.inflate(R.layout.fragment_new_edit_person,container,false);
 
+        heading=view.findViewById(R.id.person_heading);
         editName=view.findViewById(R.id.sender_account_name);
         editAccountNumber=view.findViewById(R.id.sender_account_number);
         editAccountType=view.findViewById(R.id.sender_account_type);
@@ -74,6 +77,8 @@ public class CreateSenderFragment extends Fragment {
         ifscLayout=view.findViewById(R.id.sender_account_ifsc_layout);
         bankLayout=view.findViewById(R.id.sender_account_bank_layout);
         mobileLayout=view.findViewById(R.id.sender_mobile_layout);
+
+        heading.setText("Create new sender");
 
         editName.addTextChangedListener(new TextWatcher() {
             @Override
@@ -197,6 +202,7 @@ public class CreateSenderFragment extends Fragment {
         editIfsc.setText(sender.ifsc);
         editBank.setText(sender.bank);
         editMobile.setText(sender.mobileNumber);
+        heading.setText("Edit sender details");
     }
 
     private void validateAndSave() {

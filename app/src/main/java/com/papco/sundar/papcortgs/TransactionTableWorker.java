@@ -40,12 +40,6 @@ public class TransactionTableWorker extends AsyncTask<Object,Void,Object> {
 
     private long createTransaction(Transaction transaction){
 
-        //lets check if the trasaction is valid, meaning In one group, there should be one transaction
-        // for one receiver. Two transactions r not allowed for the same receiver.
-        int count=db.getTransactionDao().getTransactionCountForReceiverInGroup(transaction.groupId,transaction.receiverId);
-        if(count>0)
-            return -1;
-
         return db.getTransactionDao().addTransaction(transaction);
     }
 

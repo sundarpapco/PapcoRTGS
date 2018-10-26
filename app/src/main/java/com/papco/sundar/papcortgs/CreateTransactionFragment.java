@@ -57,7 +57,7 @@ public class CreateTransactionFragment extends Fragment {
             }
         });
 
-        viewmodel.receivers.observe(this, new Observer<List<Receiver>>() {
+        viewmodel.getGetReceiversForSelection(viewmodel.currentGroup.id).observe(this, new Observer<List<Receiver>>() {
             @Override
             public void onChanged(@Nullable List<Receiver> receivers) {
                 if(receivers==null || receivers.size()==0){

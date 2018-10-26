@@ -34,7 +34,7 @@ public class ReceiverSelectFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         viewModel = ViewModelProviders.of(getActivity()).get(TransactionActivityVM.class);
-        viewModel.receivers.observe(this, new Observer<List<Receiver>>() {
+        viewModel.getGetReceiversForSelection(viewModel.currentGroup.id).observe(this, new Observer<List<Receiver>>() {
             @Override
             public void onChanged(@Nullable List<Receiver> receivers) {
                 if (receivers != null)

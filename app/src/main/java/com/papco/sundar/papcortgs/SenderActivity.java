@@ -57,8 +57,8 @@ public class SenderActivity extends AppCompatActivity {
 
         FragmentManager manager = getSupportFragmentManager();
         android.support.v4.app.FragmentTransaction transaction = manager.beginTransaction();
+        transaction.setCustomAnimations(R.anim.enter_from_right,R.anim.exit_to_left,R.anim.enter_from_left,R.anim.exit_to_right);
         transaction.replace(R.id.container, new CreateSenderFragment());
-        transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         transaction.addToBackStack("addSenderFragment");
         transaction.commit();
 

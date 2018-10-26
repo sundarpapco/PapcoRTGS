@@ -17,6 +17,9 @@ public interface ReceiverDao {
     @Query("select * from Receiver order by name")
     public LiveData<List<Receiver>> getAllReceivers();
 
+    @Query("select * from Receiver where id not in (select receiverId from `Transaction` where groupId=:groupId)")
+    public LiveData<List<Receiver>> getReceiversForSelection(int groupId);
+
     @Query("select * from Receiver")
     public List<Receiver> getAllReceiversNonLive();
 

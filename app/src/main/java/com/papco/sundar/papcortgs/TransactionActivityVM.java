@@ -14,7 +14,7 @@ public class TransactionActivityVM extends AndroidViewModel implements TableWork
     private LiveData<List<TransactionForList>> transactions;
 
     LiveData<List<Sender>> senders;
-    LiveData<List<Receiver>> receivers;
+    private LiveData<List<Receiver>> getReceiversForSelection;
 
     TransactionGroup currentGroup;
     int editingTransactionId=-1;
@@ -29,13 +29,20 @@ public class TransactionActivityVM extends AndroidViewModel implements TableWork
         super(application);
         db=MasterDatabase.getInstance(getApplication());
         senders=db.getSenderDao().getAllSenders();
-        receivers=db.getReceiverDao().getAllReceivers();
         selectedSender=new MutableLiveData<>();
         selectedReceiver=new MutableLiveData<>();
         editingTransaction=new MutableLiveData<>();
 
     }
 
+
+    public LiveData<List<Receiver>> getGetReceiversForSelection(int groupId) {
+
+        if(getReceiversForSelection==null)
+            getReceiversForSelection=db.getReceiverDao().getReceiversForSelection(groupId);
+
+        return getReceiversForSelection;
+    }
 
     public LiveData<List<TransactionForList>> getTransactions(){
 
