@@ -212,8 +212,6 @@ public class CreateReceiverFragment extends Fragment {
         if(!isAllFieldsValid())
             return;
 
-        hideKeyboard();
-
         if(viewModel.editingReceiver==null){ //add as new sender
 
             Receiver sender=new Receiver();
@@ -243,13 +241,6 @@ public class CreateReceiverFragment extends Fragment {
             return;
         }
 
-
-    }
-
-    private void hideKeyboard(){
-
-        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Activity.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(editBank.getWindowToken(), 0);
 
     }
 

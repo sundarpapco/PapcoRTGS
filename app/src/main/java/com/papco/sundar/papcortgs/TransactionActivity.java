@@ -1,6 +1,7 @@
 package com.papco.sundar.papcortgs;
 
 import android.Manifest;
+import android.app.Activity;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,18 +14,22 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 
 public class TransactionActivity extends AppCompatActivity implements FileExporter.WriteFileListener {
 
     static final int PERMISSION_REQUEST_STORAGE=1;
 
     TransactionActivityVM viewmodel;
+    ViewGroup container;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.container_layout);
+        container=findViewById(R.id.container);
         viewmodel=ViewModelProviders.of(this).get(TransactionActivityVM.class);
 
         if(savedInstanceState==null) {
@@ -126,8 +131,16 @@ public class TransactionActivity extends AppCompatActivity implements FileExport
 
     public void popBackStack() {
 
+        hideKeyboard();
         FragmentManager manager = getSupportFragmentManager();
         manager.popBackStack();
+
+    }
+
+    private void hideKeyboard(){
+
+        InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(container.getWindowToken(), 0);
 
     }
 

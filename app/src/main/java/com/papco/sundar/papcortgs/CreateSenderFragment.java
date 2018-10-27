@@ -210,8 +210,6 @@ public class CreateSenderFragment extends Fragment {
         if(!isAllFieldsValid())
             return;
 
-        hideKeyboard();
-
         if(viewModel.editingSender==null){ //add as new sender
 
             Sender sender=new Sender();
@@ -241,13 +239,6 @@ public class CreateSenderFragment extends Fragment {
             return;
         }
 
-
-    }
-
-    private void hideKeyboard(){
-
-        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Activity.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(editBank.getWindowToken(), 0);
 
     }
 
