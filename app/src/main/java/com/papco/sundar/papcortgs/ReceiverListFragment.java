@@ -3,6 +3,7 @@ package com.papco.sundar.papcortgs;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -14,6 +15,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -169,7 +171,10 @@ public class ReceiverListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull ReceiverAdapter.TagViewHolder holder, int position) {
-            holder.txtViewName.setText(data.get(holder.getAdapterPosition()).name);
+            if(!TextUtils.isEmpty(searchView.getQuery()))
+                holder.txtViewName.setText(data.get(holder.getAdapterPosition()).highlightedName);
+            else
+                holder.txtViewName.setText(data.get(holder.getAdapterPosition()).name);
         }
 
         @Override
@@ -205,6 +210,7 @@ public class ReceiverListFragment extends Fragment {
 
                         for (Receiver sender : unfilteredData) {
                             if (sender.name.toLowerCase().contains(stringToSearch)) {
+                                sender.highlightedName=TextFunctions.getHighlitedString(sender.name,stringToSearch,Color.YELLOW);
                                 filteredList.add(sender);
                             }
                         }

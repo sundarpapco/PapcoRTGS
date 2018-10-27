@@ -1,7 +1,9 @@
 package com.papco.sundar.papcortgs;
 
 import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.PrimaryKey;
+import android.text.SpannableString;
 
 @Entity
 public class Receiver {
@@ -14,4 +16,6 @@ public class Receiver {
     String mobileNumber;
     String ifsc;
     String bank;
+    @Ignore
+    SpannableString highlightedName;
 }
