@@ -21,6 +21,8 @@ public class Transaction {
     Sender sender=null;
     @Ignore
     Receiver receiver=null;
+    @Ignore
+    int smsStatus=-1;
 
     public String getAmountAsString(){
 

@@ -3,6 +3,8 @@ package com.papco.sundar.papcortgs;
 import android.content.Context;
 import android.os.AsyncTask;
 
+import java.util.List;
+
 public class TransactionTableWorker extends AsyncTask<Object,Void,Object> {
 
     Context context=null;
@@ -21,7 +23,7 @@ public class TransactionTableWorker extends AsyncTask<Object,Void,Object> {
     @Override
     protected Object doInBackground(Object... objects) {
 
-        if (operation == null || operation==TableOperation.READALL)
+        if (operation == null)
             return null;
 
         switch (operation){
@@ -29,6 +31,8 @@ public class TransactionTableWorker extends AsyncTask<Object,Void,Object> {
                 return createTransaction((Transaction)objects[0]);
             case READ:
                 return readTransaction((int)objects[0]);
+            case READALL:
+                return readAllTransactionsOfGroup((int)objects[0]);
             case UPDATE:
                 return updateTransaction((Transaction)objects[0]);
             case DELETE:
@@ -49,6 +53,19 @@ public class TransactionTableWorker extends AsyncTask<Object,Void,Object> {
         trans.sender=db.getSenderDao().getSender(trans.senderId);
         trans.receiver=db.getReceiverDao().getReceiver(trans.receiverId);
         return trans;
+    }
+
+    private List<Transaction> readAllTransactionsOfGroup(int groupId){
+
+        List<Transaction> transactions=db.getTransactionDao().getTransactionsNonLive(groupId);
+        for(Transaction trans:transactions){
+
+            trans.sender=db.getSenderDao().getSender(trans.senderId);
+            trans.receiver=db.getReceiverDao().getReceiver(trans.receiverId);
+
+        }
+        return transactions;
+
     }
 
 
@@ -73,6 +90,9 @@ public class TransactionTableWorker extends AsyncTask<Object,Void,Object> {
                 break;
             case READ:
                 callback.onReadComplete((Transaction)result);
+                break;
+            case READALL:
+                callback.onReadAllComplete((List<Transaction>)result);
                 break;
             case UPDATE:
                 callback.onUpdateComplete((int)result);

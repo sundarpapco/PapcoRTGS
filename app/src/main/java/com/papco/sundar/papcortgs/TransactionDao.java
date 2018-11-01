@@ -17,10 +17,10 @@ public interface TransactionDao {
     @Query("select COUNT(*) from `Transaction` where groupId=:id and receiverId=:recId")
     public int getTransactionCountForReceiverInGroup(int id,int recId);
 
-    @Query("select * from `Transaction` where groupId=:id")
+    @Query("select * from `Transaction` where groupId=:id")//used by fileExporter to export a group to excel file and mail
     public List<Transaction> getTransactionsNonLive(int id);
 
-    @Query("select * from `Transaction`")
+    @Query("select * from `Transaction`") //used while creating backup to dropbox
     public List<Transaction> getAllTransactionsNonLive();
 
     @Query("select `Transaction`.id AS id, Sender.name AS sender, Receiver.name as receiver, Receiver.mobileNumber as receiverMobile, `Transaction`.amount as" +

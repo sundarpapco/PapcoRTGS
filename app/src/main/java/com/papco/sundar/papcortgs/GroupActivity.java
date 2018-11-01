@@ -4,12 +4,14 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 public class GroupActivity extends AppCompatActivity {
 
@@ -19,6 +21,7 @@ public class GroupActivity extends AppCompatActivity {
 
 
     GroupActivityVM viewmodel;
+    SharedPreferences pref;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -29,6 +32,8 @@ public class GroupActivity extends AppCompatActivity {
         //Create the notification Channel for this app
         // this should be done for android 8.0 and up
         createNotificationChannel();
+        if(isFirstRun())
+            writeDefaultMessageTemplate();
 
         viewmodel=ViewModelProviders.of(this).get(GroupActivityVM.class);
 
@@ -87,6 +92,27 @@ public class GroupActivity extends AppCompatActivity {
             // or other notification behaviors after this
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    private boolean isFirstRun(){
+
+        pref=getSharedPreferences("mysettings",MODE_PRIVATE);
+        if(pref.contains("first_run")){
+            return false;
+        }else{
+            pref.edit().putBoolean("first_run",false).commit();
+            return true;
+        }
+
+    }
+
+    private void writeDefaultMessageTemplate(){
+
+        if(pref!=null) {
+            pref.edit().putString("message_template", TextFunctions.getDefaultMessageFormat()).commit();
+            Log.d("SUNDAR","Writing default message");
+
         }
     }
 

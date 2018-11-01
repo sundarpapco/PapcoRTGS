@@ -72,12 +72,23 @@ public class GroupListFragment extends Fragment {
                 showReceiversActivity();
                 break;
 
+            case R.id.action_message_format:
+                showMessageFormatActivity();
+                break;
+
             case R.id.action_dropbox:
                 ((GroupActivity)getActivity()).showDropBoxActivity();
                 break;
         }
 
         return true;
+    }
+
+    private void showMessageFormatActivity() {
+
+        Intent intent=new Intent(getActivity(),ActivityComposeMessage.class);
+        startActivity(intent);
+
     }
 
     private void showReceiversActivity() {

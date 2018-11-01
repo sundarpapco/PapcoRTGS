@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -48,18 +49,19 @@ public class SmsService extends Service {
     public static final int WORK_STATUS_WORKING=1;
     public static final int WORK_STATUS_COMPLETED=2;
 
-    private List<TransactionForList> smsList=null;
+    private List<Transaction> smsList=null;
     private int currentGroupId=-1; //for creating the pending Intent to launch when tap notification
     private String currentGroupName=null;
 
     SmsBinder binder;
     private SmsManager smsManager;
     NotificationCompat.Builder builder;
-    private MutableLiveData<List<TransactionForList>> transactions;
+    private MutableLiveData<List<Transaction>> transactions;
     private MutableLiveData<Integer> workingStatus;
     private SmsResultReceiver receiver;
     private boolean encounteredError=false;
     private Timer timer;
+    private SharedPreferences pref;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -142,12 +144,12 @@ public class SmsService extends Service {
 
     }
 
-    public MutableLiveData<List<TransactionForList>> getTransactions(){
+    public MutableLiveData<List<Transaction>> getTransactions(){
 
         return transactions;
     }
 
-    public void setListAndStartSending(List<TransactionForList> list){
+    public void setListAndStartSending(List<Transaction> list){
 
         if(transactions.getValue()!=null) //just ignore this call if a list has been already set
             return;
@@ -203,15 +205,20 @@ public class SmsService extends Service {
 
     }
 
-    private String composeMessage(TransactionForList trans){
+    private String composeMessage(Transaction trans){
 
-        String result="We have done RTGS transfer of ";
-        result=result+Transaction.amountAsString(trans.amount);
-        result=result+" to your account " ;
-        result=result+trans.receiver;
-        result=result+". Kindly acknowledge the same. -PAPCO OFFSET";
+        if(pref==null)
+            pref=getSharedPreferences("mysettings",MODE_PRIVATE);
 
-        return result;
+        String format=pref.getString("message_template","NULL");
+        format = format.replaceAll(TextFunctions.TAG_RECEIVER_ACC_NAME,trans.receiver.name);
+        format = format.replaceAll(TextFunctions.TAG_RECEIVER_ACC_NUMBER,trans.receiver.accountNumber);
+        format = format.replaceAll(TextFunctions.TAG_AMOUNT,Transaction.amountAsString(trans.amount));
+        format = format.replaceAll(TextFunctions.TAG_RECEIVER_BANK,trans.receiver.bank);
+        format = format.replaceAll(TextFunctions.TAG_RECEIVER_IFSC,trans.receiver.ifsc);
+        format = format.replaceAll(TextFunctions.TAG_SENDER_NAME,trans.sender.name);
+        return format;
+
 
     }
 
@@ -222,7 +229,7 @@ public class SmsService extends Service {
         int position;
         for(position=0;position<smsList.size();position++) {
 
-            TransactionForList trans=smsList.get(position);
+            Transaction trans=smsList.get(position);
 
             //make sure that we have not sent message to this person already
             if(trans.smsStatus!=SMS_STATUS_NOT_ATTEMPTED) {
@@ -232,7 +239,7 @@ public class SmsService extends Service {
             updateProgressBar(position);
 
             //First check if the receiver mobile number is valid
-            if(!isValidMobileNumber(trans.receiverMobile)){
+            if(!isValidMobileNumber(trans.receiver.mobileNumber)){
                 trans.smsStatus=SMS_STATUS_RECEIVER_NUMBER_INVALID;
                 transactions.setValue(smsList);
                 encounteredError=true;
@@ -243,7 +250,7 @@ public class SmsService extends Service {
             requestCode=trans.id;
             Intent sentIntent = new Intent(SMS_SENT_ACTION);
 
-            String number = trans.receiverMobile;
+            String number = trans.receiver.mobileNumber;
             String message = composeMessage(trans);
             sentIntent.putExtra(EXTRA_TRANS_ID,trans.id);
             sentIntent.putExtra(EXTRA_MODE,"multi");
@@ -295,7 +302,7 @@ public class SmsService extends Service {
     private void doTimeoutAndFinish(){
 
         //mark all transactions which was never attempted to timeout
-        for(TransactionForList trans:smsList){
+        for(Transaction trans:smsList){
             if(trans.smsStatus==SMS_STATUS_NOT_ATTEMPTED)
                 trans.smsStatus=SMS_STATUS_TIMEOUT;
         }
@@ -354,8 +361,8 @@ public class SmsService extends Service {
             int transId = intent.getIntExtra(EXTRA_TRANS_ID, -1);
             mode = intent.getStringExtra(EXTRA_MODE);
 
-            TransactionForList foundTrans = new TransactionForList();
-            for (TransactionForList t : smsList) {
+            Transaction foundTrans = new Transaction();
+            for (Transaction t : smsList) {
 
                 if (t.id == transId) {
                     foundTrans = t;

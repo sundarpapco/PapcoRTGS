@@ -10,6 +10,10 @@
         android:id="@+id/action_receivers"
         app:showAsAction="never"/>
 
+    <item android:title="Message format"
+        android:id="@+id/action_message_format"
+        app:showAsAction="never"/>
+
     <item android:id="@+id/action_dropbox"
         android:title="DropBox Backup"
         app:showAsAction="never"/>

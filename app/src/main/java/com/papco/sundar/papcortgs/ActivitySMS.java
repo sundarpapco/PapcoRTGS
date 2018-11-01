@@ -75,15 +75,15 @@ public class ActivitySMS extends AppCompatActivity {
             }
         }
 
-        viewmodel.getTransactions().observe(this, new Observer<List<TransactionForList>>() {
+        viewmodel.getSmsList().observe(this, new Observer<List<Transaction>>() {
             @Override
-            public void onChanged(@Nullable List<TransactionForList> transactionForLists) {
+            public void onChanged(@Nullable List<Transaction> transactionForLists) {
                 if(transactionForLists==null)
                     return;
 
                 if(adapter.getItemCount()==0)
                     adapter.setData(transactionForLists);
-                viewmodel.getTransactions().removeObservers(ActivitySMS.this);
+                viewmodel.getSmsList().removeObservers(ActivitySMS.this);
 
             }
         });
@@ -98,7 +98,7 @@ public class ActivitySMS extends AppCompatActivity {
             }
         });
 
-        adapter=new SMSAdapter(new ArrayList<TransactionForList>());
+        adapter=new SMSAdapter(new ArrayList<Transaction>());
         recycler.setLayoutManager(new LinearLayoutManager(this));
         recycler.addItemDecoration(new DividerDecoration(this,(GradientDrawable)getResources().getDrawable(R.drawable.divider)));
         recycler.setAdapter(adapter);
@@ -224,7 +224,7 @@ public class ActivitySMS extends AppCompatActivity {
 
     private void clearAllSmsStatus(){
 
-        for(TransactionForList trans:viewmodel.getTransactions().getValue()){
+        for(Transaction trans:viewmodel.getSmsList().getValue()){
             trans.smsStatus=SmsService.SMS_STATUS_NOT_ATTEMPTED;
         }
         adapter.refresh();
@@ -244,10 +244,10 @@ public class ActivitySMS extends AppCompatActivity {
     class SMSAdapter extends RecyclerView.Adapter<SMSAdapter.SMSViewHolder>{
 
 
-        private List<TransactionForList> data;
+        private List<Transaction> data;
 
 
-        public SMSAdapter(List<TransactionForList> data){
+        public SMSAdapter(List<Transaction> data){
             this.data=data;
             setHasStableIds(true);
         }
@@ -267,15 +267,15 @@ public class ActivitySMS extends AppCompatActivity {
         @Override
         public void onBindViewHolder(@NonNull SMSViewHolder holder, int position) {
 
-            holder.name.setText(data.get(holder.getAdapterPosition()).receiver);
+            holder.name.setText(data.get(holder.getAdapterPosition()).receiver.name);
             holder.status.setText(getSmsStatus(data.get(holder.getAdapterPosition()).smsStatus));
-            if(data.get(holder.getAdapterPosition()).receiverMobile.equals("")){
+            if(data.get(holder.getAdapterPosition()).receiver.mobileNumber.equals("")){
                 holder.mobilenumer.setVisibility(View.INVISIBLE);
                 holder.icon.setVisibility(View.INVISIBLE);
             }else{
                 holder.mobilenumer.setVisibility(View.VISIBLE);
                 holder.icon.setVisibility(View.VISIBLE);
-                holder.mobilenumer.setText(data.get(holder.getAdapterPosition()).receiverMobile);
+                holder.mobilenumer.setText(data.get(holder.getAdapterPosition()).receiver.mobileNumber);
             }
 
             if(data.get(holder.getAdapterPosition()).smsStatus!=SmsService.SMS_STATUS_SENT)
@@ -289,7 +289,7 @@ public class ActivitySMS extends AppCompatActivity {
             return data.size();
         }
 
-        public void setData(List<TransactionForList> data){
+        public void setData(List<Transaction> data){
             this.data=data;
             notifyDataSetChanged();
 
@@ -347,9 +347,9 @@ public class ActivitySMS extends AppCompatActivity {
 
             progress.setText("Sending sms. Please wait...");
             smsService=((SmsService.SmsBinder)iBinder).getService();
-            smsService.getTransactions().observe(ActivitySMS.this, new Observer<List<TransactionForList>>() {
+            smsService.getTransactions().observe(ActivitySMS.this, new Observer<List<Transaction>>() {
                 @Override
-                public void onChanged(@Nullable List<TransactionForList> transactionForLists) {
+                public void onChanged(@Nullable List<Transaction> transactionForLists) {
 
                     adapter.setData(transactionForLists);
 
@@ -371,7 +371,7 @@ public class ActivitySMS extends AppCompatActivity {
 
                 }
             });
-            smsService.setListAndStartSending(viewmodel.getTransactions().getValue());
+            smsService.setListAndStartSending(viewmodel.getSmsList().getValue());
 
             mbound=true;
 
