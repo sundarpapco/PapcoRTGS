@@ -23,10 +23,15 @@ public class ActivitySMSVM extends AndroidViewModel implements TableWorkCallback
     public MutableLiveData<List<Transaction>> getSmsList() {
         if(smsList==null){
             smsList=new MutableLiveData<>();
-            new TransactionTableWorker(getApplication(),TableOperation.READALL,this).execute(currentGroupId);
+            if(!SmsService.IS_SERVICE_RUNNING) //if the service is running and activity is binding to it, then the list can be obtained from the service while binding
+                new TransactionTableWorker(getApplication(),TableOperation.READALL,this).execute(currentGroupId);
         }
 
         return smsList;
+    }
+
+    public void setSmsList(List<Transaction> smsList) {
+        this.smsList.setValue(smsList);
     }
 
     @Override

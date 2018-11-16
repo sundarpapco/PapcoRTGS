@@ -147,7 +147,7 @@ public class ActivityComposeMessage extends AppCompatActivity {
         String result = source.toString();
         result = result.replaceAll(TextFunctions.TAG_RECEIVER_ACC_NAME, "ABC PVT LTD");
         result = result.replaceAll(TextFunctions.TAG_RECEIVER_ACC_NUMBER, "123456789");
-        result = result.replaceAll(TextFunctions.TAG_AMOUNT, "\u20b912,345");
+        result = result.replaceAll(TextFunctions.TAG_AMOUNT, "Rs.12,345");
         result = result.replaceAll(TextFunctions.TAG_RECEIVER_BANK, "ICICI, Svks");
         result = result.replaceAll(TextFunctions.TAG_RECEIVER_IFSC, "ICIC0000012");
         result = result.replaceAll(TextFunctions.TAG_SENDER_NAME, "PAPCO PRIVATE LIMITED");

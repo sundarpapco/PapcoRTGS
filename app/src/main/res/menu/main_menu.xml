@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".GroupActivity">
 
     <item android:title="Senders"
         android:id="@+id/action_senders"
@@ -8,7 +10,7 @@
 
     <item android:title="Receivers"
         android:id="@+id/action_receivers"
-        app:showAsAction="never"/>
+        app:showAsAction="ifRoom"/>
 
     <item android:title="Message format"
         android:id="@+id/action_message_format"

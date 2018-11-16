@@ -8,6 +8,7 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -22,6 +23,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -81,9 +83,7 @@ public class ActivitySMS extends AppCompatActivity {
                 if(transactionForLists==null)
                     return;
 
-                if(adapter.getItemCount()==0)
-                    adapter.setData(transactionForLists);
-                viewmodel.getSmsList().removeObservers(ActivitySMS.this);
+                adapter.setData(transactionForLists);
 
             }
         });
@@ -93,7 +93,7 @@ public class ActivitySMS extends AppCompatActivity {
             public void onClick(View view) {
 
                 if(!SmsService.IS_SERVICE_RUNNING)
-                    checkPermissionAndStartService();
+                    showSendConfirmDialog();
 
             }
         });
@@ -140,6 +140,20 @@ public class ActivitySMS extends AppCompatActivity {
         return false;
     }
 
+
+    private void showSendConfirmDialog(){
+        AlertDialog.Builder builder=new AlertDialog.Builder(this);
+        builder.setTitle("SEND MESSAGES");
+        builder.setMessage("Start sending messages to all beneficiaries? This operation cannot be cancelled in the middle");
+        builder.setNegativeButton("CANCEL",null);
+        builder.setPositiveButton("SEND", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                checkPermissionAndStartService();
+            }
+        });
+        builder.create().show();
+    }
 
     private void checkPermissionAndStartService(){
 
@@ -324,6 +338,13 @@ public class ActivitySMS extends AppCompatActivity {
 
         }
 
+        public void updateSmsStatus(){
+
+            notifyItemRangeChanged(0,data.size());
+
+        }
+
+
         class SMSViewHolder extends RecyclerView.ViewHolder{
 
             TextView name,status,mobilenumer;
@@ -351,10 +372,12 @@ public class ActivitySMS extends AppCompatActivity {
                 @Override
                 public void onChanged(@Nullable List<Transaction> transactionForLists) {
 
-                    adapter.setData(transactionForLists);
+
+                    adapter.updateSmsStatus();
 
                 }
             });
+
 
             smsService.getWorkingStatus().observe(ActivitySMS.this, new Observer<Integer>() {
                 @Override
@@ -362,9 +385,7 @@ public class ActivitySMS extends AppCompatActivity {
 
                     if(integer==smsService.WORK_STATUS_COMPLETED){
 
-                        Log.d("SUNDAR","Getting the final result and setting it");
-                        adapter.setData(smsService.getTransactions().getValue()); //get the result and stop the service
-                        Log.d("SUNDAR",Integer.toString(smsService.getTransactions().getValue().size()));
+                        viewmodel.setSmsList(smsService.getTransactions().getValue()); //get the result and stop the service
                         unbindFromTheService();
                         stopSmsService();
                     }
@@ -372,6 +393,8 @@ public class ActivitySMS extends AppCompatActivity {
                 }
             });
             smsService.setListAndStartSending(viewmodel.getSmsList().getValue());
+            if(viewmodel.getSmsList().getValue()==null)
+                viewmodel.setSmsList(smsService.getTransactions().getValue());
 
             mbound=true;
 

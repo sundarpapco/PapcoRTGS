@@ -63,7 +63,8 @@
         </intent-filter>
         </activity>
 
-        <activity android:name=".ActivityComposeMessage"/>
+        <activity android:name=".ActivityComposeMessage"
+            android:screenOrientation="portrait"/>
 
     </application>
 

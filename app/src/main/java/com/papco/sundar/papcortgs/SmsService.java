@@ -79,9 +79,9 @@ public class SmsService extends Service {
             IS_SERVICE_RUNNING=true;
             showNotification(); //this will make the service forground
 
-            if(transactions==null)
-                transactions=new MutableLiveData<>();
-
+            if(transactions==null) {
+                transactions = new MutableLiveData<>();
+            }
             if(workingStatus==null){
                 workingStatus=new MutableLiveData<>();
                 workingStatus.setValue(WORK_STATUS_WAITING_FOR_LIST);
