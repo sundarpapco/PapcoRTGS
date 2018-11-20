@@ -29,6 +29,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.papco.sundar.papcortgs.mail.EmailService;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,6 +111,23 @@ public class TransactionListFragment extends Fragment {
 
         }
 
+        if(item.getItemId()==R.id.action_email_all){
+
+            if(EmailService.isIsRunning()){ //if the sms service is already running, dont allow user to open the activity again
+
+                Toast.makeText(getActivity(),"Already sending Mails in progress. Please tap on notification",Toast.LENGTH_LONG).show();
+                return true;
+
+            }
+
+            if(viewmodel.getTransactions().getValue().size()>0)
+                ((TransactionActivity)getActivity()).showEmailActivity();
+            else
+                Toast.makeText(getActivity(),"Please add atleast one transaction to send Email",Toast.LENGTH_SHORT).show();
+            return true;
+            
+        }
+
         return false;
     }
 
@@ -142,7 +161,7 @@ public class TransactionListFragment extends Fragment {
         if(adapter==null)
             adapter= new TransactionAdapter(new ArrayList<TransactionForList>());
         recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recycler.addItemDecoration(new DividerDecoration(getActivity(),(GradientDrawable)getResources().getDrawable(R.drawable.divider_grey)));
+        recycler.addItemDecoration(new DividerDecoration(getActivity(),getActivity().getResources().getColor(R.color.selectionGrey)));
         recycler.setAdapter(adapter);
 
         return ui;

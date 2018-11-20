@@ -100,7 +100,7 @@ public class ActivitySMS extends AppCompatActivity {
 
         adapter=new SMSAdapter(new ArrayList<Transaction>());
         recycler.setLayoutManager(new LinearLayoutManager(this));
-        recycler.addItemDecoration(new DividerDecoration(this,(GradientDrawable)getResources().getDrawable(R.drawable.divider)));
+        recycler.addItemDecoration(new DividerDecoration(this));
         recycler.setAdapter(adapter);
 
         getSupportActionBar().setTitle("Send SMS to Receivers");

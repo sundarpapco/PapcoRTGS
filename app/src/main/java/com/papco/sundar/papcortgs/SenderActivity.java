@@ -60,6 +60,7 @@ public class SenderActivity extends AppCompatActivity {
 
     public void showAddSenderFragment() {
 
+        hideKeyBoard();
         FragmentManager manager = getSupportFragmentManager();
         android.support.v4.app.FragmentTransaction transaction = manager.beginTransaction();
         transaction.setCustomAnimations(R.anim.enter_from_right,R.anim.exit_to_left,R.anim.enter_from_left,R.anim.exit_to_right);
@@ -74,6 +75,7 @@ public class SenderActivity extends AppCompatActivity {
         hideKeyBoard();
         FragmentManager manager = getSupportFragmentManager();
         manager.popBackStackImmediate();
+
     }
 
     private void hideKeyBoard() {

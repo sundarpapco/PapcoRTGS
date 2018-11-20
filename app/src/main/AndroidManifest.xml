@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
 
     <application
         android:allowBackup="true"
@@ -27,6 +28,8 @@
         </provider>
 
         <service android:name=".SmsService"
+            android:exported="false"/>
+        <service android:name=".mail.EmailService"
             android:exported="false"/>
         <activity android:name=".SenderActivity"
             android:parentActivityName=".GroupActivity"/>
@@ -48,6 +51,9 @@
         <activity android:name=".ActivityDropBox"
             android:screenOrientation="portrait"
             android:parentActivityName=".GroupActivity"/>
+        <activity android:name=".ActivityEmail"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".TransactionActivity"/>
 
         <activity
             android:name="com.dropbox.core.android.AuthActivity"

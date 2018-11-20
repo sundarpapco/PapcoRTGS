@@ -95,7 +95,7 @@ public class ReceiverListFragment extends Fragment {
 
 
         recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recycler.addItemDecoration(new DividerDecoration(getActivity(), (GradientDrawable) getResources().getDrawable(R.drawable.divider)));
+        recycler.addItemDecoration(new DividerDecoration(getActivity()));
         if(adapter==null)
             adapter=new ReceiverAdapter(new ArrayList<Receiver>());
         recycler.setAdapter(adapter);

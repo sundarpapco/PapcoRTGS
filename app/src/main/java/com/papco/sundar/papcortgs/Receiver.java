@@ -10,12 +10,13 @@ public class Receiver {
 
     @PrimaryKey(autoGenerate = true)
     int id;
-    String accountType;
-    String accountNumber;
-    String name;
-    String mobileNumber;
-    String ifsc;
-    String bank;
+    public String accountType;
+    public String accountNumber;
+    public String name;
+    public String mobileNumber;
+    public String ifsc;
+    public String bank;
+    public String email="";
     @Ignore
     SpannableString highlightedName;
 }

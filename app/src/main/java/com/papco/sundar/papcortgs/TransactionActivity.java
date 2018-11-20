@@ -129,6 +129,16 @@ public class TransactionActivity extends AppCompatActivity implements FileExport
         startActivity(intent);
     }
 
+    public void showEmailActivity(){
+
+        Intent intent=new Intent(this,ActivityEmail.class);
+        Bundle b=new Bundle();
+        b.putInt("groupId",viewmodel.currentGroup.id);
+        b.putString("groupName",viewmodel.currentGroup.name);
+        intent.putExtras(b);
+        startActivity(intent);
+    }
+
     public void popBackStack() {
 
         hideKeyboard();

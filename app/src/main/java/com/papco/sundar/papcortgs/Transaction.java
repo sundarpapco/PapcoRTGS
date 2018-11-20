@@ -5,6 +5,8 @@ import android.arch.persistence.room.ForeignKey;
 import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.PrimaryKey;
 
+import com.papco.sundar.papcortgs.mail.EmailService;
+
 @Entity(foreignKeys={@ForeignKey(entity = Sender.class,parentColumns = "id",childColumns = "senderId",onDelete = ForeignKey.CASCADE),
         @ForeignKey(entity = Receiver.class,parentColumns = "id",childColumns = "receiverId",onDelete = ForeignKey.CASCADE),
         @ForeignKey(entity = TransactionGroup.class,parentColumns = "id",childColumns = "groupId",onDelete = ForeignKey.CASCADE)})
@@ -12,17 +14,19 @@ public class Transaction {
 
     @PrimaryKey(autoGenerate = true)
     int id;
-    int groupId;
-    int senderId;
-    int receiverId;
-    int amount;
-    String remarks;
+    public int groupId;
+    public int senderId;
+    public int receiverId;
+    public int amount;
+    public String remarks;
     @Ignore
-    Sender sender=null;
+    public Sender sender=null;
     @Ignore
-    Receiver receiver=null;
+    public Receiver receiver=null;
     @Ignore
     int smsStatus=-1;
+    @Ignore
+    public int emailStatus=EmailService.STATUS_DEFAULT;
 
     public String getAmountAsString(){
 

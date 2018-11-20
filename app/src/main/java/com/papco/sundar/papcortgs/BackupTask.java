@@ -193,6 +193,9 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
         int row=0;
         for(Receiver receiver:receivers){
 
+            if(receiver.email==null) //since its added in the later version, older objects may have null value
+                receiver.email="";
+
             sheet.addCell(new Number(0,row,receiver.id,contentformat));
             sheet.addCell(new Label(1,row,receiver.accountType,contentformat));
             sheet.addCell(new Label(2,row,receiver.accountNumber,contentformat));
@@ -200,6 +203,7 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
             sheet.addCell(new Label(4,row,receiver.mobileNumber,contentformat));
             sheet.addCell(new Label(5,row,receiver.ifsc,contentformat));
             sheet.addCell(new Label(6,row,receiver.bank,contentformat));
+            sheet.addCell(new Label(7,row,receiver.email,contentformat));
             row++;
 
         }
@@ -229,6 +233,9 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
         int row=0;
         for(Sender sender:senders){
 
+            if(sender.email==null) //Since email was added in later version, older senders may have this as null
+                sender.email="";
+
             sheet.addCell(new Number(0,row,sender.id,contentformat));
             sheet.addCell(new Label(1,row,sender.accountType,contentformat));
             sheet.addCell(new Label(2,row,sender.accountNumber,contentformat));
@@ -236,6 +243,7 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
             sheet.addCell(new Label(4,row,sender.mobileNumber,contentformat));
             sheet.addCell(new Label(5,row,sender.ifsc,contentformat));
             sheet.addCell(new Label(6,row,sender.bank,contentformat));
+            sheet.addCell(new Label(7,row,sender.email,contentformat));
             row++;
 
         }
@@ -388,6 +396,7 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
             currentReceiver.mobileNumber=sheet.getCell(4,row).getContents();
             currentReceiver.ifsc=sheet.getCell(5,row).getContents();
             currentReceiver.bank=sheet.getCell(6,row).getContents();
+            currentReceiver.email=sheet.getCell(7,row).getContents();
 
             receivers.add(currentReceiver);
             row++;
@@ -425,6 +434,7 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
             currentSender.mobileNumber=sheet.getCell(4,row).getContents();
             currentSender.ifsc=sheet.getCell(5,row).getContents();
             currentSender.bank=sheet.getCell(6,row).getContents();
+            currentSender.email=sheet.getCell(7,row).getContents();
 
             senders.add(currentSender);
             row++;

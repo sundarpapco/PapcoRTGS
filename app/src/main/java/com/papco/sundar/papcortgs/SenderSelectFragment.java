@@ -79,7 +79,7 @@ public class SenderSelectFragment extends Fragment {
 
 
         recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recycler.addItemDecoration(new DividerDecoration(getActivity(), (GradientDrawable) getResources().getDrawable(R.drawable.divider)));
+        recycler.addItemDecoration(new DividerDecoration(getActivity()));
         if(adapter==null)
             adapter = new SenderAdapter(new ArrayList<Sender>());
         recycler.setAdapter(adapter);

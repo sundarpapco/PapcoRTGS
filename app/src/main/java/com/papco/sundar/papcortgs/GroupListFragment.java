@@ -124,7 +124,7 @@ public class GroupListFragment extends Fragment {
         if(adapter==null)
             adapter= new GroupAdapter(new ArrayList<TransactionGroup>());
         recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recycler.addItemDecoration(new DividerDecoration(getActivity(),(GradientDrawable)getResources().getDrawable(R.drawable.divider)));
+        recycler.addItemDecoration(new DividerDecoration(getActivity()));
         recycler.setAdapter(adapter);
 
         return ui;

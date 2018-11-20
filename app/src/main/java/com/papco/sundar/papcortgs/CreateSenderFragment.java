@@ -21,11 +21,14 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class CreateSenderFragment extends Fragment {
 
     TextView heading;
-    EditText editName,editAccountNumber,editAccountType,editIfsc,editMobile,editBank;
-    TextInputLayout nameLayout,accountNumberLayout,accountTypeLayout,ifscLayout,mobileLayout,bankLayout;
+    EditText editName,editAccountNumber,editAccountType,editIfsc,editMobile,editBank,editEmail;
+    TextInputLayout nameLayout,accountNumberLayout,accountTypeLayout,ifscLayout,mobileLayout,bankLayout,emailLayout;
     SenderActivityVM viewModel;
 
     @Override
@@ -71,12 +74,14 @@ public class CreateSenderFragment extends Fragment {
         editIfsc=view.findViewById(R.id.sender_ifsc);
         editBank=view.findViewById(R.id.sender_bank);
         editMobile=view.findViewById(R.id.sender_mobile_number);
+        editEmail=view.findViewById(R.id.sender_email);
         nameLayout=view.findViewById(R.id.sender_name_layout);
         accountNumberLayout=view.findViewById(R.id.sender_account_number_layout);
         accountTypeLayout=view.findViewById(R.id.sender_account_type_layout);
         ifscLayout=view.findViewById(R.id.sender_account_ifsc_layout);
         bankLayout=view.findViewById(R.id.sender_account_bank_layout);
         mobileLayout=view.findViewById(R.id.sender_mobile_layout);
+        emailLayout=view.findViewById(R.id.sender_email_layout);
 
         heading.setText("Create new sender");
 
@@ -186,6 +191,24 @@ public class CreateSenderFragment extends Fragment {
             }
         });
 
+        editEmail.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                bankLayout.setError(null);
+                bankLayout.setErrorEnabled(false);
+            }
+        });
+
         if(viewModel.editingSender!=null)
             loadValues();
 
@@ -202,6 +225,7 @@ public class CreateSenderFragment extends Fragment {
         editIfsc.setText(sender.ifsc);
         editBank.setText(sender.bank);
         editMobile.setText(sender.mobileNumber);
+        editEmail.setText(sender.email);
         heading.setText("Edit sender details");
     }
 
@@ -219,6 +243,7 @@ public class CreateSenderFragment extends Fragment {
             sender.ifsc=editIfsc.getText().toString();
             sender.bank=editBank.getText().toString();
             sender.mobileNumber=editMobile.getText().toString();
+            sender.email=editEmail.getText().toString();
 
             viewModel.addSender(sender);
             ((SenderActivity)getActivity()).popBackStack();
@@ -232,6 +257,7 @@ public class CreateSenderFragment extends Fragment {
             sender.ifsc=editIfsc.getText().toString();
             sender.bank=editBank.getText().toString();
             sender.mobileNumber=editMobile.getText().toString();
+            sender.email=editEmail.getText().toString();
 
             viewModel.editingSender=null;
             viewModel.updateSender(sender);
@@ -275,6 +301,26 @@ public class CreateSenderFragment extends Fragment {
             result=false;
         }
 
+        if(!TextUtils.isEmpty(editEmail.getEditableText())){
+            if(!isValidEmail(editEmail.getText().toString())){
+                emailLayout.setErrorEnabled(true);
+                emailLayout.setError("Enter a valid email");
+                return false;
+            }
+
+        }
+
         return result;
+    }
+
+    private boolean isValidEmail(String email){
+
+        String EMAIL_REGEX="^[\\w-\\+]+(\\.[\\w]+)*@[\\w-]+(\\.[\\w]+)*(\\.[a-zA-Z]{2,})$";
+        Pattern pattern=Pattern.compile(EMAIL_REGEX,Pattern.CASE_INSENSITIVE);
+        Matcher matcher;
+
+        matcher=pattern.matcher(email);
+        return matcher.matches();
+
     }
 }

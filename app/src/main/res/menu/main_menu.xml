@@ -10,7 +10,7 @@
 
     <item android:title="Receivers"
         android:id="@+id/action_receivers"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="never"/>
 
     <item android:title="Message format"
         android:id="@+id/action_message_format"
