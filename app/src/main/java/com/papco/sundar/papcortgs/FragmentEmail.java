@@ -29,6 +29,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.papco.sundar.papcortgs.mail.EmailCallBack;
 import com.papco.sundar.papcortgs.mail.EmailService;
 
@@ -114,6 +115,7 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
                 }
 
                 checkPermissionAndStartSending();
+                //printProfileDetails();
             }
         });
 
@@ -294,6 +296,24 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
             return true;
         else
             return false;
+    }
+
+    private void printProfileDetails(){
+
+        GoogleSignInAccount account=GoogleSignIn.getLastSignedInAccount(getActivity().getApplicationContext());
+        if(account!=null){
+
+            Log.d(TAG, "printProfileDetails:");
+            Log.d(TAG, "Display name: "+ account.getDisplayName());
+            Log.d(TAG, "Email: "+ account.getEmail());
+            Log.d(TAG, "Family name: "+ account.getFamilyName());
+            Log.d(TAG, "Given name: "+ account.getGivenName());
+            Log.d(TAG, "getId(): "+ account.getId());
+            Log.d(TAG, "getIdToken(): "+ account.getIdToken());
+            Log.d(TAG, "geServerAuthCode(): "+ account.getServerAuthCode());
+            Log.d(TAG, "getPhotoUrl(): "+ account.getPhotoUrl());
+
+        }
     }
 
     @Override

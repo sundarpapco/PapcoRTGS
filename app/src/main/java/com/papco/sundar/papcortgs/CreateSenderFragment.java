@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -139,6 +140,9 @@ public class CreateSenderFragment extends Fragment {
             }
         });
 
+        InputFilter[] filters={new InputFilter.AllCaps(),new InputFilter.LengthFilter(11)};
+        editIfsc.getText().setFilters(filters);
+
         editIfsc.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -152,10 +156,6 @@ public class CreateSenderFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                if(editable.length()>=4 && editIfsc.getSelectionStart()>=4)
-                    editIfsc.setInputType(InputType.TYPE_CLASS_NUMBER);
-                else
-                    editIfsc.setInputType(InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
                 ifscLayout.setError(null);
                 ifscLayout.setErrorEnabled(false);
             }

@@ -56,6 +56,7 @@ public class ActivityEmail extends AppCompatActivity {
         String scopeSendMail="https://www.googleapis.com/auth/gmail.send";
         GoogleSignInOptions.Builder builder=new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN);
         builder.requestScopes(new Scope(scopeSendMail));
+        builder.requestIdToken(getString(R.string.client_id));
         builder.requestEmail();
         builder.requestProfile();
         GoogleSignInOptions gso=builder.build();

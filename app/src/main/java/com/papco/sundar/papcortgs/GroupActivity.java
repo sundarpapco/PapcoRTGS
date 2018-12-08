@@ -13,7 +13,10 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-public class GroupActivity extends AppCompatActivity {
+import com.papco.sundar.papcortgs.password.PasswordCallback;
+import com.papco.sundar.papcortgs.password.PasswordDialog;
+
+public class GroupActivity extends AppCompatActivity implements PasswordCallback {
 
     public static final String NOTIFICATION_CHANNEL_ID="smsChannelID";
     public static final String NOTIFICATION_CHANNEL_NAME="Papco RTGS";
@@ -116,4 +119,25 @@ public class GroupActivity extends AppCompatActivity {
         }
     }
 
+    private void showReceiversActivity() {
+
+        Intent intent=new Intent(this,ReceiverActivity.class);
+        startActivity(intent);
+    }
+
+    private void showSendersActivity() {
+
+        Intent intent=new Intent(this,SenderActivity.class);
+        startActivity(intent);
+
+    }
+
+    @Override
+    public void onPasswordOk(int code) {
+        if(code==PasswordDialog.CODE_RECEIVERS)
+            showReceiversActivity();
+
+        if(code==PasswordDialog.CODE_SENDERS)
+            showSendersActivity();
+    }
 }

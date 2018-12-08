@@ -8,7 +8,9 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -18,6 +20,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.papco.sundar.papcortgs.password.PasswordCallback;
+import com.papco.sundar.papcortgs.password.PasswordDialog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,11 +70,12 @@ public class GroupListFragment extends Fragment {
         switch (item.getItemId()) {
 
             case R.id.action_senders:
-                showSendersActivity();
+                askForPassword(PasswordDialog.CODE_SENDERS);
                 break;
 
             case R.id.action_receivers:
-                showReceiversActivity();
+                //showReceiversActivity();
+                askForPassword(PasswordDialog.CODE_RECEIVERS);
                 break;
 
             case R.id.action_message_format:
@@ -91,20 +97,16 @@ public class GroupListFragment extends Fragment {
 
     }
 
-    private void showReceiversActivity() {
+    private void askForPassword(int code){
 
-        Intent intent=new Intent(getActivity(),ReceiverActivity.class);
-        startActivity(intent);
+        PasswordDialog passwordDialog=new PasswordDialog();
+        FragmentManager manager=getActivity().getSupportFragmentManager();
+        passwordDialog.setRequestCode(code);
+        passwordDialog.show(manager,"passwordDialog");
     }
 
-    private void showSendersActivity() {
 
-        Intent intent=new Intent(getActivity(),SenderActivity.class);
-        startActivity(intent);
-
-    }
-
-    @Nullable
+        @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 

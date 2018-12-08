@@ -5,8 +5,8 @@
     <string name="gmail_login_info">"To send mail, you must log in to a valid gmail\naccount from which you want to send mails\nautomatically."</string>
     <string name="email_template">
 
-        "Sir,\n\nThis is to inform you that we \"&lt;SenAccName&gt;\" has sent an RTGS payment of &lt;TransAmount&gt; to your account &lt;RecAccName&gt;, &lt;RecBank&gt; branch. Kindly acknowledge the same for our confirmation purpose.\n\nThank you\n\nYours,\n&lt;SenAccName&gt;
+        "Sir,\n\nThis is to inform you that we \"&lt;SenAccName&gt;\" has sent an RTGS payment of &lt;TransAmount&gt; to your account &lt;RecAccName&gt;, &lt;RecBank&gt; branch.\n\nKindly acknowledge the same for our confirmation purpose.\n\nThank you\n\nYours,\n&lt;SenAccName&gt;
 
     </string>
-    <string name="client_id">798337766637-qdopsmdh5n9u5trm6d6bjltijohnqf7l.apps.googleusercontent.com</string>
+    <string name="client_id">798337766637-4hplviqeao9ne3ekn67qiup6ud8jjo9s.apps.googleusercontent.com</string>
 </resources>

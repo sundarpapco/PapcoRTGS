@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,6 +21,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.papco.sundar.papcortgs.password.PasswordCallback;
+import com.papco.sundar.papcortgs.password.PasswordDialog;
+
 import java.util.List;
 
 public class CreateTransactionFragment extends Fragment {
@@ -31,6 +35,59 @@ public class CreateTransactionFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+        setHasOptionsMenu(true);
+
+    }
+
+
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_done,menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId()==R.id.action_done){
+            validateAndSave();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        if(viewmodel.editingTransactionId!=-1 && viewmodel.editingTransaction.getValue()==null) {
+            ((TransactionActivity) getActivity()).getSupportActionBar().setTitle("Update transaction");
+            ((TransactionActivity)getActivity()).getSupportActionBar().setSubtitle(null);
+        }else {
+            ((TransactionActivity) getActivity()).getSupportActionBar().setTitle("Create transaction");
+            ((TransactionActivity)getActivity()).getSupportActionBar().setSubtitle(null);
+        }
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        if(viewmodel==null)
+            initializeViewModel();
+
+        if(viewmodel.editingTransactionId!=-1 && viewmodel.editingTransaction.getValue()==null){
+            viewmodel.loadTransaction(viewmodel.editingTransactionId);
+        }else{
+            amount.setText("");
+            remarks.setText("ON ACCOUNT");
+        }
+
+    }
+
+    private void initializeViewModel(){
+
         viewmodel=ViewModelProviders.of(getActivity()).get(TransactionActivityVM.class);
 
         viewmodel.senders.observe(this, new Observer<List<Sender>>() {
@@ -91,41 +148,6 @@ public class CreateTransactionFragment extends Fragment {
             }
         });
 
-        setHasOptionsMenu(true);
-
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_done,menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId()==R.id.action_done){
-            validateAndSave();
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        if(viewmodel.editingTransactionId!=-1 && viewmodel.editingTransaction.getValue()==null) {
-            ((TransactionActivity) getActivity()).getSupportActionBar().setTitle("Update transaction");
-            ((TransactionActivity)getActivity()).getSupportActionBar().setSubtitle(null);
-        }else {
-            ((TransactionActivity) getActivity()).getSupportActionBar().setTitle("Create transaction");
-            ((TransactionActivity)getActivity()).getSupportActionBar().setSubtitle(null);
-        }
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
     }
 
     @Nullable
@@ -167,25 +189,28 @@ public class CreateTransactionFragment extends Fragment {
         senderMore.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ((TransactionActivity)getActivity()).showSenderActivity();
+                askForPassword(PasswordDialog.CODE_SENDERS);
             }
         });
         
         receiverMore.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ((TransactionActivity)getActivity()).showReceiverActivity();
+                askForPassword(PasswordDialog.CODE_RECEIVERS);
             }
         });
 
-        if(viewmodel.editingTransactionId!=-1 && viewmodel.editingTransaction.getValue()==null){
-            viewmodel.loadTransaction(viewmodel.editingTransactionId);
-        }else{
-            amount.setText("");
-            remarks.setText("ON ACCOUNT");
-        }
+
         
         return ui;
+    }
+
+    private void askForPassword(int code){
+
+        PasswordDialog passwordDialog=new PasswordDialog();
+        FragmentManager manager=getActivity().getSupportFragmentManager();
+        passwordDialog.setRequestCode(code);
+        passwordDialog.show(manager,"passwordDialog");
     }
 
 

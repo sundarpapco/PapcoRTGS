@@ -43,8 +43,10 @@ public class ReceiverListFragment extends Fragment {
         viewModel.receivers.observe(this, new Observer<List<Receiver>>() {
             @Override
             public void onChanged(@Nullable List<Receiver> senders) {
-                if (senders != null)
+                if (senders != null) {
                     adapter.setData(senders);
+                    setSubtitle(senders.size());
+                }
             }
         });
 
@@ -57,6 +59,13 @@ public class ReceiverListFragment extends Fragment {
     public void onStart() {
         super.onStart();
         ((ReceiverActivity)getActivity()).getSupportActionBar().setTitle("Manage receivers");
+        setSubtitle(adapter.getItemCount());
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        ((ReceiverActivity)getActivity()).getSupportActionBar().setSubtitle("");
     }
 
     @Nullable
@@ -103,6 +112,19 @@ public class ReceiverListFragment extends Fragment {
         return ui;
     }
 
+
+    private void setSubtitle(int count){
+
+        String subtitle;
+        if(count>0)
+            subtitle=Integer.toString(count)+ " Receivers";
+        else
+            subtitle="";
+
+        ((ReceiverActivity)getActivity()).getSupportActionBar().setSubtitle(subtitle);
+
+
+    }
 
     private void deleteReceiver(final Receiver delReceiver) {
 

@@ -5,6 +5,7 @@ import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.util.List;
@@ -27,6 +28,9 @@ public class TransactionActivityVM extends AndroidViewModel implements TableWork
 
     public TransactionActivityVM(@NonNull Application application) {
         super(application);
+
+        Log.d("SUNDAR", "TransactionActivityVM is creating");
+
         db=MasterDatabase.getInstance(getApplication());
         senders=db.getSenderDao().getAllSenders();
         selectedSender=new MutableLiveData<>();
@@ -34,6 +38,8 @@ public class TransactionActivityVM extends AndroidViewModel implements TableWork
         editingTransaction=new MutableLiveData<>();
 
     }
+
+
 
 
     public LiveData<List<Receiver>> getGetReceiversForSelection(int groupId) {

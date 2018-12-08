@@ -2,7 +2,6 @@ package com.papco.sundar.papcortgs.mail;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -31,16 +30,19 @@ import javax.mail.internet.MimeMessage;
 
 public class EmailTask extends AsyncTask<List<Transaction>,List<Transaction>,List<Transaction>> {
 
-    String FROM_ADDRESS;
-    String TO_ADDRESS;
-    String SUBJECT;
-    String message;
-    String USER_ID;
+    private String FROM_ADDRESS;
+    private String TO_ADDRESS;
+    private String SUBJECT;
+    private String message;
+    private String USER_ID;
+    private final String MESSAGE_FORMAT="Sir,\n\nThis is to inform you that we <SenAccName> has sent an RTGS payment of <TransAmount>/- " +
+            "to your following account \n\nAcount Name: <RecAccName>\nAccount Number: <RecAccNumber>\nBank: <RecBank>\nAmount: <TransAmount>/-" +
+            "\n\nKindly acknowledge the same for our confirmation purpose." +
+            "\n\nThank you\n\nYours,\n<SenAccName>";
 
 
     Context context;
     EmailCallBack callBack;
-    GoogleAccountCredential credential;
     Gmail service;
     GoogleSignInAccount account;
 
@@ -72,7 +74,7 @@ public class EmailTask extends AsyncTask<List<Transaction>,List<Transaction>,Lis
             FROM_ADDRESS=account.getDisplayName() +" <"+account.getEmail()+">";*/
 
         FROM_ADDRESS="Papco Offset Private Limited" +" <"+account.getEmail()+">";
-        SUBJECT="RTGS Payment intimation from PAPCO";
+        SUBJECT="RTGS Payment intimation";
         USER_ID=GoogleSignIn.getLastSignedInAccount(context).getId();
         if(callBack!=null)
             callBack.onStartSending();
@@ -188,7 +190,7 @@ public class EmailTask extends AsyncTask<List<Transaction>,List<Transaction>,Lis
 
     private String composeMessage(Transaction trans){
 
-        String format=context.getString(R.string.email_template);
+        String format=MESSAGE_FORMAT;
         format = format.replaceAll(TextFunctions.TAG_RECEIVER_ACC_NAME,trans.receiver.name);
         format = format.replaceAll(TextFunctions.TAG_RECEIVER_ACC_NUMBER,trans.receiver.accountNumber);
         format = format.replaceAll(TextFunctions.TAG_AMOUNT,Transaction.amountAsString(trans.amount));

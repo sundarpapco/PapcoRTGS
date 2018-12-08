@@ -20,6 +20,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -42,34 +43,19 @@ public class TransactionListFragment extends Fragment {
     TransactionAdapter adapter=null;
     TransactionActivityVM viewmodel;
     CoordinatorLayout rootView;
+    String TAG="SUNDAR";
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        viewmodel=ViewModelProviders.of(getActivity()).get(TransactionActivityVM.class);
-        viewmodel.getTransactions().observe(getActivity(), new Observer<List<TransactionForList>>() {
-            @Override
-            public void onChanged(@Nullable List<TransactionForList> transactionForLists) {
+        Log.d(TAG, "Creating TransactionListFragment");
+        adapter=new TransactionAdapter(new ArrayList<TransactionForList>());
 
-                int tot=0;
-
-                if(transactionForLists==null)
-                    return;
-
-                for(TransactionForList t:transactionForLists){
-                    tot=tot+t.amount;
-                }
-
-                if(adapter!=null)
-                    adapter.setTotal(tot);
-
-                if(adapter!=null)
-                    adapter.setData(transactionForLists);
-            }
-        });
         setHasOptionsMenu(true);
 
     }
+
+    
 
     @Override
     public void onStart() {
@@ -134,12 +120,37 @@ public class TransactionListFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        Log.d(TAG, "onActivityCreated: ");
+        if(viewmodel!=null) {
+            Log.d(TAG, "Already having viewmodel. So skipping ");
+            return;
+        }
+        viewmodel=ViewModelProviders.of(getActivity()).get(TransactionActivityVM.class);
+        viewmodel.getTransactions().observe(getActivity(), new Observer<List<TransactionForList>>() {
+            @Override
+            public void onChanged(@Nullable List<TransactionForList> transactionForLists) {
+
+                int tot=0;
+
+                if(transactionForLists==null)
+                    return;
+
+                for(TransactionForList t:transactionForLists){
+                    tot=tot+t.amount;
+                }
+
+                adapter.setTotal(tot);
+                adapter.setData(transactionForLists);
+            }
+        });
 
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        Log.d(TAG, "onCreateView of TransationListFragment calling ");
 
         View ui=inflater.inflate(R.layout.transaction_list_fragment,container,false);
         rootView=ui.findViewById(R.id.main_layout);
@@ -158,8 +169,6 @@ public class TransactionListFragment extends Fragment {
             }
         });
 
-        if(adapter==null)
-            adapter= new TransactionAdapter(new ArrayList<TransactionForList>());
         recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
         recycler.addItemDecoration(new DividerDecoration(getActivity(),getActivity().getResources().getColor(R.color.selectionGrey)));
         recycler.setAdapter(adapter);
