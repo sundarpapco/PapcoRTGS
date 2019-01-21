@@ -27,17 +27,17 @@
                 android:resource="@xml/file_path" />
         </provider>
 
-        <service android:name=".SmsService"
+        <service android:name=".screens.sms.SmsService"
             android:exported="false"/>
-        <service android:name=".mail.EmailService"
+        <service android:name=".screens.mail.EmailService"
             android:exported="false"/>
-        <activity android:name=".SenderActivity"
-            android:parentActivityName=".GroupActivity"/>
-        <activity android:name=".ReceiverActivity"
-            android:parentActivityName=".GroupActivity"/>
-        <activity android:name=".TransactionActivity"
-            android:parentActivityName=".GroupActivity"/>
-        <activity android:name=".GroupActivity">
+        <activity android:name=".screens.sender.SenderActivity"
+            android:parentActivityName=".screens.transactionGroup.GroupActivity"/>
+        <activity android:name=".screens.receiver.ReceiverActivity"
+            android:parentActivityName=".screens.transactionGroup.GroupActivity"/>
+        <activity android:name=".screens.transaction.common.TransactionActivity"
+            android:parentActivityName=".screens.transactionGroup.GroupActivity"/>
+        <activity android:name=".screens.transactionGroup.GroupActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -45,15 +45,15 @@
             </intent-filter>
 
         </activity>
-        <activity android:name=".ActivitySMS"
+        <activity android:name=".screens.sms.ActivitySMS"
             android:screenOrientation="portrait"
-            android:parentActivityName=".TransactionActivity"/>
-        <activity android:name=".ActivityDropBox"
+            android:parentActivityName=".screens.transaction.common.TransactionActivity"/>
+        <activity android:name=".screens.backup.ActivityDropBox"
             android:screenOrientation="portrait"
-            android:parentActivityName=".GroupActivity"/>
-        <activity android:name=".ActivityEmail"
+            android:parentActivityName=".screens.transactionGroup.GroupActivity"/>
+        <activity android:name=".screens.mail.ActivityEmail"
             android:screenOrientation="portrait"
-            android:parentActivityName=".TransactionActivity"/>
+            android:parentActivityName=".screens.transaction.common.TransactionActivity"/>
 
         <activity
             android:name="com.dropbox.core.android.AuthActivity"
@@ -69,7 +69,7 @@
         </intent-filter>
         </activity>
 
-        <activity android:name=".ActivityComposeMessage"
+        <activity android:name=".screens.sms.ActivityComposeMessage"
             android:screenOrientation="portrait"/>
 
     </application>
