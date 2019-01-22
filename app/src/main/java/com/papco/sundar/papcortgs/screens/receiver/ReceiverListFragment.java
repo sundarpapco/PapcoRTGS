@@ -148,9 +148,9 @@ public class ReceiverListFragment extends Fragment {
 
 
     // RecyclerView item click and long click callbacks which will be called from the viewholder
-    private void recyclerItemClicked(View view, Receiver sender, int adapterPosition) {
+    private void recyclerItemClicked(View view, Receiver receiver, int adapterPosition) {
 
-        viewModel.editingReceiver = sender;
+        viewModel.editingReceiver = receiver;
         ((ReceiverActivity) getActivity()).showAddReceiverFragment();
 
     }

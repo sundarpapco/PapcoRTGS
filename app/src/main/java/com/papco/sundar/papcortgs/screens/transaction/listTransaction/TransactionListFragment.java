@@ -113,7 +113,7 @@ public class TransactionListFragment extends Fragment {
 
         if(item.getItemId()==R.id.action_email_all){
 
-            if(EmailService.isIsRunning()){ //if the sms service is already running, dont allow user to open the activity again
+            if(EmailService.isRunning()){ //if the sms service is already running, dont allow user to open the activity again
 
                 Toast.makeText(getActivity(),"Already sending Mails in progress. Please tap on notification",Toast.LENGTH_LONG).show();
                 return true;

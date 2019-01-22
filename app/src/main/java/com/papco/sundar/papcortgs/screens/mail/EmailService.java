@@ -2,6 +2,7 @@ package com.papco.sundar.papcortgs.screens.mail;
 
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
@@ -11,6 +12,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.app.TaskStackBuilder;
 
+import com.papco.sundar.papcortgs.screens.transaction.common.TransactionActivity;
 import com.papco.sundar.papcortgs.screens.transactionGroup.GroupActivity;
 import com.papco.sundar.papcortgs.R;
 import com.papco.sundar.papcortgs.database.transaction.Transaction;
@@ -20,50 +22,73 @@ import java.util.List;
 
 public class EmailService extends Service implements EmailCallBack {
 
-    private static boolean IS_RUNNING=false;
+
+
+    public static Intent getStartingIntent(Context context, int groupId, String groupName){
+
+        //groupId and groupName are needed to prepare the launching intent of notification
+        Bundle bundle=new Bundle();
+        bundle.putInt(KEY_GROUP_ID,groupId);
+        bundle.putString(KEY_GROUP_NAME,groupName);
+        Intent intent=new Intent(context,EmailService.class);
+        intent.setAction(ACTION_START_SERVICE);
+        intent.putExtras(bundle);
+        return intent;
+
+    }
+
+    public static Intent getStoppingIntent(Context context){
+
+        Intent intent=new Intent(context,EmailService.class);
+        intent.setAction(ACTION_STOP_SERVICE);
+        return intent;
+    }
 
 
     // region Constants --------------------------------------------------------
 
-    public static final String ACTION_START_SERVICE="com.papco.sundar.papcortgs.startemailservice";
-    public static final String ACTION_STOP_SERVICE="com.papco.sundar.papcortgs.stopemailservice";
+    private static final String ACTION_START_SERVICE = "com.papco.sundar.papcortgs.startemailservice";
+    private static final String ACTION_STOP_SERVICE = "com.papco.sundar.papcortgs.stopemailservice";
+    private static final String KEY_GROUP_ID = "groupId";
+    private static final String KEY_GROUP_NAME = "groupName";
+    private static boolean IS_RUNNING = false;
 
-    public static final int STATUS_DEFAULT=3;
-    public static final int STATUS_QUEUED=4;
-    public static final int STATUS_SENDING=5;
-    public static final int STATUS_SENT=6;
-    public static final int STATUS_FAILED=7;
+    public static final int STATUS_DEFAULT = 3;
+    public static final int STATUS_QUEUED = 4;
+    public static final int STATUS_SENDING = 5;
+    public static final int STATUS_SENT = 6;
+    public static final int STATUS_FAILED = 7;
 
-    private final int NOTIFICATION_ID=2;
+    private final int NOTIFICATION_ID = 2;
 
-    public static final int WORK_STATUS_DEFAULT=0;
-    public static final int WORK_STATUS_WAITING_FOR_LIST=8;
-    public static final int WORK_STATUS_WORKING=9;
-    public static final int WORK_STATUS_COMPLETED=10;
+    public static final int WORK_STATUS_DEFAULT = 0;
+    public static final int WORK_STATUS_WAITING_FOR_LIST = 8;
+    public static final int WORK_STATUS_WORKING = 9;
+    public static final int WORK_STATUS_COMPLETED = 10;
 
     // endregion Constants --------------------------------------------------------
 
-    private List<Transaction> emailList=null;
-    private int currentGroupId=-1; //for creating the pending Intent to launch when tap notification
-    private String currentGroupName=null;
-    private int workingStatus=WORK_STATUS_DEFAULT;
+    private List<Transaction> emailList = null;
+    private int currentGroupId = -1; //for creating the pending Intent to launch when tap notification
+    private String currentGroupName = null;
+    private int workingStatus = WORK_STATUS_DEFAULT;
     private NotificationCompat.Builder builder;
-    private WeakReference<EmailCallBack> weakCallback=null;
+    private WeakReference<EmailCallBack> weakCallback = null;
     private EmailBinder binder;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        if(intent.getAction().equals(ACTION_START_SERVICE)){
+        if (intent.getAction().equals(ACTION_START_SERVICE)) {
 
-            if(isIsRunning())
+            if (isRunning())
                 return START_STICKY;
             else {
                 initializeService(intent);
             }
         }
 
-        if(intent.getAction().equals(ACTION_STOP_SERVICE)){
+        if (intent.getAction().equals(ACTION_STOP_SERVICE)) {
             stopTheService();
         }
 
@@ -73,140 +98,133 @@ public class EmailService extends Service implements EmailCallBack {
 
     private void initializeService(Intent intent) {
 
-        IS_RUNNING=true;
+        IS_RUNNING = true;
 
 
-        if(intent.getExtras()!=null) { //group id needed for preparing the pendingIntent of notification
-            currentGroupId = intent.getExtras().getInt("groupId", -1);
-            currentGroupName=intent.getExtras().getString("groupName");
+        if (intent.getExtras() != null) { //group id needed for preparing the pendingIntent of notification
+            currentGroupId = intent.getExtras().getInt(KEY_GROUP_ID, -1);
+            currentGroupName = intent.getExtras().getString(KEY_GROUP_NAME);
         }
 
-        workingStatus=WORK_STATUS_WAITING_FOR_LIST;
+        workingStatus = WORK_STATUS_WAITING_FOR_LIST;
         showNotification(); //This will make the service foreground
     }
 
-    public void setCallBack(EmailCallBack callBack){
+    public void setCallBack(EmailCallBack callBack) {
 
-        weakCallback=new WeakReference<>(callBack);
+        weakCallback = new WeakReference<>(callBack);
 
-        if(workingStatus==WORK_STATUS_WORKING){
-            if(weakCallback.get()!=null && emailList!=null){
-               weakCallback.get().onObserverAttached(emailList);
-            }
+        if (weakCallback.get() != null && emailList != null) {
+            weakCallback.get().onObserverAttached(emailList);
         }
 
-        if(workingStatus==WORK_STATUS_COMPLETED){
-            if(weakCallback.get()!=null && emailList!=null)
+
+        if (workingStatus == WORK_STATUS_COMPLETED) {
+            if (weakCallback.get() != null && emailList != null)
                 weakCallback.get().onComplete(emailList);
         }
     }
 
-    public void removeCallBack(){
+    public void removeCallBack() {
 
         weakCallback.clear();
     }
 
-    private void showNotification() {
+    private void stopTheService() {
 
-            Intent intent=new Intent(this,ActivityEmail.class);
-            Bundle b=new Bundle();
-            b.putInt("groupId",currentGroupId);
-            intent.putExtras(b);
-
-            TaskStackBuilder taskBuilder=TaskStackBuilder.create(this);
-            taskBuilder.addNextIntentWithParentStack(intent);
-
-
-            Intent transactionIntent=taskBuilder.editIntentAt(1);
-            Bundle options=new Bundle();
-            options.putInt("groupId",currentGroupId);
-            options.putString("groupName",currentGroupName);
-            transactionIntent.putExtras(options);
-            PendingIntent resultPendingIntent=taskBuilder.getPendingIntent(0,PendingIntent.FLAG_UPDATE_CURRENT);
-            builder=new NotificationCompat.Builder(this,GroupActivity.NOTIFICATION_CHANNEL_ID);
-            builder.setSmallIcon(R.drawable.app_icon);
-            builder.setContentTitle("Sending Email...");
-            builder.setProgress(100,0,true);
-            builder.setPriority(NotificationCompat.PRIORITY_LOW);
-            builder.setContentIntent(resultPendingIntent);
-            startForeground(NOTIFICATION_ID,builder.build());
-
-    }
-
-    private void stopTheService(){
-
-        IS_RUNNING=false;
+        IS_RUNNING = false;
         stopForeground(true);
         stopSelf();
 
     }
 
-    public void setListAndStartSending(List<Transaction> list){
+    public void setListAndStartSending(List<Transaction> list) {
 
-        if(emailList!=null || list==null) //just ignore this call if a list has been already set
+        if (emailList != null || list == null) //just ignore this call if a list has been already set
             return;
 
-        emailList=list;
+        emailList = list;
         startSendingMail();
     }
 
     private void startSendingMail() {
 
-        EmailTask task=new EmailTask(getApplicationContext(),this);
+        EmailTask task = new EmailTask(getApplicationContext(), this);
         task.execute(emailList);
     }
 
-    private void updateProgressBar(List<Transaction> list) {
+    private void showNotification() {
 
-        int currentStatus=0;
-        boolean isThereAnyError=false;
-        int status=STATUS_DEFAULT;
-        for(Transaction transaction:list){
+        Intent intent = new Intent(this, ActivityEmail.class);
+        Bundle b = new Bundle();
+        b.putInt("groupId", currentGroupId);
+        intent.putExtras(b);
 
-            status=transaction.emailStatus;
-
-            if(status==STATUS_QUEUED)
-                break; //We can break the loop here since all remaining will be queued only
-
-            if(status==STATUS_SENT || status==STATUS_FAILED) {
-                currentStatus = currentStatus + 1;
-            }
-
-            if(status==STATUS_FAILED)
-                isThereAnyError=true;
+        TaskStackBuilder taskBuilder = TaskStackBuilder.create(this);
+        taskBuilder.addNextIntentWithParentStack(intent);
 
 
-        }
-
-        if(currentStatus==list.size()){
-            //All sending completed. update the progressbar to complete
-            builder.setContentTitle("Sending mail complete");
-            builder.setProgress(0,0,false); //remove the progressbar
-            if(isThereAnyError)
-                builder.setContentText("Sending mails completed with some errors! Tap for info");
-            else
-                builder.setContentText("Successfully sent mails to beneficiaries");
-
-        }else{
-
-            builder.setProgress(list.size(), currentStatus, false);
-            builder.setContentTitle("Sending mail " + Integer.toString(currentStatus + 1) + " of " + Integer.toString(list.size()));
-        }
-
-        NotificationManagerCompat.from(this).notify(NOTIFICATION_ID,builder.build());
+        Intent transactionIntent = taskBuilder.editIntentAt(1);
+        transactionIntent.putExtras(TransactionActivity.getStartingArguments(currentGroupId, currentGroupName));
+        PendingIntent resultPendingIntent = taskBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder = new NotificationCompat.Builder(this, GroupActivity.NOTIFICATION_CHANNEL_ID);
+        builder.setSmallIcon(R.drawable.app_icon);
+        builder.setContentTitle("Sending Email...");
+        builder.setProgress(100, 0, true);
+        builder.setPriority(NotificationCompat.PRIORITY_LOW);
+        builder.setContentIntent(resultPendingIntent);
+        startForeground(NOTIFICATION_ID, builder.build());
 
     }
+
+    private void updateNotification(int updatedIndex) {
+
+        //progress will be updated only when a mail is sent or failed. Sending updation is to be ignored
+        if (emailList.get(updatedIndex).emailStatus == STATUS_SENDING)
+            return;
+
+        builder.setProgress(emailList.size(), updatedIndex, false);
+        builder.setContentTitle("Sending mail " + Integer.toString(updatedIndex + 1) + " of " + Integer.toString(emailList.size()));
+
+        NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, builder.build());
+
+    }
+
+    private void updateNotificationCompleted() {
+
+        boolean isErrorSpotted = false;
+
+        //search the list to find if there was any error found while sending mail
+        for (Transaction transaction : emailList) {
+
+            if (transaction.emailStatus == STATUS_FAILED) {
+                isErrorSpotted = true;
+                break;
+            }
+        }
+
+        builder.setContentTitle("Sending mail complete");
+        builder.setProgress(0, 0, false); //remove the progressbar
+        if (isErrorSpotted)
+            builder.setContentText("Sending mails completed with some failures! Tap for info");
+        else
+            builder.setContentText("Successfully sent mails to beneficiaries");
+
+        NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, builder.build());
+
+    }
+
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        if(binder==null)
-            binder=new EmailBinder();
+        if (binder == null)
+            binder = new EmailBinder();
 
         return binder;
     }
 
-    public static boolean isIsRunning(){
+    public static boolean isRunning() {
         return IS_RUNNING;
     }
 
@@ -220,8 +238,8 @@ public class EmailService extends Service implements EmailCallBack {
     @Override
     public void onStartSending() {
 
-        workingStatus=WORK_STATUS_WORKING;
-        if(weakCallback.get()!=null){
+        workingStatus = WORK_STATUS_WORKING;
+        if (weakCallback.get() != null) {
             weakCallback.get().onStartSending();
         }
 
@@ -230,8 +248,9 @@ public class EmailService extends Service implements EmailCallBack {
     @Override
     public void onUpdate(int updatedPosition) {
 
-        updateProgressBar(emailList);
-        if(weakCallback.get()!=null && emailList!=null){
+        //updateProgressBar(emailList);
+        updateNotification(updatedPosition);
+        if (weakCallback.get() != null && emailList != null) {
             weakCallback.get().onUpdate(updatedPosition);
         }
 
@@ -240,8 +259,9 @@ public class EmailService extends Service implements EmailCallBack {
     @Override
     public void onComplete(List<Transaction> list) {
 
-        workingStatus=WORK_STATUS_COMPLETED;
-        if(weakCallback.get()!=null && list!=null){
+        workingStatus = WORK_STATUS_COMPLETED;
+        updateNotificationCompleted();
+        if (weakCallback.get() != null && list != null) {
             weakCallback.get().onComplete(list);
         }
 
@@ -251,7 +271,7 @@ public class EmailService extends Service implements EmailCallBack {
 
     public class EmailBinder extends Binder {
 
-        public EmailService getService(){
+        public EmailService getService() {
 
             return EmailService.this;
         }

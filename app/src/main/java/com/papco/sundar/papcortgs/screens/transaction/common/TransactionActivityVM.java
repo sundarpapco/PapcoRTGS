@@ -69,7 +69,7 @@ public class TransactionActivityVM extends AndroidViewModel{
         if(createTransactionVM==null)
             createTransactionVM=new CreateTransactionVM(getApplication(),groupId,loadTransactionId);
         else
-            createTransactionVM.initialize();
+            createTransactionVM.initialize(loadTransactionId);
 
         return createTransactionVM;
     }

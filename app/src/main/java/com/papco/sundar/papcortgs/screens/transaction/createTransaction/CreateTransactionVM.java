@@ -35,7 +35,7 @@ public class CreateTransactionVM {
         amount=new MutableLiveData<>();
         remarks=new MutableLiveData<>();
 
-        initialize();
+        initialize(transactionId);
 
 
     }
@@ -81,8 +81,8 @@ public class CreateTransactionVM {
 
     // utility methods ---------------------------------------------------
 
-    public void initialize(){
-
+    public void initialize(int transactionId){
+        this.transactionId=transactionId;
         if(transactionId==-1) // -1 means we are not editing. But have to create a new Transaction
             createBlankTransaction(groupId);
         else

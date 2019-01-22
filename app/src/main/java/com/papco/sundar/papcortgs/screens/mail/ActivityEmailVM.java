@@ -28,7 +28,7 @@ public class ActivityEmailVM extends AndroidViewModel implements TableWorkCallba
     public MutableLiveData<List<Transaction>> getEmailList() {
         if(emailList==null){
             emailList=new MutableLiveData<>();
-            if(!EmailService.isIsRunning()) //if the service is running and activity is binding to it, then the list can be obtained from the service while binding
+            if(!EmailService.isRunning()) //if the service is running and activity is binding to it, then the list can be obtained from the service while binding
                 new TransactionTableWorker(getApplication(), TableOperation.READALL,this).execute(currentGroupId);
         }
 

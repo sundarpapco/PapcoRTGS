@@ -35,27 +35,31 @@ import com.papco.sundar.papcortgs.screens.transaction.listTransaction.Transactio
 public class TransactionActivity extends AppCompatActivity implements FileExporter.WriteFileListener,PasswordCallback {
 
 
-    public static final String KEY_GROUP_ID = "groupId";
-    public static final String KEY_GROUP_NAME = "groupName";
-
     public static Intent getStartingIntent(Context context,int groupId, String groupName){
 
         Intent intent=new Intent(context,TransactionActivity.class);
-        Bundle bundle=new Bundle();
-        bundle.putInt(KEY_GROUP_ID,groupId);
-        bundle.putString(KEY_GROUP_NAME,groupName);
-        intent.putExtras(bundle);
+        intent.putExtras(getStartingArguments(groupId,groupName));
         return intent;
 
     }
 
+    public static Bundle getStartingArguments(int groupId,String groupName){
 
-    static final int PERMISSION_REQUEST_STORAGE=1;
+        Bundle bundle=new Bundle();
+        bundle.putInt(KEY_GROUP_ID,groupId);
+        bundle.putString(KEY_GROUP_NAME,groupName);
+        return bundle;
 
-    TransactionActivityVM viewmodel;
-    TransactionGroup transactionGroup;
-    ViewGroup container;
-    boolean needtopop=false;
+    }
+
+    public static final String KEY_GROUP_ID = "groupId";
+    public static final String KEY_GROUP_NAME = "groupName";
+    private static final int PERMISSION_REQUEST_STORAGE=1;
+
+    private TransactionActivityVM viewmodel;
+    private TransactionGroup transactionGroup;
+    private ViewGroup container;
+    private boolean needtopop=false;
 
 
     @Override

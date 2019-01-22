@@ -13,9 +13,7 @@ import com.papco.sundar.papcortgs.R;
 
 public class FragmentGoogleSignIn extends Fragment {
 
-    private static final int RC_SIGNIN=1;
-
-    SignInButton button;
+    private SignInButton button;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {

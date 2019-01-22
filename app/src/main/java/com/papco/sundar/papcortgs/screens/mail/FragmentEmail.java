@@ -18,7 +18,6 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -70,12 +69,12 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
     @Override
     public void onResume() {
         super.onResume();
-        if (EmailService.isIsRunning() && !mbound) {
+        if (EmailService.isRunning() && !mbound) {
 
             bindToEmailService();
         }
 
-        if (EmailService.isIsRunning()) {
+        if (EmailService.isRunning()) {
             fab.hide();
             signOutView.setVisibility(View.GONE);
         }
@@ -85,7 +84,7 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
     @Override
     public void onPause() {
         super.onPause();
-        if (EmailService.isIsRunning() && mbound) {
+        if (EmailService.isRunning() && mbound) {
             unBindFromEmailService();
         }
     }
@@ -154,13 +153,7 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
 
     public void startEmailService() {
 
-
-        Intent intent = new Intent(getActivity(), EmailService.class);
-        Bundle ex = new Bundle();
-        ex.putInt("groupId", viewmodel.currentGroupId);
-        ex.putString("groupName", viewmodel.currentGroupName);
-        intent.putExtras(ex);
-        intent.setAction(EmailService.ACTION_START_SERVICE);
+        Intent intent=EmailService.getStartingIntent(getActivity(),viewmodel.currentGroupId,viewmodel.currentGroupName);
         getActivity().startService(intent);
         bindToEmailService();
         updateLayout(true);
@@ -170,12 +163,7 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
     private void stopEmailService() {
 
         unBindFromEmailService();
-        Intent intent = new Intent(getActivity(), EmailService.class);
-        Bundle ex = new Bundle();
-        ex.putInt("groupId", viewmodel.currentGroupId);
-        intent.putExtras(ex);
-        intent.setAction(EmailService.ACTION_STOP_SERVICE);
-        getActivity().startService(intent);
+        getActivity().startService(EmailService.getStoppingIntent(getActivity()));
         updateLayout(false);
 
     }
@@ -306,8 +294,10 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
     @Override
     public void onObserverAttached(List<Transaction> currentList) {
 
-        if (viewmodel.getEmailList().getValue() == null)
+        if(viewmodel.getEmailList().getValue()==null)
             viewmodel.getEmailList().setValue(currentList);
+        else
+            adapter.updateEmailStatus();
     }
 
     @Override
