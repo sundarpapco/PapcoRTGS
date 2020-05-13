@@ -34,32 +34,36 @@ public class ReceiverSelectFragment extends Fragment {
 
     public static final String KEY_GROUP_ID = "key_group_id";
 
-    public static ReceiverSelectFragment getInstance(int groupId){
+    public static ReceiverSelectFragment getInstance(int groupId) {
 
-        Bundle bundle=new Bundle();
-        bundle.putInt(KEY_GROUP_ID,groupId);
-        ReceiverSelectFragment fragment=new ReceiverSelectFragment();
+        Bundle bundle = new Bundle();
+        bundle.putInt(KEY_GROUP_ID, groupId);
+        ReceiverSelectFragment fragment = new ReceiverSelectFragment();
         fragment.setArguments(bundle);
         return fragment;
     }
 
 
-    RecyclerView recycler;
-    FloatingActionButton fab;
-    SearchView searchView;
-    ReceiverSelectionVM viewModel;
-    ReceiverAdapter adapter;
+    private RecyclerView recycler;
+    private FloatingActionButton fab;
+    private SearchView searchView;
+    private ReceiverSelectionVM viewModel;
+    private ReceiverAdapter adapter;
+    private boolean isInitialLoad = true;
 
 
     @Override
     public void onStart() {
         super.onStart();
-        ((TransactionActivity)getActivity()).getSupportActionBar().setTitle("Select receiver");
+        ((TransactionActivity) getActivity()).getSupportActionBar().setTitle("Select receiver");
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        if (savedInstanceState != null)
+            isInitialLoad = false;
 
         View ui = inflater.inflate(R.layout.senders_list_fragment, container, false);
 
@@ -83,11 +87,10 @@ public class ReceiverSelectFragment extends Fragment {
         });
 
 
-
         recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
         recycler.addItemDecoration(new DividerDecoration(getActivity()));
 
-        if(adapter==null)
+        if (adapter == null)
             adapter = new ReceiverAdapter(new ArrayList<Receiver>());
         recycler.setAdapter(adapter);
         return ui;
@@ -97,10 +100,11 @@ public class ReceiverSelectFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        if(viewModel!=null)
+        if (viewModel != null)
             return;
 
-        viewModel = ViewModelProviders.of(getActivity()).get(TransactionActivityVM.class).getReceiverSelectionVM(getGroupId());
+        viewModel = ViewModelProviders.of(getActivity()).get(TransactionActivityVM.class).
+                getReceiverSelectionVM(isInitialLoad, getGroupId());
         viewModel.getReceivers().observe(this, new Observer<List<Receiver>>() {
             @Override
             public void onChanged(@Nullable List<Receiver> receivers) {
@@ -110,17 +114,17 @@ public class ReceiverSelectFragment extends Fragment {
         });
     }
 
-    private int getGroupId(){
+    private int getGroupId() {
         return getArguments().getInt(KEY_GROUP_ID);
     }
+
     // RecyclerView item click and long click callbacks which will be called from the viewholder
     private void recyclerItemClicked(View view, Receiver receiver, int adapterPosition) {
 
         viewModel.selectReceiver(receiver);
-        ((TransactionActivity)getActivity()).popBackStack();
+        ((TransactionActivity) getActivity()).popBackStack();
 
     }
-
 
 
     // Adapter class for the recyclerview
@@ -144,7 +148,7 @@ public class ReceiverSelectFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull ReceiverAdapter.TagViewHolder holder, int position) {
-            if(!TextUtils.isEmpty(searchView.getQuery()))
+            if (!TextUtils.isEmpty(searchView.getQuery()))
                 holder.txtViewName.setText(data.get(holder.getAdapterPosition()).highlightedName);
             else
                 holder.txtViewName.setText(data.get(holder.getAdapterPosition()).name);
@@ -184,7 +188,7 @@ public class ReceiverSelectFragment extends Fragment {
                         for (Receiver sender : unfilteredData) {
                             if (sender.name.toLowerCase().contains(stringToSearch)) {
 
-                                sender.highlightedName= TextFunctions.getHighlitedString(sender.name,stringToSearch,Color.YELLOW);
+                                sender.highlightedName = TextFunctions.getHighlitedString(sender.name, stringToSearch, Color.YELLOW);
                                 filteredList.add(sender);
                             }
                         }

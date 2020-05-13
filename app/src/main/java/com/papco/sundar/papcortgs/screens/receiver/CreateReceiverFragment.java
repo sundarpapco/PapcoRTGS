@@ -27,8 +27,8 @@ import java.util.regex.Pattern;
 
 public class CreateReceiverFragment extends Fragment {
 
-    EditText editName,editAccountNumber,editAccountType,editIfsc,editMobile,editBank,editEmail;
-    TextInputLayout nameLayout,accountNumberLayout,accountTypeLayout,ifscLayout,mobileLayout,bankLayout,emailLayout;
+    EditText editName,editAccountNumber,confirmAccountNumber,editAccountType,editIfsc,editMobile,editBank,editEmail;
+    TextInputLayout nameLayout,accountNumberLayout,confirmAccountNumberLayout,accountTypeLayout,ifscLayout,mobileLayout,bankLayout,emailLayout;
     ReceiverActivityVM viewModel;
 
     @Override
@@ -71,6 +71,7 @@ public class CreateReceiverFragment extends Fragment {
 
         editName=view.findViewById(R.id.sender_account_name);
         editAccountNumber=view.findViewById(R.id.sender_account_number);
+        confirmAccountNumber=view.findViewById(R.id.sender_confirm_account_number);
         editAccountType=view.findViewById(R.id.sender_account_type);
         editIfsc=view.findViewById(R.id.sender_ifsc);
         editBank=view.findViewById(R.id.sender_bank);
@@ -78,6 +79,7 @@ public class CreateReceiverFragment extends Fragment {
         editEmail=view.findViewById(R.id.sender_email);
         nameLayout=view.findViewById(R.id.sender_name_layout);
         accountNumberLayout=view.findViewById(R.id.sender_account_number_layout);
+        confirmAccountNumberLayout=view.findViewById(R.id.sender_confirm_account_number_layout);
         accountTypeLayout=view.findViewById(R.id.sender_account_type_layout);
         ifscLayout=view.findViewById(R.id.sender_account_ifsc_layout);
         bankLayout=view.findViewById(R.id.sender_account_bank_layout);
@@ -118,6 +120,24 @@ public class CreateReceiverFragment extends Fragment {
             public void afterTextChanged(Editable editable) {
                 accountNumberLayout.setError(null);
                 accountNumberLayout.setErrorEnabled(false);
+            }
+        });
+
+        confirmAccountNumber.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                confirmAccountNumberLayout.setError(null);
+                confirmAccountNumberLayout.setErrorEnabled(false);
             }
         });
 
@@ -219,6 +239,7 @@ public class CreateReceiverFragment extends Fragment {
         Receiver sender=viewModel.editingReceiver;
         editName.setText(sender.name);
         editAccountNumber.setText(sender.accountNumber);
+        confirmAccountNumber.setText(sender.accountNumber);
         editAccountType.setText(sender.accountType);
         editIfsc.setText(sender.ifsc);
         editBank.setText(sender.bank);
@@ -274,11 +295,20 @@ public class CreateReceiverFragment extends Fragment {
             result=false;
         }
 
-        if(TextUtils.isEmpty(editAccountNumber.getEditableText()) || Long.parseLong(editAccountNumber.getText().toString())==0){
+        String accountNumber=editAccountNumber.getEditableText().toString();
+        if(TextUtils.isEmpty(accountNumber)){
             accountNumberLayout.setErrorEnabled(true);
             accountNumberLayout.setError("Enter valid account number");
             result=false;
         }
+
+        String confirmationAccountNumber=confirmAccountNumber.getEditableText().toString();
+        if(!accountNumber.equals(confirmationAccountNumber)){
+            confirmAccountNumberLayout.setErrorEnabled(true);
+            confirmAccountNumber.setError("Account number and confirmation number not matching");
+            result=false;
+        }
+
 
         if (TextUtils.isEmpty(editAccountType.getEditableText())){
             accountTypeLayout.setErrorEnabled(true);

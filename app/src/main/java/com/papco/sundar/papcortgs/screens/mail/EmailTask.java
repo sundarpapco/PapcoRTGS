@@ -113,21 +113,20 @@ public class EmailTask extends AsyncTask<List<Transaction>,Integer,List<Transact
 
             TO_ADDRESS=trans.receiver.email;
             message=composeMessage(trans);
-            /*try {
+            try {
                 MimeMessage emailmsg = createEmail(TO_ADDRESS, FROM_ADDRESS, SUBJECT, message);
                 sendMessage(service,USER_ID,emailmsg);
                 trans.emailStatus=EmailService.STATUS_SENT;
             }catch (Exception e){
-                //e.printStackTrace();
                 trans.emailStatus=EmailService.STATUS_FAILED;
-            }*/
+            }
 
-            try {
+            /*try {
                 Thread.sleep(1500l);
                 trans.emailStatus=EmailService.STATUS_SENT;
             }catch (Exception e){
 
-            }
+            }*/
             publishProgress(currentSendingIndex);
 
         }

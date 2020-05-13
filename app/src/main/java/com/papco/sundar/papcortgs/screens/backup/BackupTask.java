@@ -168,7 +168,7 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
     }
 
 
-    //********** Methods for backup
+    // region ********** Methods for backup
 
     private void clearAllTables() throws Exception{
 
@@ -342,10 +342,10 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
     }
 
 
-    //*********************
+    //endregion *********************
 
 
-    //************ Methods for Restore
+    //region ************ Methods for Restore
 
     private boolean whetherValidBackupExists(){
 
@@ -525,7 +525,7 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
 
     }
 
-    //**********************
+    //endregion **********************
 
     @Override
     protected void onProgressUpdate(String... values) {

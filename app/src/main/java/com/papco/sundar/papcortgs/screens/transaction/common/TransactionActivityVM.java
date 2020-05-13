@@ -12,7 +12,7 @@ import com.papco.sundar.papcortgs.screens.transaction.createTransaction.Receiver
 import com.papco.sundar.papcortgs.screens.transaction.createTransaction.SenderSelectionVM;
 import com.papco.sundar.papcortgs.screens.transaction.listTransaction.TransactionListVM;
 
-public class TransactionActivityVM extends AndroidViewModel{
+public class TransactionActivityVM extends AndroidViewModel {
 
     private TransactionListVM transactionListVM;
     private ReceiverSelectionVM receiverSelectionVM;
@@ -25,51 +25,49 @@ public class TransactionActivityVM extends AndroidViewModel{
 
     public TransactionListVM getTransactionListVM(int groupId) {
 
-        if(transactionListVM==null)
-            transactionListVM=new TransactionListVM(getApplication(),groupId);
+        if (transactionListVM == null)
+            transactionListVM = new TransactionListVM(getApplication(), groupId);
 
         return transactionListVM;
     }
 
-    public ReceiverSelectionVM getReceiverSelectionVM(int groupId) {
+    public ReceiverSelectionVM getReceiverSelectionVM(boolean needNewInstance, int groupId) {
 
-        if(receiverSelectionVM==null) {
-            receiverSelectionVM = new ReceiverSelectionVM(getApplication(),groupId);
+        if (receiverSelectionVM == null || needNewInstance) {
+            receiverSelectionVM = new ReceiverSelectionVM(getApplication(), groupId);
             receiverSelectionVM.setCallback(new ReceiverSelectionListener() {
                 @Override
                 public void onReceiverSelected(Receiver receiver) {
-                    if(createTransactionVM!=null)
+                    if (createTransactionVM != null)
                         createTransactionVM.setReceiver(receiver);
                 }
             });
-
         }
+
         return receiverSelectionVM;
     }
 
-    public SenderSelectionVM getSenderSelectionVM() {
+    public SenderSelectionVM getSenderSelectionVM(boolean needNewInstance) {
 
-        if(senderSelectionVM==null) {
+        if (senderSelectionVM == null || needNewInstance) {
             senderSelectionVM = new SenderSelectionVM(getApplication());
             senderSelectionVM.setCallback(new SenderSelectionVM.SenderSelectionListener() {
                 @Override
                 public void onSenderSelected(Sender sender) {
-                    if(createTransactionVM!=null)
+                    if (createTransactionVM != null)
                         createTransactionVM.setSender(sender);
 
                 }
             });
-
         }
+
         return senderSelectionVM;
     }
 
-    public CreateTransactionVM getCreateTransactionVM(int groupId,int loadTransactionId) {
+    public CreateTransactionVM getCreateTransactionVM(boolean needNewInstance, int groupId, int loadTransactionId) {
 
-        if(createTransactionVM==null)
-            createTransactionVM=new CreateTransactionVM(getApplication(),groupId,loadTransactionId);
-        else
-            createTransactionVM.initialize(loadTransactionId);
+        if (createTransactionVM == null || needNewInstance)
+            createTransactionVM = new CreateTransactionVM(getApplication(), groupId, loadTransactionId);
 
         return createTransactionVM;
     }

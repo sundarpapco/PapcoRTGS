@@ -130,6 +130,8 @@ public class TransactionActivity extends AppCompatActivity implements FileExport
         return false;
     }
 
+
+
     private void loadTransactionListFragment() {
 
         FragmentManager manager = getSupportFragmentManager();
@@ -139,7 +141,6 @@ public class TransactionActivity extends AppCompatActivity implements FileExport
         transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         transaction.commit();
     }
-
 
     public void showAddTransactionFragment(int loadTransactionId) {
 

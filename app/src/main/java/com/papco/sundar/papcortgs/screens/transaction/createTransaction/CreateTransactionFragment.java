@@ -46,6 +46,7 @@ public class CreateTransactionFragment extends Fragment {
     EditText senderField,receiverField,amountField,remarksField;
     ImageView senderMore,receiverMore;
     CreateTransactionVM viewModel;
+    private boolean isInitialLoad=true;
 
     // region override Methods ---------------------------------------
 
@@ -95,6 +96,10 @@ public class CreateTransactionFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        if(savedInstanceState!=null)
+            isInitialLoad=false;
+
 
         View ui=inflater.inflate(R.layout.create_transaction,container,false);
         
@@ -182,7 +187,9 @@ public class CreateTransactionFragment extends Fragment {
     private void initializeViewModel(){
 
         viewModel =ViewModelProviders.of(getActivity()).get(TransactionActivityVM.class)
-                .getCreateTransactionVM(getArguments().getInt(KEY_GROUP_ID),getArguments().getInt(KEY_LOAD_TRANSACTION_ID));
+                .getCreateTransactionVM(isInitialLoad,
+                        getArguments().getInt(KEY_GROUP_ID),
+                        getArguments().getInt(KEY_LOAD_TRANSACTION_ID));
 
         viewModel.getSelectedSender().observe(this, new Observer<Sender>() {
             @Override
@@ -211,6 +218,13 @@ public class CreateTransactionFragment extends Fragment {
         viewModel.getAmount().observe(this, new Observer<Integer>() {
             @Override
             public void onChanged(@Nullable Integer integer) {
+
+                //If this call is due to config change, then ignore this call
+                //because user might have edited the amount and we should not
+                // reset with initial loading data
+                if(!isInitialLoad)
+                    return;
+
                 if(integer==null || integer==0)
                     amountField.setText("");
                 else
@@ -222,6 +236,10 @@ public class CreateTransactionFragment extends Fragment {
         viewModel.getRemarks().observe(this, new Observer<String>() {
             @Override
             public void onChanged(@Nullable String remarks) {
+
+                if(!isInitialLoad)
+                    return;
+
                 if(remarks==null)
                     remarksField.setText("ON ACCOUNT");
                 else

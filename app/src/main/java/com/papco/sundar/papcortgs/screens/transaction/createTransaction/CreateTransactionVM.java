@@ -35,7 +35,7 @@ public class CreateTransactionVM {
         amount=new MutableLiveData<>();
         remarks=new MutableLiveData<>();
 
-        initialize(transactionId);
+        initialize();
 
 
     }
@@ -81,8 +81,8 @@ public class CreateTransactionVM {
 
     // utility methods ---------------------------------------------------
 
-    public void initialize(int transactionId){
-        this.transactionId=transactionId;
+    private void initialize(){
+
         if(transactionId==-1) // -1 means we are not editing. But have to create a new Transaction
             createBlankTransaction(groupId);
         else
@@ -117,6 +117,7 @@ public class CreateTransactionVM {
         // This function will create a blank transaction.
         // This function has to select the first available sender and receiver for the initial screen to select
         // This function will set sender and receiver to null if no sender or receiver found in database
+        // Also set Amount and remarks to initial values
 
         transactionId=-1;
         new Thread(new Runnable() {
@@ -134,6 +135,9 @@ public class CreateTransactionVM {
                     selectedReceiver.postValue(null);
                 else
                     selectedReceiver.postValue(firstReceiver.get(0));
+
+                amount.postValue(0);
+                remarks.postValue("ON ACCOUNT");
 
             }
         }).start();

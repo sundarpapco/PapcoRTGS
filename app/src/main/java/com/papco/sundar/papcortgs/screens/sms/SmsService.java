@@ -104,7 +104,6 @@ public class SmsService extends Service {
 
     @Override
     public void onDestroy() {
-        Log.d("SUNDAR","On destroy");
         IS_SERVICE_RUNNING=false;
         unregisterReceiver(receiver);
         super.onDestroy();
@@ -199,7 +198,6 @@ public class SmsService extends Service {
 
     private boolean isValidMobileNumber(String number){
 
-        Log.d("CHECKING NUMBER:",number);
         if(number.trim().length()!=10)
             return false;
 

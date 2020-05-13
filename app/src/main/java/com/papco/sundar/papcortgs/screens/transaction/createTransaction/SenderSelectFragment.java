@@ -32,17 +32,19 @@ import java.util.List;
 public class SenderSelectFragment extends Fragment {
 
 
-    RecyclerView recycler;
-    FloatingActionButton fab;
-    SearchView searchView;
-    SenderSelectionVM viewModel;
-    SenderAdapter adapter;
+    private RecyclerView recycler;
+    private FloatingActionButton fab;
+    private SearchView searchView;
+    private SenderSelectionVM viewModel;
+    private SenderAdapter adapter;
+    private boolean isInitialLoad = true;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        viewModel = ViewModelProviders.of(getActivity()).get(TransactionActivityVM.class).getSenderSelectionVM();
+        viewModel = ViewModelProviders.of(getActivity()).get(TransactionActivityVM.class).
+                getSenderSelectionVM(isInitialLoad);
         viewModel.getSenders().observe(this, new Observer<List<Sender>>() {
             @Override
             public void onChanged(@Nullable List<Sender> senders) {
@@ -56,12 +58,15 @@ public class SenderSelectFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        ((TransactionActivity)getActivity()).getSupportActionBar().setTitle("Select sender");
+        ((TransactionActivity) getActivity()).getSupportActionBar().setTitle("Select sender");
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        if (savedInstanceState != null)
+            isInitialLoad = false;
 
         View ui = inflater.inflate(R.layout.senders_list_fragment, container, false);
 
@@ -84,10 +89,9 @@ public class SenderSelectFragment extends Fragment {
         });
 
 
-
         recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
         recycler.addItemDecoration(new DividerDecoration(getActivity()));
-        if(adapter==null)
+        if (adapter == null)
             adapter = new SenderAdapter(new ArrayList<Sender>());
         recycler.setAdapter(adapter);
 
@@ -95,15 +99,13 @@ public class SenderSelectFragment extends Fragment {
     }
 
 
-
     // RecyclerView item click and long click callbacks which will be called from the viewholder
     private void recyclerItemClicked(View view, Sender sender, int adapterPosition) {
 
         viewModel.selectSender(sender);
-        ((TransactionActivity)getActivity()).popBackStack();
+        ((TransactionActivity) getActivity()).popBackStack();
 
     }
-
 
 
     // Adapter class for the recyclerview
@@ -127,7 +129,7 @@ public class SenderSelectFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull SenderAdapter.TagViewHolder holder, int position) {
-            if(!TextUtils.isEmpty(searchView.getQuery()))
+            if (!TextUtils.isEmpty(searchView.getQuery()))
                 holder.txtViewName.setText(data.get(holder.getAdapterPosition()).highlightedName);
             else
                 holder.txtViewName.setText(data.get(holder.getAdapterPosition()).name);
@@ -166,7 +168,7 @@ public class SenderSelectFragment extends Fragment {
 
                         for (Sender sender : unfilteredData) {
                             if (sender.name.toLowerCase().contains(stringToSearch)) {
-                                sender.highlightedName= TextFunctions.getHighlitedString(sender.name,stringToSearch,Color.YELLOW);
+                                sender.highlightedName = TextFunctions.getHighlitedString(sender.name, stringToSearch, Color.YELLOW);
                                 filteredList.add(sender);
                             }
                         }
