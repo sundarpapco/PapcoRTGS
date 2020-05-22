@@ -55,7 +55,7 @@
             android:layout_margin="8dp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:hint="Account Number"
+            android:hint="Confirm Account Number"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
             <android.support.design.widget.TextInputEditText
@@ -63,7 +63,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
-                android:maxLines="1" />
+                android:maxLines="1"
+                android:textSelectHandle="@drawable/invisible_shape"/>
 
         </android.support.design.widget.TextInputLayout>
 
