@@ -2,6 +2,7 @@ package com.papco.sundar.papcortgs.screens.transaction.common;
 
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
+import android.arch.lifecycle.MutableLiveData;
 import android.support.annotation.NonNull;
 
 import com.papco.sundar.papcortgs.database.receiver.Receiver;
@@ -18,6 +19,8 @@ public class TransactionActivityVM extends AndroidViewModel {
     private ReceiverSelectionVM receiverSelectionVM;
     private SenderSelectionVM senderSelectionVM;
     private CreateTransactionVM createTransactionVM;
+
+    public MutableLiveData<String> autoReportGeneration=new MutableLiveData<>();
 
     public TransactionActivityVM(@NonNull Application application) {
         super(application);

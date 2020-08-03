@@ -17,4 +17,9 @@
         android:icon="@drawable/ic_email_white"
         app:showAsAction="ifRoom"/>
 
+    <item android:id="@+id/action_export_auto"
+        android:icon="@drawable/ic_export_file"
+        android:title="Export auto RTGS file"
+        app:showAsAction="never"/>
+
 </menu>

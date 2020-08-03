@@ -19,7 +19,9 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 
 import com.papco.sundar.papcortgs.R;
+import com.papco.sundar.papcortgs.common.AutoFileExporter;
 import com.papco.sundar.papcortgs.common.FileExporter;
+import com.papco.sundar.papcortgs.database.common.MasterDatabase;
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup;
 import com.papco.sundar.papcortgs.screens.mail.ActivityEmail;
 import com.papco.sundar.papcortgs.screens.password.PasswordCallback;
@@ -231,6 +233,13 @@ public class TransactionActivity extends AppCompatActivity implements FileExport
 
     }
 
+    public void autoExportFile(long time){
+        if(weHaveStoragePermission())
+            createAutoXLFile(time);
+        else
+            requestStoragePermission();
+    }
+
     public boolean weHaveStoragePermission() {
 
         if(ContextCompat.checkSelfPermission(this,Manifest.permission.READ_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED)
@@ -246,6 +255,10 @@ public class TransactionActivity extends AppCompatActivity implements FileExport
     private void CreateXLFile() {
 
         new FileExporter(getApplication(),this).execute(transactionGroup);
+    }
+
+    private void createAutoXLFile(long time){
+        new AutoFileExporter(MasterDatabase.getInstance(this),this,time).execute(transactionGroup);
     }
 
     private void requestStoragePermission() {

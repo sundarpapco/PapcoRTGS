@@ -3,6 +3,7 @@ package com.papco.sundar.papcortgs.common;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.text.TextUtils;
 
 import com.papco.sundar.papcortgs.database.common.MasterDatabase;
 import com.papco.sundar.papcortgs.database.transaction.Transaction;
@@ -30,7 +31,7 @@ public class FileExporter extends AsyncTask<TransactionGroup, Void, String> {
 
     Context context;
     List<Transaction> transactions;
-    WriteFileListener listener=null;
+    WriteFileListener listener;
     MasterDatabase db;
     ArrayList<ColumnDetail> colDetails=new ArrayList<>(13);
 
@@ -44,7 +45,7 @@ public class FileExporter extends AsyncTask<TransactionGroup, Void, String> {
     @Override
     protected String doInBackground(TransactionGroup... transactionGroups) {
 
-        String resultPath="";
+        String resultPath;
 
         try {
 
@@ -64,19 +65,19 @@ public class FileExporter extends AsyncTask<TransactionGroup, Void, String> {
 
     private void loadDefaultColWidths(){
 
-        colDetails.add(0,new ColumnDetail(5));
-        colDetails.add(1,new ColumnDetail(10));
-        colDetails.add(2,new ColumnDetail(15));
-        colDetails.add(3,new ColumnDetail(15));
-        colDetails.add(4,new ColumnDetail(33));
-        colDetails.add(5,new ColumnDetail(15));
-        colDetails.add(6,new ColumnDetail(33));
-        colDetails.add(7,new ColumnDetail(15));
-        colDetails.add(8,new ColumnDetail(15));
-        colDetails.add(9,new ColumnDetail(18));
-        colDetails.add(10,new ColumnDetail(30));
-        colDetails.add(11,new ColumnDetail(15));
-        colDetails.add(12,new ColumnDetail(15));
+        colDetails.add(0, new ColumnDetail(5));
+        colDetails.add(1, new ColumnDetail(9));
+        colDetails.add(2, new ColumnDetail(10));
+        colDetails.add(3, new ColumnDetail(12));
+        colDetails.add(4, new ColumnDetail(28));
+        colDetails.add(5, new ColumnDetail(8));
+        colDetails.add(6, new ColumnDetail(28));
+        colDetails.add(7, new ColumnDetail(11));
+        colDetails.add(8, new ColumnDetail(14));
+        colDetails.add(9, new ColumnDetail(12));
+        colDetails.add(10, new ColumnDetail(10));
+        colDetails.add(11, new ColumnDetail(10));
+        colDetails.add(12, new ColumnDetail(30));
 
     }
 
@@ -84,12 +85,7 @@ public class FileExporter extends AsyncTask<TransactionGroup, Void, String> {
 
         int i =0;
         for(ColumnDetail col:colDetails){
-
-            if(col.recommendedWidth>col.minimumWidth)
-                sheet.setColumnView(i, col.recommendedWidth); //setting the column width
-            else
-                sheet.setColumnView(i,col.minimumWidth);
-
+            sheet.setColumnView(i, Math.max(col.recommendedWidth, col.minimumWidth)); //setting the column width
             i++;
 
         }
@@ -120,7 +116,7 @@ public class FileExporter extends AsyncTask<TransactionGroup, Void, String> {
         if (!directory.isDirectory()) {
             directory.mkdirs();
         }
-        WritableWorkbook workbook = null;
+        WritableWorkbook workbook;
 
         //prepare the file and workbook settings
         File file = new File(directory, fileName);
@@ -260,9 +256,15 @@ public class FileExporter extends AsyncTask<TransactionGroup, Void, String> {
 
     private void calculateColumnWidth(int position,String matter){
 
-        int length=matter.length()+8;
-        if(length > colDetails.get(position).recommendedWidth)
-            colDetails.get(position).recommendedWidth=length;
+        int length;
+
+        if(TextUtils.isDigitsOnly(matter))
+            length=matter.length()+1;
+        else
+            length=matter.length() + 4;
+
+        if (length > colDetails.get(position).recommendedWidth)
+            colDetails.get(position).recommendedWidth = length;
 
     }
 
@@ -275,9 +277,9 @@ public class FileExporter extends AsyncTask<TransactionGroup, Void, String> {
 
     }
 
-    public static interface WriteFileListener{
+    public interface WriteFileListener{
 
-        public void onWriteFileComplete(String filename);
+        void onWriteFileComplete(String filename);
     }
 
     public static class ColumnDetail{

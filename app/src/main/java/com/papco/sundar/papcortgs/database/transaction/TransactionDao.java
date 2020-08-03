@@ -18,6 +18,9 @@ public interface TransactionDao {
     //used by fileExporter to export a group to excel file and mail
     List<Transaction> getTransactionsNonLive(int id);
 
+    @Query("select receiverId from `Transaction` where groupId=:groupId")
+    List<Integer> getReceiverIdsOfGroup(int groupId);
+
     @Query("select * from `Transaction`") //used while creating backup to dropbox
     List<Transaction> getAllTransactionsNonLive();
 

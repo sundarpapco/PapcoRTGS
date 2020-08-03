@@ -17,11 +17,12 @@ public interface ReceiverDao {
     @Query("select * from Receiver order by name")
     LiveData<List<Receiver>> getAllReceivers();
 
-    @Query("select * from Receiver where id not in (select receiverId from `Transaction` where groupId=:groupId) order by name")
-    LiveData<List<Receiver>> getReceiversForSelection(int groupId);
 
-    @Query("select * from Receiver")
+    @Query("select * from Receiver order by name")
     List<Receiver> getAllReceiversNonLive();
+
+    @Query(("select name from Receiver"))
+    List<String> getAllReceiverNames();
 
     @Query("select * from Receiver where id not in (select receiverId from `Transaction` where groupId=:groupId) order by name limit 1")
     List<Receiver> getFirstReceiverForSelection(int groupId);

@@ -30,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.papco.sundar.papcortgs.R;
+import com.papco.sundar.papcortgs.common.DatePickerFragment;
 import com.papco.sundar.papcortgs.database.transaction.TransactionForList;
 import com.papco.sundar.papcortgs.common.DividerDecoration;
 import com.papco.sundar.papcortgs.database.transaction.Transaction;
@@ -42,7 +43,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TransactionListFragment extends Fragment {
+public class TransactionListFragment extends Fragment implements DatePickerFragment.OnDatePickedListener {
 
     public static final String KEY_GROUP_ID = "key_group_id";
     public static final String KEY_GROUP_NAME = "key_group_name";
@@ -93,6 +94,11 @@ public class TransactionListFragment extends Fragment {
             else
                 Toast.makeText(getActivity(),"Please add atleast one transaction to export",Toast.LENGTH_SHORT).show();
             return true;
+        }
+
+        if(item.getItemId()==R.id.action_export_auto){
+
+            showDatePickerDialog();
         }
 
         if(item.getItemId()==R.id.action_sms_all){
@@ -231,6 +237,14 @@ public class TransactionListFragment extends Fragment {
 
     }
 
+    public void showDatePickerDialog(){
+
+        DatePickerFragment.Companion.getInstance().show(
+                getChildFragmentManager(),
+                DatePickerFragment.TAG
+        );
+    }
+
     public void shareFile(final String filename){
 
         String fullpath="";
@@ -266,6 +280,16 @@ public class TransactionListFragment extends Fragment {
         }
 
         snackbar.show();
+
+    }
+
+    @Override
+    public void onDatePicked(long selectedDayId) {
+
+        if(viewmodel.getTransactions().getValue().size()>0)
+            ((TransactionActivity)getActivity()).autoExportFile(selectedDayId);
+        else
+            Toast.makeText(getActivity(),"Please add atleast one transaction to export",Toast.LENGTH_SHORT).show();
 
     }
 

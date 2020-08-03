@@ -2,84 +2,130 @@ package com.papco.sundar.papcortgs.database.receiver;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.text.TextUtils;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.papco.sundar.papcortgs.database.common.MasterDatabase;
 import com.papco.sundar.papcortgs.database.common.TableOperation;
 import com.papco.sundar.papcortgs.database.common.TableWorkCallback;
 
-public class ReceiverTableWorker extends AsyncTask<Object,Void,Object> {
+import java.util.List;
+import java.util.Locale;
 
-    Context context=null;
-    TableOperation operation=null;
-    TableWorkCallback callback=null;
+public class ReceiverTableWorker extends AsyncTask<Object, Void, Object> {
+
+    Context context = null;
+    TableOperation operation = null;
+    TableWorkCallback callback = null;
     MasterDatabase db;
 
-    public ReceiverTableWorker(Context context, TableOperation operation, TableWorkCallback callback){
-        this.operation=operation;
-        this.context=context;
-        this.callback=callback;
-        db= MasterDatabase.getInstance(context);
+    public ReceiverTableWorker(Context context, TableOperation operation, TableWorkCallback callback) {
+        this.operation = operation;
+        this.context = context;
+        this.callback = callback;
+        db = MasterDatabase.getInstance(context);
     }
 
 
     @Override
     protected Object doInBackground(Object... objects) {
 
-        if (operation == null || operation==TableOperation.READALL)
+        if (operation == null || operation == TableOperation.READALL)
             return null;
 
-        switch (operation){
+        switch (operation) {
             case CREATE:
-                return createReceiver((Receiver)objects[0]);
+                return createReceiver((Receiver) objects[0]);
             case READ:
-                return readReceiver((int)objects[0]);
+                return readReceiver((int) objects[0]);
             case UPDATE:
-                return updateReceiver((Receiver)objects[0]);
+                return updateReceiver((Receiver) objects[0]);
             case DELETE:
-                return deleteReceiver((Receiver)objects[0]);
+                return deleteReceiver((Receiver) objects[0]);
         }
 
         return null;
     }
 
-    private long createReceiver(Receiver receiver){
+    private long createReceiver(Receiver receiver) {
 
-        return db.getReceiverDao().addReceiver(receiver);
+        if (isNameAlreadyExists(receiver.name))
+            return -1L;
+        else
+            return db.getReceiverDao().addReceiver(receiver);
+
     }
 
-    private Receiver readReceiver(int receiverId){
+    private Receiver readReceiver(int receiverId) {
 
         return db.getReceiverDao().getReceiver(receiverId);
     }
 
 
-    private int updateReceiver(Receiver receiver){
+    private int updateReceiver(Receiver receiver) {
 
-        return db.getReceiverDao().updateReceiver(receiver);
+        if (isNameAlreadyExistsExceptCurrent(receiver))
+            return -1;
+        else
+            return db.getReceiverDao().updateReceiver(receiver);
     }
 
-    private int deleteReceiver(Receiver receiver){
+    private int deleteReceiver(Receiver receiver) {
 
         return db.getReceiverDao().deleteReceiver(receiver);
     }
 
+    private boolean isNameAlreadyExists(String givenName) {
+
+        String newNameInLowerCase = givenName.toLowerCase();
+        String nameInLowerCase;
+        List<String> receivers = db.getReceiverDao().getAllReceiverNames();
+        for (String receiver : receivers) {
+            nameInLowerCase = receiver.toLowerCase();
+            if (newNameInLowerCase.equals(nameInLowerCase))
+                return true;
+
+        }
+        return false;
+
+    }
+
     @Override
     protected void onPostExecute(Object result) {
-        if(callback==null)
+        if (callback == null)
             return;
 
-        switch (operation){
+        switch (operation) {
             case CREATE:
-                callback.onCreateComplete((int)result);
+                callback.onCreateComplete((long) result);
                 break;
             case READ:
-                callback.onReadComplete((Receiver)result);
+                callback.onReadComplete((Receiver) result);
                 break;
             case UPDATE:
-                callback.onUpdateComplete((int)result);
+                callback.onUpdateComplete((int) result);
                 break;
             case DELETE:
-                callback.onDeleteComplete((int)result);
+                callback.onDeleteComplete((int) result);
         }
+    }
+
+    private boolean isNameAlreadyExistsExceptCurrent(Receiver updatingReceiver) {
+
+        String newNameInLowerCase = updatingReceiver.name.toLowerCase();
+        String nameInLowerCase;
+        List<Receiver> receivers = db.getReceiverDao().getAllReceiversNonLive();
+        for (Receiver receiver : receivers) {
+
+            if (receiver.id != updatingReceiver.id) {
+                nameInLowerCase = receiver.name.toLowerCase();
+                if (newNameInLowerCase.equals(nameInLowerCase))
+                    return true;
+            }
+
+        }
+        return false;
+
     }
 }

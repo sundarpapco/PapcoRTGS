@@ -4,10 +4,12 @@ import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -18,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.papco.sundar.papcortgs.R;
 import com.papco.sundar.papcortgs.common.DividerDecoration;
@@ -133,6 +136,8 @@ public class ReceiverSelectFragment extends Fragment {
 
         private List<Receiver> unfilteredData;
         private List<Receiver> data;
+        @ColorInt int black=ContextCompat.getColor(requireContext(),android.R.color.black);
+        @ColorInt int grey=ContextCompat.getColor(requireContext(),android.R.color.darker_gray);
 
         public ReceiverAdapter(List<Receiver> data) {
             unfilteredData = data;
@@ -148,10 +153,17 @@ public class ReceiverSelectFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull ReceiverAdapter.TagViewHolder holder, int position) {
+
+            Receiver receiver=data.get(holder.getAdapterPosition());
             if (!TextUtils.isEmpty(searchView.getQuery()))
-                holder.txtViewName.setText(data.get(holder.getAdapterPosition()).highlightedName);
+                holder.txtViewName.setText(receiver.highlightedName);
             else
-                holder.txtViewName.setText(data.get(holder.getAdapterPosition()).name);
+                holder.txtViewName.setText(receiver.name);
+
+            if(receiver.accountNumber.equals("-1"))
+                holder.txtViewName.setTextColor(grey);
+            else
+                holder.txtViewName.setTextColor(black);
         }
 
         @Override
@@ -218,8 +230,10 @@ public class ReceiverSelectFragment extends Fragment {
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-
-                        recyclerItemClicked(view, data.get(getAdapterPosition()), getAdapterPosition());
+                        if (!data.get(getAdapterPosition()).accountNumber.equals("-1"))
+                            recyclerItemClicked(view, data.get(getAdapterPosition()), getAdapterPosition());
+                        else
+                            Toast.makeText(requireContext(), "This beneficiary has already been added", Toast.LENGTH_LONG).show();
                     }
                 });
             }

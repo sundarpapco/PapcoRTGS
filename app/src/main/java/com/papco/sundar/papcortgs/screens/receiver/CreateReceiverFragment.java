@@ -1,14 +1,17 @@
 package com.papco.sundar.papcortgs.screens.receiver;
 
+import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 
 import com.papco.sundar.papcortgs.R;
+import com.papco.sundar.papcortgs.common.Event;
 import com.papco.sundar.papcortgs.database.receiver.Receiver;
 
 import java.util.regex.Matcher;
@@ -69,20 +73,36 @@ public class CreateReceiverFragment extends Fragment {
 
         linkViews(view);
 
-        editName.addTextChangedListener(new ClearErrorTextWatcher(nameLayout));
-        editAccountNumber.addTextChangedListener(new ClearErrorTextWatcher(confirmAccountNumberLayout));
+        editName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                editName.setError(null);
+            }
+        });
+        editAccountNumber.addTextChangedListener(new ClearErrorTextWatcher(editAccountNumber));
+        editAccountNumber.addTextChangedListener(new ClearErrorTextWatcher(confirmAccountNumber));
         editAccountNumber.setOnFocusChangeListener(new CheckSameContentListener(confirmAccountNumber));
 
-        confirmAccountNumber.addTextChangedListener(new ClearErrorTextWatcher(confirmAccountNumberLayout));
+        confirmAccountNumber.addTextChangedListener(new ClearErrorTextWatcher(confirmAccountNumber));
         confirmAccountNumber.setCustomSelectionActionModeCallback(new DisableEditTextPastingCallBack());
         confirmAccountNumber.setLongClickable(false);
         confirmAccountNumber.setTextIsSelectable(false);
         confirmAccountNumber.setOnFocusChangeListener(new CheckSameContentListener(editAccountNumber));
 
-        editAccountType.addTextChangedListener(new ClearErrorTextWatcher(accountTypeLayout));
+        editAccountType.addTextChangedListener(new ClearErrorTextWatcher(editAccountType));
 
 
-        editIfsc.addTextChangedListener(new ClearErrorTextWatcher(ifscLayout));
+        editIfsc.addTextChangedListener(new ClearErrorTextWatcher(editIfsc));
         InputFilter[] filters = {new InputFilter.AllCaps(), new InputFilter.LengthFilter(11)};
         editIfsc.getText().setFilters(filters);
         editIfsc.setOnClickListener(new View.OnClickListener() {
@@ -97,8 +117,8 @@ public class CreateReceiverFragment extends Fragment {
             }
         });
 
-        editBank.addTextChangedListener(new ClearErrorTextWatcher(bankLayout));
-        editEmail.addTextChangedListener(new ClearErrorTextWatcher(emailLayout));
+        editBank.addTextChangedListener(new ClearErrorTextWatcher(editBank));
+        editEmail.addTextChangedListener(new ClearErrorTextWatcher(editEmail));
 
 
         if (viewModel.editingReceiver != null)
@@ -106,6 +126,25 @@ public class CreateReceiverFragment extends Fragment {
 
 
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        viewModel.shouldPopUpBackStack.observe(getViewLifecycleOwner(), new Observer<Event<Boolean>>() {
+            @Override
+            public void onChanged(@Nullable Event<Boolean> event) {
+
+                if (event != null && !event.isAlreadyHandled()) {
+
+                    Boolean result = event.handleEvent();
+                    if (result != null && result)
+                        ((ReceiverActivity) getActivity()).popBackStack();
+                }
+            }
+        });
+
     }
 
     private void linkViews(View view) {
@@ -133,11 +172,9 @@ public class CreateReceiverFragment extends Fragment {
         String confirmationNumber = confirmAccountNumber.getText().toString();
 
         if (!accountNumber.equals(confirmationNumber)) {
-            confirmAccountNumberLayout.setErrorEnabled(true);
-            confirmAccountNumberLayout.setError("Account number and confirmation number does not match");
+            confirmAccountNumber.setError("Account number and confirmation number does not match");
         } else {
-            confirmAccountNumberLayout.setErrorEnabled(false);
-            confirmAccountNumberLayout.setError(null);
+            confirmAccountNumber.setError(null);
         }
     }
 
@@ -171,7 +208,7 @@ public class CreateReceiverFragment extends Fragment {
             sender.email = editEmail.getText().toString();
 
             viewModel.addReceiver(sender);
-            ((ReceiverActivity) getActivity()).popBackStack();
+            //((ReceiverActivity) getActivity()).popBackStack();
         } else {
 
             Receiver sender = new Receiver();
@@ -186,7 +223,7 @@ public class CreateReceiverFragment extends Fragment {
 
             viewModel.editingReceiver = null;
             viewModel.updateReceiver(sender);
-            ((ReceiverActivity) getActivity()).popBackStack();
+            //((ReceiverActivity) getActivity()).popBackStack();
             return;
         }
 
@@ -197,48 +234,41 @@ public class CreateReceiverFragment extends Fragment {
 
         boolean result = true;
         if (TextUtils.isEmpty(editName.getEditableText())) {
-            nameLayout.setErrorEnabled(true);
-            nameLayout.setError("Enter a valid name");
+            editName.setError("Enter a valid name");
             result = false;
         }
 
         String accountNumber = editAccountNumber.getEditableText().toString();
         if (TextUtils.isEmpty(accountNumber)) {
-            accountNumberLayout.setErrorEnabled(true);
-            accountNumberLayout.setError("Enter valid account number");
+            editAccountNumber.setError("Enter valid account number");
             result = false;
         }
 
         String confirmationAccountNumber = confirmAccountNumber.getEditableText().toString();
         if (!accountNumber.equals(confirmationAccountNumber)) {
-            confirmAccountNumberLayout.setErrorEnabled(true);
             confirmAccountNumber.setError("Account number and confirmation number not matching");
             result = false;
         }
 
 
         if (TextUtils.isEmpty(editAccountType.getEditableText())) {
-            accountTypeLayout.setErrorEnabled(true);
-            accountTypeLayout.setError("Enter valid account type");
+            editAccountType.setError("Enter valid account type");
             result = false;
         }
 
         if (TextUtils.isEmpty(editIfsc.getEditableText())) {
-            ifscLayout.setErrorEnabled(true);
-            ifscLayout.setError("Enter valid IFS code");
+            editIfsc.setError("Enter valid IFS code");
             result = false;
         }
 
         if (TextUtils.isEmpty(editBank.getEditableText())) {
-            bankLayout.setErrorEnabled(true);
-            bankLayout.setError("Enter valid bank name");
+            editBank.setError("Enter valid bank name");
             result = false;
         }
 
         if (!TextUtils.isEmpty(editEmail.getEditableText())) {
             if (!isValidEmail(editEmail.getText().toString())) {
-                emailLayout.setErrorEnabled(true);
-                emailLayout.setError("Enter a valid email");
+                editEmail.setError("Enter a valid email");
                 return false;
             }
 

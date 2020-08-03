@@ -43,7 +43,7 @@
                 android:id="@+id/sender_account_number"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"
+                android:inputType="textPassword"
                 android:maxLines="1" />
 
         </android.support.design.widget.TextInputLayout>
@@ -62,7 +62,7 @@
                 android:id="@+id/sender_confirm_account_number"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"
+                android:inputType="textVisiblePassword"
                 android:maxLines="1"
                 android:textSelectHandle="@drawable/invisible_shape"/>
 
