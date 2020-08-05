@@ -2,7 +2,6 @@ package com.papco.sundar.papcortgs.common
 
 import android.os.Environment
 import android.text.TextUtils
-import com.papco.sundar.papcortgs.common.FileExporter.ColumnDetail
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup

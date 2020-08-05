@@ -5,16 +5,16 @@ import android.os.AsyncTask;
 import com.papco.sundar.papcortgs.database.common.MasterDatabase;
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup;
 
-public class AutoFileExporter extends AsyncTask<TransactionGroup,Void,String> {
+public class ManualFileExporter extends AsyncTask<TransactionGroup,Void,String> {
 
     WriteFileListener listener;
     MasterDatabase db;
-    long time;
+    String chequeNumber;
 
-    public AutoFileExporter(MasterDatabase db, WriteFileListener listener,long time){
+    public ManualFileExporter(MasterDatabase db, WriteFileListener listener,String chequeNumber){
         this.listener=listener;
         this.db=db;
-        this.time=time;
+        this.chequeNumber=chequeNumber;
     }
 
     @Override
@@ -23,7 +23,7 @@ public class AutoFileExporter extends AsyncTask<TransactionGroup,Void,String> {
         String result;
 
         try{
-            AutoRTGSReport report=new AutoRTGSReport(db,time);
+            ManualRTGSReport report=new ManualRTGSReport(db,chequeNumber);
             result=report.createReport(transactionGroups[0]);
         }catch (Exception e){
             e.printStackTrace();
