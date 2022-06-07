@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Papco RTGS</string>
     <string name="authority">com.papco.sundar.papcortgs.fileprovider</string>
     <string name="compos_info">"Tap on square to insert corresponding tag in the message. The words marked in BLUE  will be replaced with the respective fields while sending the message."</string>
@@ -9,4 +9,25 @@
 
     </string>
     <string name="client_id">798337766637-4hplviqeao9ne3ekn67qiup6ud8jjo9s.apps.googleusercontent.com</string>
+
+
+    <string name="sender_name_already_exist">This sender name already exist. Try different name</string>
+    <string name="receiver_name_already_exist">This receiver name already exist. Try different name</string>
+    <string name="add_a_sender_first">Please add a sender first</string>
+    <string name="create_new_xl_file">Create XL file</string>
+    <string name="update_xl_file">Update XL file</string>
+    <string name="xl_file_name">XL file name</string>
+    <string name="default_sender">Default Sender</string>
+    <string name="save">Save</string>
+    <string name="create">Create</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="delete_group_confirmation">Are you sure want to delete this XL file?</string>
+    <string name="sending_failed">SENDING FAILED</string>
+    <string name="mail_sent">MAIL SENT</string>
+    <string name="queued">QUEUED</string>
+    <string name="sending" tools:ignore="TypographyEllipsis">SENDING...</string>
+    <string name="error_no_internet_connection">No active internet connection found. Please try again later!</string>
+
+
 </resources>

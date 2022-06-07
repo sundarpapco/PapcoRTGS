@@ -1,18 +1,7 @@
 package com.papco.sundar.papcortgs.screens.transaction.createTransaction;
 
-import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,12 +11,25 @@ import android.widget.Filterable;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.papco.sundar.papcortgs.R;
 import com.papco.sundar.papcortgs.common.DividerDecoration;
 import com.papco.sundar.papcortgs.common.TextFunctions;
 import com.papco.sundar.papcortgs.database.receiver.Receiver;
 import com.papco.sundar.papcortgs.screens.transaction.common.TransactionActivity;
-import com.papco.sundar.papcortgs.screens.transaction.common.TransactionActivityVM;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +38,7 @@ public class ReceiverSelectFragment extends Fragment {
 
 
     public static final String KEY_GROUP_ID = "key_group_id";
+    public static final String KEY_RECEIVER_SELECTION = "key_receiver_selection";
 
     public static ReceiverSelectFragment getInstance(int groupId) {
 
@@ -48,30 +51,56 @@ public class ReceiverSelectFragment extends Fragment {
 
 
     private RecyclerView recycler;
-    private FloatingActionButton fab;
     private SearchView searchView;
     private ReceiverSelectionVM viewModel;
     private ReceiverAdapter adapter;
-    private boolean isInitialLoad = true;
 
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        viewModel = ViewModelProviders.of(this).get(ReceiverSelectionVM.class);
+
+        if (getGroupId() == -1)
+            throw new IllegalStateException("Group ID argument not found");
+
+        viewModel.loadReceivers(getGroupId());
+
+    }
 
     @Override
     public void onStart() {
         super.onStart();
-        ((TransactionActivity) getActivity()).getSupportActionBar().setTitle("Select receiver");
+        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
+        if (actionBar != null)
+            actionBar.setTitle("Select receiver");
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.senders_list_fragment, container, false);
+    }
 
-        if (savedInstanceState != null)
-            isInitialLoad = false;
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        initViews(view);
+        observeViewModel();
+    }
 
-        View ui = inflater.inflate(R.layout.senders_list_fragment, container, false);
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        //To avoid memory leak
+        if (recycler != null)
+            recycler.setAdapter(null);
+    }
+
+    private void initViews(View ui) {
 
         recycler = ui.findViewById(R.id.sender_fragment_recycler);
-        fab = ui.findViewById(R.id.sender_fragment_fab);
+        FloatingActionButton fab = ui.findViewById(R.id.sender_fragment_fab);
         searchView = ui.findViewById(R.id.sender_fragment_search_view);
         fab.hide();
 
@@ -89,44 +118,46 @@ public class ReceiverSelectFragment extends Fragment {
             }
         });
 
-
-        recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recycler.addItemDecoration(new DividerDecoration(getActivity()));
-
+        //Recycler view initializing
+        recycler.setLayoutManager(new LinearLayoutManager(requireActivity()));
+        recycler.addItemDecoration(new DividerDecoration(requireActivity()));
         if (adapter == null)
             adapter = new ReceiverAdapter(new ArrayList<Receiver>());
         recycler.setAdapter(adapter);
-        return ui;
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
 
-        if (viewModel != null)
-            return;
+    private void observeViewModel() {
 
-        viewModel = ViewModelProviders.of(getActivity()).get(TransactionActivityVM.class).
-                getReceiverSelectionVM(isInitialLoad, getGroupId());
-        viewModel.getReceivers().observe(this, new Observer<List<Receiver>>() {
+        viewModel.getReceivers().observe(getViewLifecycleOwner(), new Observer<List<Receiver>>() {
             @Override
             public void onChanged(@Nullable List<Receiver> receivers) {
                 if (receivers != null)
                     adapter.setData(receivers);
             }
         });
+
+    }
+
+
+    // RecyclerView item click and long click callbacks which will be called from the view holder
+    private void recyclerItemClicked(Receiver receiver) {
+
+        //Set the result to the fragment manager so that the parent fragment which requested will
+        //receive the result once the back stack is popped up
+        Bundle result = new Bundle();
+        result.putInt(KEY_RECEIVER_SELECTION, receiver.id);
+        getParentFragmentManager().setFragmentResult(KEY_RECEIVER_SELECTION, result);
+
+        ((TransactionActivity) requireActivity()).popBackStack();
+
     }
 
     private int getGroupId() {
-        return getArguments().getInt(KEY_GROUP_ID);
-    }
-
-    // RecyclerView item click and long click callbacks which will be called from the viewholder
-    private void recyclerItemClicked(View view, Receiver receiver, int adapterPosition) {
-
-        viewModel.selectReceiver(receiver);
-        ((TransactionActivity) getActivity()).popBackStack();
-
+        if (getArguments() != null)
+            return getArguments().getInt(KEY_GROUP_ID);
+        else
+            return -1;
     }
 
 
@@ -136,8 +167,10 @@ public class ReceiverSelectFragment extends Fragment {
 
         private List<Receiver> unfilteredData;
         private List<Receiver> data;
-        @ColorInt int black=ContextCompat.getColor(requireContext(),android.R.color.black);
-        @ColorInt int grey=ContextCompat.getColor(requireContext(),android.R.color.darker_gray);
+        @ColorInt
+        int black = ContextCompat.getColor(requireContext(), android.R.color.black);
+        @ColorInt
+        int grey = ContextCompat.getColor(requireContext(), android.R.color.darker_gray);
 
         public ReceiverAdapter(List<Receiver> data) {
             unfilteredData = data;
@@ -154,13 +187,13 @@ public class ReceiverSelectFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull ReceiverAdapter.TagViewHolder holder, int position) {
 
-            Receiver receiver=data.get(holder.getAdapterPosition());
+            Receiver receiver = data.get(holder.getAdapterPosition());
             if (!TextUtils.isEmpty(searchView.getQuery()))
                 holder.txtViewName.setText(receiver.highlightedName);
             else
                 holder.txtViewName.setText(receiver.name);
 
-            if(receiver.accountNumber.equals("-1"))
+            if (receiver.accountNumber.equals("-1"))
                 holder.txtViewName.setTextColor(grey);
             else
                 holder.txtViewName.setTextColor(black);
@@ -200,7 +233,7 @@ public class ReceiverSelectFragment extends Fragment {
                         for (Receiver sender : unfilteredData) {
                             if (sender.name.toLowerCase().contains(stringToSearch)) {
 
-                                sender.highlightedName = TextFunctions.getHighlitedString(sender.name, stringToSearch, Color.YELLOW);
+                                sender.highlightedName = TextFunctions.getHighlightedString(sender.name, stringToSearch, Color.YELLOW);
                                 filteredList.add(sender);
                             }
                         }
@@ -211,6 +244,7 @@ public class ReceiverSelectFragment extends Fragment {
                 }
 
                 @Override
+                @SuppressWarnings("unchecked")
                 protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
                     data = (List<Receiver>) filterResults.values;
                     notifyDataSetChanged();
@@ -231,7 +265,7 @@ public class ReceiverSelectFragment extends Fragment {
                     @Override
                     public void onClick(View view) {
                         if (!data.get(getAdapterPosition()).accountNumber.equals("-1"))
-                            recyclerItemClicked(view, data.get(getAdapterPosition()), getAdapterPosition());
+                            recyclerItemClicked(data.get(getAdapterPosition()));
                         else
                             Toast.makeText(requireContext(), "This beneficiary has already been added", Toast.LENGTH_LONG).show();
                     }

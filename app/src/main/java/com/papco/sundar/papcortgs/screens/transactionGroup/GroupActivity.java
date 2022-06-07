@@ -2,19 +2,18 @@ package com.papco.sundar.papcortgs.screens.transactionGroup;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.papco.sundar.papcortgs.R;
-import com.papco.sundar.papcortgs.screens.transaction.common.TransactionActivity;
 import com.papco.sundar.papcortgs.common.TextFunctions;
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup;
 import com.papco.sundar.papcortgs.screens.backup.ActivityDropBox;
@@ -22,6 +21,7 @@ import com.papco.sundar.papcortgs.screens.password.PasswordCallback;
 import com.papco.sundar.papcortgs.screens.password.PasswordDialog;
 import com.papco.sundar.papcortgs.screens.receiver.ReceiverActivity;
 import com.papco.sundar.papcortgs.screens.sender.SenderActivity;
+import com.papco.sundar.papcortgs.screens.transaction.common.TransactionActivity;
 
 public class GroupActivity extends AppCompatActivity implements PasswordCallback {
 
@@ -30,7 +30,7 @@ public class GroupActivity extends AppCompatActivity implements PasswordCallback
     public static final String NOTIFICATION_CHANNEL_DESC="Notifications from papcoRTGS app";
 
 
-    GroupActivityVM viewmodel;
+    GroupActivityVM viewModel;
     SharedPreferences pref;
 
     @Override
@@ -45,7 +45,7 @@ public class GroupActivity extends AppCompatActivity implements PasswordCallback
         if(isFirstRun())
             writeDefaultMessageTemplate();
 
-        viewmodel=ViewModelProviders.of(this).get(GroupActivityVM.class);
+        viewModel = new ViewModelProvider(this).get(GroupActivityVM.class);
 
         if(savedInstanceState==null)
             loadGroupListFragment();
@@ -56,32 +56,22 @@ public class GroupActivity extends AppCompatActivity implements PasswordCallback
     private void loadGroupListFragment() {
 
         FragmentManager manager = getSupportFragmentManager();
-        android.support.v4.app.FragmentTransaction transaction = manager.beginTransaction();
+        FragmentTransaction transaction = manager.beginTransaction();
         transaction.add(R.id.container, new GroupListFragment());
         transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         transaction.commit();
     }
 
-    public void showCreateEditDialog(){
-        new GroupCreateEditDialog().show(getSupportFragmentManager().beginTransaction(),"dialog");
-    }
 
     public void showTransactionsActivity(TransactionGroup group){
 
-        startActivity(TransactionActivity.getStartingIntent(this,group.id,group.name));
+        startActivity(TransactionActivity.getStartingIntent(this,group.id,group.name,group.defaultSenderId));
     }
 
     public void showDropBoxActivity(){
 
         Intent intent=new Intent(this, ActivityDropBox.class);
         startActivity(intent);
-
-    }
-
-    public void popBackStack() {
-
-        FragmentManager manager = getSupportFragmentManager();
-        manager.popBackStack();
 
     }
 
@@ -106,7 +96,7 @@ public class GroupActivity extends AppCompatActivity implements PasswordCallback
         if(pref.contains("first_run")){
             return false;
         }else{
-            pref.edit().putBoolean("first_run",false).commit();
+            pref.edit().putBoolean("first_run",false).apply();
             return true;
         }
 
@@ -115,9 +105,7 @@ public class GroupActivity extends AppCompatActivity implements PasswordCallback
     private void writeDefaultMessageTemplate(){
 
         if(pref!=null) {
-            pref.edit().putString("message_template", TextFunctions.getDefaultMessageFormat()).commit();
-            Log.d("SUNDAR","Writing default message");
-
+            pref.edit().putString("message_template", TextFunctions.getDefaultMessageFormat()).apply();
         }
     }
 

@@ -1,9 +1,11 @@
 package com.papco.sundar.papcortgs.database.sender;
 
-import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.Ignore;
-import android.arch.persistence.room.PrimaryKey;
 import android.text.SpannableString;
+
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.PrimaryKey;
 
 @Entity
 public class Sender {
@@ -20,4 +22,9 @@ public class Sender {
     @Ignore
     public SpannableString highlightedName;
 
+    @NonNull
+    @Override
+    public String toString() {
+        return name;
+    }
 }

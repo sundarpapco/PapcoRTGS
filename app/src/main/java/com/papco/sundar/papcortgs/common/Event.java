@@ -2,6 +2,8 @@ package com.papco.sundar.papcortgs.common;
 
 public class Event<T> {
 
+    public static final String SUCCESS="EVENT_SUCCESS";
+
     private boolean isAlreadyHandled=false;
     private T data=null;
 

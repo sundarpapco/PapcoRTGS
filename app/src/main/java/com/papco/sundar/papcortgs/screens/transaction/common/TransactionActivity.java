@@ -2,21 +2,22 @@ package com.papco.sundar.papcortgs.screens.transaction.common;
 
 import android.Manifest;
 import android.app.Activity;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Toast;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.papco.sundar.papcortgs.R;
 import com.papco.sundar.papcortgs.common.AutoFileExporter;
@@ -26,6 +27,7 @@ import com.papco.sundar.papcortgs.common.WriteFileListener;
 import com.papco.sundar.papcortgs.database.common.MasterDatabase;
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup;
 import com.papco.sundar.papcortgs.screens.mail.ActivityEmail;
+import com.papco.sundar.papcortgs.screens.mail.EmailService;
 import com.papco.sundar.papcortgs.screens.password.PasswordCallback;
 import com.papco.sundar.papcortgs.screens.password.PasswordDialog;
 import com.papco.sundar.papcortgs.screens.receiver.ReceiverActivity;
@@ -42,31 +44,32 @@ public class TransactionActivity extends AppCompatActivity implements
         WriteFileListener, PasswordCallback, TextInputDialogFragment.TextInputListener {
 
 
-    public static Intent getStartingIntent(Context context, int groupId, String groupName) {
+    public static Intent getStartingIntent(Context context, int groupId, String groupName,int defaultSenderId) {
 
         Intent intent = new Intent(context, TransactionActivity.class);
-        intent.putExtras(getStartingArguments(groupId, groupName));
+        intent.putExtras(getStartingArguments(groupId, groupName,defaultSenderId));
         return intent;
 
     }
 
-    public static Bundle getStartingArguments(int groupId, String groupName) {
+    public static Bundle getStartingArguments(int groupId, String groupName,int defaultSenderId) {
 
         Bundle bundle = new Bundle();
         bundle.putInt(KEY_GROUP_ID, groupId);
         bundle.putString(KEY_GROUP_NAME, groupName);
+        bundle.putInt(KEY_DEFAULT_SENDER_ID,defaultSenderId);
         return bundle;
 
     }
 
     public static final String KEY_GROUP_ID = "groupId";
     public static final String KEY_GROUP_NAME = "groupName";
+    private static final String KEY_DEFAULT_SENDER_ID="defaultSenderId";
     private static final int PERMISSION_REQUEST_STORAGE = 1;
 
-    private TransactionActivityVM viewmodel;
     private TransactionGroup transactionGroup;
     private ViewGroup container;
-    private boolean needtopop = false;
+    private boolean needToPop = false;
 
 
     @Override
@@ -75,8 +78,6 @@ public class TransactionActivity extends AppCompatActivity implements
 
         setContentView(R.layout.container_layout);
         container = findViewById(R.id.container);
-        viewmodel = ViewModelProviders.of(this).get(TransactionActivityVM.class);
-
 
         Bundle b = getIntent().getExtras();
 
@@ -84,6 +85,7 @@ public class TransactionActivity extends AppCompatActivity implements
             transactionGroup = new TransactionGroup();
             transactionGroup.id = b.getInt(KEY_GROUP_ID);
             transactionGroup.name = b.getString(KEY_GROUP_NAME);
+            transactionGroup.defaultSenderId=b.getInt(KEY_DEFAULT_SENDER_ID,0);
         }
 
 
@@ -98,15 +100,15 @@ public class TransactionActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        if (needtopop) {
-            needtopop = false;
+        if (needToPop) {
+            needToPop = false;
             popBackStack();
         }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean("NEEDPOPUP", needtopop);
+        outState.putBoolean("NEEDPOPUP", needToPop);
         super.onSaveInstanceState(outState);
 
     }
@@ -115,7 +117,7 @@ public class TransactionActivity extends AppCompatActivity implements
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         if (savedInstanceState != null)
-            needtopop = savedInstanceState.getBoolean("NEEDPOPUP");
+            needToPop = savedInstanceState.getBoolean("NEEDPOPUP");
     }
 
     @Override
@@ -139,8 +141,10 @@ public class TransactionActivity extends AppCompatActivity implements
     private void loadTransactionListFragment() {
 
         FragmentManager manager = getSupportFragmentManager();
-        android.support.v4.app.FragmentTransaction transaction = manager.beginTransaction();
-        TransactionListFragment fragment = TransactionListFragment.getInstance(transactionGroup.id, transactionGroup.name);
+        FragmentTransaction transaction = manager.beginTransaction();
+        TransactionListFragment fragment = TransactionListFragment.getInstance(
+                        transactionGroup.id,
+                        transactionGroup.name);
         transaction.add(R.id.container, fragment, "fragmentTransactionList");
         transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         transaction.commit();
@@ -149,9 +153,10 @@ public class TransactionActivity extends AppCompatActivity implements
     public void showAddTransactionFragment(int loadTransactionId) {
 
         FragmentManager manager = getSupportFragmentManager();
-        android.support.v4.app.FragmentTransaction transaction = manager.beginTransaction();
+        FragmentTransaction transaction = manager.beginTransaction();
         transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out, R.anim.fade_in, R.anim.fade_out);
-        transaction.replace(R.id.container, CreateTransactionFragment.getInstance(transactionGroup.id, loadTransactionId));
+        transaction.replace(R.id.container, CreateTransactionFragment.getInstance(
+                transactionGroup.id, loadTransactionId,transactionGroup.defaultSenderId));
         transaction.addToBackStack("addTransactionFragment");
         transaction.commit();
 
@@ -159,7 +164,7 @@ public class TransactionActivity extends AppCompatActivity implements
 
     public void showSenderSelectFragment() {
         FragmentManager manager = getSupportFragmentManager();
-        android.support.v4.app.FragmentTransaction transaction = manager.beginTransaction();
+        FragmentTransaction transaction = manager.beginTransaction();
         transaction.replace(R.id.container, new SenderSelectFragment());
         transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         transaction.addToBackStack("senderSelectFragment");
@@ -168,7 +173,7 @@ public class TransactionActivity extends AppCompatActivity implements
 
     public void showReceiverSelectFragment() {
         FragmentManager manager = getSupportFragmentManager();
-        android.support.v4.app.FragmentTransaction transaction = manager.beginTransaction();
+        FragmentTransaction transaction = manager.beginTransaction();
         transaction.replace(R.id.container, ReceiverSelectFragment.getInstance(transactionGroup.id));
         transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         transaction.addToBackStack("receiverSelectFragment");
@@ -177,7 +182,7 @@ public class TransactionActivity extends AppCompatActivity implements
 
     public void showSenderActivity() {
 
-        needtopop = true;
+        needToPop = true;
         Intent intent = new Intent(this, SenderActivity.class);
         startActivity(intent);
         //popBackStack();
@@ -185,7 +190,7 @@ public class TransactionActivity extends AppCompatActivity implements
 
     public void showReceiverActivity() {
 
-        needtopop = true;
+        needToPop = true;
         Intent intent = new Intent(this, ReceiverActivity.class);
         startActivity(intent);
         //popBackStack();
@@ -206,8 +211,9 @@ public class TransactionActivity extends AppCompatActivity implements
 
         Intent intent = new Intent(this, ActivityEmail.class);
         Bundle b = new Bundle();
-        b.putInt("groupId", transactionGroup.id);
-        b.putString("groupName", transactionGroup.name);
+        b.putInt(EmailService.KEY_GROUP_ID, transactionGroup.id);
+        b.putString(EmailService.KEY_GROUP_NAME, transactionGroup.name);
+        b.putInt(EmailService.KEY_DEFAULT_SENDER_ID,transactionGroup.defaultSenderId);
         intent.putExtras(b);
         startActivity(intent);
     }
@@ -247,10 +253,7 @@ public class TransactionActivity extends AppCompatActivity implements
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
             return false;
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-            return false;
-
-        return true;
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
 
@@ -289,17 +292,27 @@ public class TransactionActivity extends AppCompatActivity implements
             showSenderActivity();
     }
 
-    private void showChequeNumberInputDialog(){
+    private void showChequeNumberInputDialog() {
 
-        TextInputDialogFragment.Builder builder=new TextInputDialogFragment.Builder();
+        TextInputDialogFragment.Builder builder = new TextInputDialogFragment.Builder();
         builder.setTitle("Enter cheque number");
         builder.setHint("Cheque number");
         builder.setResponseCode(1);
-        TextInputDialogFragment textInputDialog=builder.build();
+        TextInputDialogFragment textInputDialog = builder.build();
         textInputDialog.show(
                 getSupportFragmentManager(),
                 TextInputDialogFragment.TAG);
 
+    }
+
+    @Override
+    public boolean onValidate(@NotNull String enteredText) {
+        if (enteredText.trim().equals("")) {
+            Toast.makeText(this, "Enter valid cheque number", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true;
     }
 
     @Override

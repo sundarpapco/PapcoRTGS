@@ -1,3 +1,5 @@
+@file:Suppress("INACCESSIBLE_TYPE")
+
 package com.papco.sundar.papcortgs.common
 
 import android.os.Environment
@@ -7,10 +9,10 @@ import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
 import jxl.Workbook
 import jxl.WorkbookSettings
+import jxl.format.*
 import jxl.format.Alignment
 import jxl.format.Border
 import jxl.format.BorderLineStyle
-import jxl.format.CellFormat
 import jxl.format.Colour
 import jxl.format.VerticalAlignment
 import jxl.write.*
@@ -39,6 +41,8 @@ class AutoRTGSReport(
         dateFormat.format(Date(time)).toUpperCase(Locale.getDefault())
     }
 
+    private var rowSize:Int=0
+
 
     fun createReport(transactionGroup: TransactionGroup): String {
 
@@ -47,6 +51,7 @@ class AutoRTGSReport(
         setDefaultColumnWidths()
         val workbook = createWorkBook()
         val sheet = workbook.createSheet("Sheet1", 0)
+        rowSize=sheet.getRowView(0).size
         writeHeadings(sheet)
         writeTransactions(sheet, transactions)
         setColumnWidths(sheet)
@@ -138,8 +143,8 @@ class AutoRTGSReport(
         return WritableCellFormat(font).apply {
             setBorder(Border.ALL, BorderLineStyle.THIN)
             alignment = Alignment.LEFT
-            verticalAlignment = VerticalAlignment.BOTTOM
-            wrap = true
+            verticalAlignment = VerticalAlignment.CENTRE
+            wrap = false
         }
     }
 
@@ -231,6 +236,9 @@ class AutoRTGSReport(
 
         val contentFormat = contentCellFormat()
         for ((index, transaction) in transactions.withIndex()) {
+            val currentRow=sheet.getRowView(index+1)
+            currentRow.size=rowSize
+            sheet.setRowView(index+1,currentRow)
             writeTransaction(sheet, transaction, index + 1, contentFormat)
         }
     }
@@ -261,14 +269,25 @@ class AutoRTGSReport(
         sheet.addCell(Label(6, row, receiver.ifsc,format))
         calculateColumnWidth(6, receiver.ifsc)
 
+        //Writing nothing in the cell but drawing the border for the cells
         sheet.addCell(Label(7,row,"",format))
         sheet.addCell(Label(8,row,"",format))
 
+        if(receiver.mobileNumber!=null){
         sheet.addCell(Label(9,row,receiver.mobileNumber,format))
-        calculateColumnWidth(9,receiver.mobileNumber)
+        calculateColumnWidth(9,receiver.mobileNumber)}
+        else{
+            sheet.addCell(Label(9,row,"",format))
+            calculateColumnWidth(9,"")
+        }
 
-        sheet.addCell(Label(10,row,receiver.email,format))
-        calculateColumnWidth(10,receiver.email)
+        if(receiver.email!=null) {
+            sheet.addCell(Label(10, row, receiver.email, format))
+            calculateColumnWidth(10, receiver.email)
+        }else{
+            sheet.addCell(Label(10, row, "", format))
+            calculateColumnWidth(10, "")
+        }
 
         //Writing nothing in the cell but drawing the border for the cells
         sheet.addCell(Label(11,row,"",format))

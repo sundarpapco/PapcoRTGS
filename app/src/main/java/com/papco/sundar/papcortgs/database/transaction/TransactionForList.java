@@ -1,6 +1,7 @@
 package com.papco.sundar.papcortgs.database.transaction;
 
-import android.arch.persistence.room.Ignore;
+
+import androidx.room.Ignore;
 
 public class TransactionForList {
 

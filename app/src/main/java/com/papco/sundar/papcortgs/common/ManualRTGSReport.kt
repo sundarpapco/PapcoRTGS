@@ -1,11 +1,11 @@
+@file:Suppress("INACCESSIBLE_TYPE")
+
 package com.papco.sundar.papcortgs.common
 
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Environment
-import android.text.TextPaint
-import android.util.Log
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
@@ -53,11 +53,6 @@ class ManualRTGSReport(
         writeHeadings(sheet)
         writeTransactions(sheet, transactions)
         setColumnWidths(sheet)
-
-        val emailLength=textPaint.measureText("iockeerthikaagencies@gmail.com")
-        val nineteenWLength=textPaint.measureText("WWWWWWWWWWWWWWWWWWW")
-        Log.d("TAG","Email text width: $emailLength")
-        Log.d("TAG","W text width: $nineteenWLength")
 
         workbook.write()
         workbook.close()
@@ -151,10 +146,10 @@ class ManualRTGSReport(
         sheet.addCell(Label(1, 0, "TRAN ID", headingFormat))
 
         sheet.setColumnView(2, 10) //setting the column width
-        sheet.addCell(Label(2, 0, "SENDER ACCOUNT TYPE", headingFormat))
+        sheet.addCell(Label(2, 0, "AMOUNT", headingFormat))
 
         sheet.setColumnView(3, 9) //setting the column width
-        sheet.addCell(Label(3, 0, "AMOUNT", headingFormat))
+        sheet.addCell(Label(3, 0, "SENDER ACCOUNT TYPE", headingFormat))
 
         sheet.setColumnView(4, 12) //setting the column width
         sheet.addCell(Label(4, 0, "SENDER ACCOUNT NO", headingFormat))
@@ -169,7 +164,7 @@ class ManualRTGSReport(
         sheet.addCell(Label(7, 0, "Detail", headingFormat))
 
         sheet.setColumnView(8, 28) //setting the column width
-        sheet.addCell(Label(8, 0, "OoR7002(SENDER NAME)", headingFormat))
+        sheet.addCell(Label(8, 0, "OoR7002 (SENDER NAME)", headingFormat))
 
         sheet.setColumnView(9, 11) //setting the column width
         sheet.addCell(Label(9, 0, "BENEFICIARY IFSC", headingFormat))
@@ -208,11 +203,11 @@ class ManualRTGSReport(
         sheet.addCell(Label(1, row, chequeNumber, format))
         calculateColumnWidth(1, chequeNumber)
 
-        sheet.addCell(Label(2, row, sender.accountType, format))
-        calculateColumnWidth(2, sender.accountType)
+        sheet.addCell(Label(2, row, transaction.amount.toString(), format))
+        calculateColumnWidth(2, transaction.amount.toString())
 
-        sheet.addCell(Label(3, row, transaction.amount.toString(), format))
-        calculateColumnWidth(3, transaction.amount.toString())
+        sheet.addCell(Label(3, row, sender.accountType, format))
+        calculateColumnWidth(3, sender.accountType)
 
         sheet.addCell(Label(4, row, sender.accountNumber, format))
         calculateColumnWidth(4, sender.accountNumber)
@@ -246,16 +241,6 @@ class ManualRTGSReport(
 
     }
 
-    /*private fun calculateColumnWidth(column: Int, matter: String) {
-
-        val length = if (TextUtils.isDigitsOnly(matter))
-            matter.length + 2
-        else
-            matter.length + 4
-
-        if (length > columnDetails[column].recommendedWidth) columnDetails[column].recommendedWidth = length
-    }*/
-
     private fun calculateColumnWidth(column: Int, matter: String) {
 
         val textWidthInPixels=textPaint.measureText(matter).toDouble()
@@ -267,15 +252,14 @@ class ManualRTGSReport(
     private fun setColumnWidths(sheet: WritableSheet) {
 
         for ((index, columnDetail) in columnDetails.withIndex()) {
-            Log.d("SUNDAR","Setting width of column $index to ${max(columnDetail.minimumWidth,columnDetail.recommendedWidth)}")
             sheet.setColumnView(index, max(columnDetail.minimumWidth, columnDetail.recommendedWidth))
         }
 
     }
 
-    private fun createTextPaint():TextPaint = TextPaint().apply {
+    private fun createTextPaint():Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        isLinearText=true
         textSize = 10f
-        textAlign = Paint.Align.LEFT
         color = Color.BLACK
         typeface = Typeface.create("Arial", Typeface.NORMAL)
     }

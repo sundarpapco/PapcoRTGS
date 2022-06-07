@@ -1,13 +1,13 @@
 package com.papco.sundar.papcortgs.screens.transactionGroup;
 
 import android.app.Dialog;
-import android.arch.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
-import android.support.v7.app.AlertDialog;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
+import androidx.appcompat.app.AlertDialog;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -17,14 +17,14 @@ import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup;
 
 public class GroupCreateEditDialog extends DialogFragment {
 
-    GroupActivityVM viewmodel;
+    GroupActivityVM viewModel;
     TransactionGroup editingGroup=null;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        viewmodel=ViewModelProviders.of(getActivity()).get(GroupActivityVM.class);
-        editingGroup=viewmodel.editingGroup;
+        viewModel =ViewModelProviders.of(requireActivity()).get(GroupActivityVM.class);
+        editingGroup= viewModel.editingGroup;
     }
 
     @NonNull
@@ -40,10 +40,10 @@ public class GroupCreateEditDialog extends DialogFragment {
 
     private AlertDialog createNewAlertDialog(){
 
-        View view=getActivity().getLayoutInflater().inflate(R.layout.new_group,null);
+        View view=requireActivity().getLayoutInflater().inflate(R.layout.new_group,null);
         final EditText editText=view.findViewById(R.id.new_tag_editText);
 
-        AlertDialog.Builder builder=new AlertDialog.Builder(getActivity());
+        AlertDialog.Builder builder=new AlertDialog.Builder(requireActivity());
         builder.setTitle("New XL file");
         builder.setView(view);
         builder.setPositiveButton("CREATE",null);
@@ -65,11 +65,11 @@ public class GroupCreateEditDialog extends DialogFragment {
     }
 
     private AlertDialog createEditAlertDialog(){
-        View view=getActivity().getLayoutInflater().inflate(R.layout.new_group,null);
+        View view=requireActivity().getLayoutInflater().inflate(R.layout.new_group,null);
         final EditText editText=view.findViewById(R.id.new_tag_editText);
         editText.setText(editingGroup.name);
 
-        AlertDialog.Builder builder=new AlertDialog.Builder(getActivity());
+        AlertDialog.Builder builder=new AlertDialog.Builder(requireActivity());
         builder.setTitle("Edit XL filename");
         builder.setView(view);
         builder.setPositiveButton("SAVE",null);
@@ -106,7 +106,7 @@ public class GroupCreateEditDialog extends DialogFragment {
 
         dialog.dismiss();
         editingGroup.name=groupName.getText().toString();
-        viewmodel.updateTransactionGroup(editingGroup);
+        viewModel.updateTransactionGroup(editingGroup);
     }
 
     private void validateAndCreateNewGroup(AlertDialog dialog,EditText groupName) {
@@ -119,17 +119,17 @@ public class GroupCreateEditDialog extends DialogFragment {
         dialog.dismiss();
         TransactionGroup newGroup=new TransactionGroup();
         newGroup.name=groupName.getText().toString();
-        viewmodel.addTransactionGroup(newGroup);
+        viewModel.addTransactionGroup(newGroup);
     }
 
     private void deleteGroup(final TransactionGroup delGroup    ){
 
-        AlertDialog.Builder builder=new AlertDialog.Builder(getActivity());
+        AlertDialog.Builder builder=new AlertDialog.Builder(requireActivity());
         builder.setMessage("Sure delete XL file "+delGroup.name+" ?");
         builder.setPositiveButton("DELETE", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                viewmodel.deleteTransactionGroup(delGroup);
+                viewModel.deleteTransactionGroup(delGroup);
             }
         });
         builder.setNegativeButton("CANCEL",null);

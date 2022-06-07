@@ -1,32 +1,25 @@
 package com.papco.sundar.papcortgs.screens.transaction.createTransaction;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.content.Context;
-
-import com.papco.sundar.papcortgs.common.Observable;
-import com.papco.sundar.papcortgs.database.common.MasterDatabase;
+import android.app.Application;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import com.papco.sundar.papcortgs.database.receiver.Receiver;
-
 import java.util.List;
 
-import com.papco.sundar.papcortgs.screens.transaction.createTransaction.ReceiverSelectionVM.*;
 
-public class ReceiverSelectionVM extends Observable<ReceiverSelectionListener>
+public class ReceiverSelectionVM extends AndroidViewModel
         implements FetchReceiversForGroupTask.ReceiverForSelectionCallBack {
 
-    public interface ReceiverSelectionListener {
 
-        void onReceiverSelected(Receiver receiver);
+    private MutableLiveData<List<Receiver>> receiversList = new MutableLiveData<>();
+
+    public ReceiverSelectionVM(Application application) {
+        super(application);
     }
 
-
-    private MasterDatabase db;
-    private MutableLiveData<List<Receiver>> receiversList= new MutableLiveData<List<Receiver>>();
-
-    public ReceiverSelectionVM(Context context, int groupId) {
-        db = MasterDatabase.getInstance(context);
-        FetchReceiversForGroupTask task=new FetchReceiversForGroupTask(context,this);
+    public void loadReceivers(int groupId) {
+        FetchReceiversForGroupTask task = new FetchReceiversForGroupTask(getApplication(), this);
         task.execute(groupId);
     }
 
@@ -34,10 +27,6 @@ public class ReceiverSelectionVM extends Observable<ReceiverSelectionListener>
         return receiversList;
     }
 
-    public void selectReceiver(Receiver receiver) {
-        if (getCallback() != null)
-            getCallback().onReceiverSelected(receiver);
-    }
 
     @Override
     public void onReceiverForSelectionList(List<Receiver> receivers) {

@@ -3,16 +3,16 @@ package com.papco.sundar.papcortgs.screens.backup;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.util.Log;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.UploadBuilder;
 import com.dropbox.core.v2.files.WriteMode;
 import com.papco.sundar.papcortgs.database.common.MasterDatabase;
-import com.papco.sundar.papcortgs.database.transaction.Transaction;
 import com.papco.sundar.papcortgs.database.receiver.Receiver;
 import com.papco.sundar.papcortgs.database.sender.Sender;
+import com.papco.sundar.papcortgs.database.transaction.Transaction;
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup;
 
 import java.io.File;
@@ -172,7 +172,6 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
 
     private void clearAllTables() throws Exception{
 
-        Log.d("CLEARING","CLEARING ALL TABLES NOW");
         db.getReceiverDao().deleteAllReceivers();
         db.getSenderDao().deleteAllSenders();
         db.getTransactionGroupDao().deleteAllTransactionGroups();
@@ -316,9 +315,11 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
 
             sheet.addCell(new Number(0,row,group.id,contentformat));
             sheet.addCell(new Label(1,row,group.name,contentformat));
+            sheet.addCell(new Number(2,row,group.defaultSenderId,contentformat));
             row++;
 
         }
+
         sheet.addCell(new Label(0,row,"--end--",contentformat));
 
         //write the workbook and close it
@@ -473,6 +474,19 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
             currentGroup.id=Integer.parseInt(sheet.getCell(0,row).getContents());
             currentGroup.name=sheet.getCell(1,row).getContents();
 
+            /*
+            Using a special try catch block here. Because the defaultSenderId feature is added later
+            in database migration Version 3. So, if we are restoring a old Version 2 database backup,
+            then the column defaultSenderId wont exist there and thus will cause Index Out of bounds
+            exception. We are catching that case manually if an exception occurs, then we are simply
+            restoring a default value of 0
+             */
+            try {
+                String defaultSender = sheet.getCell(2, row).getContents();
+                currentGroup.defaultSenderId = Integer.parseInt(defaultSender);
+            }catch (ArrayIndexOutOfBoundsException e){
+                currentGroup.defaultSenderId=0;
+            }
             groups.add(currentGroup);
             row++;
 
@@ -566,8 +580,7 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
 
             return;
 
-        }else
-            Log.d("SUNDAR","ACTIVITY DESTROYED BEFORE BACKUP");
+        }
 
     }
 

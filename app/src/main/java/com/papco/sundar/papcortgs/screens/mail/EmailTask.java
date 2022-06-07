@@ -61,9 +61,11 @@ public class EmailTask extends AsyncTask<List<Transaction>,Integer,List<Transact
         String[] SCOPES={GmailScopes.GMAIL_SEND};
         JacksonFactory jacksonFactory=new JacksonFactory();
         NetHttpTransport httpTransport=new NetHttpTransport();
+
         GoogleAccountCredential credentials=GoogleAccountCredential.usingOAuth2(context, Arrays.asList(SCOPES));
         credentials.setBackOff(new ExponentialBackOff());
         credentials.setSelectedAccountName(account.getEmail());
+
         Gmail.Builder builder=new Gmail.Builder(httpTransport,jacksonFactory,credentials);
         builder.setApplicationName(context.getResources().getString(R.string.app_name));
         service=builder.build();
@@ -184,8 +186,8 @@ public class EmailTask extends AsyncTask<List<Transaction>,Integer,List<Transact
         Message message = createMessageWithEmail(emailContent);
         message = service.users().messages().send(userId, message).execute();
 
-        System.out.println("Message id: " + message.getId());
-        System.out.println(message.toPrettyString());
+        /*System.out.println("Message id: " + message.getId());
+        System.out.println(message.toPrettyString());*/
         return message;
     }
 

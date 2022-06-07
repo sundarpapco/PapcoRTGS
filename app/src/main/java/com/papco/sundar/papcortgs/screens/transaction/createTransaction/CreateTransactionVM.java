@@ -1,9 +1,10 @@
 package com.papco.sundar.papcortgs.screens.transaction.createTransaction;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.content.Context;
-import android.util.Log;
+import android.app.Application;
+
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.papco.sundar.papcortgs.database.common.MasterDatabase;
 import com.papco.sundar.papcortgs.database.receiver.Receiver;
@@ -11,43 +12,39 @@ import com.papco.sundar.papcortgs.database.sender.Sender;
 import com.papco.sundar.papcortgs.database.transaction.Transaction;
 
 import java.util.List;
+import java.util.Objects;
 
-public class CreateTransactionVM {
+public class CreateTransactionVM extends AndroidViewModel {
 
 
     private MasterDatabase db;
 
-    private int transactionId;
-    private int groupId;
     private MutableLiveData<Sender> selectedSender;
     private MutableLiveData<Receiver> selectedReceiver;
     private MutableLiveData<Integer> amount;
     private MutableLiveData<String> remarks;
+    private Boolean isAlreadyLoaded = false;
 
-    public CreateTransactionVM(Context context, int groupId, int loadTransactionId){
+    public CreateTransactionVM(Application application) {
+        super(application);
 
-        db=MasterDatabase.getInstance(context);
+        db = MasterDatabase.getInstance(application);
 
-        transactionId=loadTransactionId;
-        this.groupId=groupId;
-        selectedSender=new MutableLiveData<>();
-        selectedReceiver=new MutableLiveData<>();
-        amount=new MutableLiveData<>();
-        remarks=new MutableLiveData<>();
-
-        initialize();
-
+        selectedSender = new MutableLiveData<>();
+        selectedReceiver = new MutableLiveData<>();
+        amount = new MutableLiveData<>();
+        remarks = new MutableLiveData<>();
 
     }
 
 
     // setters -------------------------------------------------
 
-    public void setSender(Sender sender){
+    public void setSender(Sender sender) {
         selectedSender.setValue(sender);
     }
 
-    public void setReceiver(Receiver receiver){
+    public void setReceiver(Receiver receiver) {
         selectedReceiver.setValue(receiver);
     }
 
@@ -81,27 +78,22 @@ public class CreateTransactionVM {
 
     // utility methods ---------------------------------------------------
 
-    private void initialize(){
 
-        if(transactionId==-1) // -1 means we are not editing. But have to create a new Transaction
-            createBlankTransaction(groupId);
+    public void loadTransaction(final int transactionId) {
+
+        if (isAlreadyLoaded)
+            return;
         else
-            loadTransaction(transactionId);
-
-    }
-
-    private void loadTransaction(final int transactionId){
+            isAlreadyLoaded = true;
 
         new Thread(new Runnable() {
             @Override
             public void run() {
 
-                Transaction transaction=db.getTransactionDao().getTransaction(transactionId);
-                Sender sender=db.getSenderDao().getSender(transaction.senderId);
-                Receiver receiver=db.getReceiverDao().getReceiver(transaction.receiverId);
+                Transaction transaction = db.getTransactionDao().getTransaction(transactionId);
+                Sender sender = db.getSenderDao().getSender(transaction.senderId);
+                Receiver receiver = db.getReceiverDao().getReceiver(transaction.receiverId);
 
-                CreateTransactionVM.this.transactionId=transaction.id;
-                CreateTransactionVM.this.groupId=transaction.groupId;
                 selectedSender.postValue(sender);
                 selectedReceiver.postValue(receiver);
                 amount.postValue(transaction.amount);
@@ -112,26 +104,34 @@ public class CreateTransactionVM {
 
     }
 
-    private void createBlankTransaction(final int groupId){
+    public void createBlankTransaction(final int groupId, final int defaultSenderId) {
 
         // This function will create a blank transaction.
         // This function has to select the first available sender and receiver for the initial screen to select
         // This function will set sender and receiver to null if no sender or receiver found in database
         // Also set Amount and remarks to initial values
 
-        transactionId=-1;
+        if (isAlreadyLoaded)
+            return;
+        else
+            isAlreadyLoaded = true;
+
         new Thread(new Runnable() {
             @Override
             public void run() {
 
-                List<Sender> firstSender=db.getSenderDao().getFirstSender();
-                List<Receiver> firstReceiver=db.getReceiverDao().getFirstReceiverForSelection(groupId);
-                if(firstSender.size()==0)
-                    selectedSender.postValue(null);
-                else
-                    selectedSender.postValue(firstSender.get(0));
+                List<Sender> firstSender = db.getSenderDao().getFirstSender();
+                Sender defaultSender = db.getSenderDao().getSender(defaultSenderId);
+                List<Receiver> firstReceiver = db.getReceiverDao().getFirstReceiverForSelection(groupId);
 
-                if(firstReceiver.size()==0)
+                if (firstSender.size() == 0)
+                    selectedSender.postValue(null);
+                else if (defaultSender == null)
+                    selectedSender.postValue(firstSender.get(0));
+                else
+                    selectedSender.postValue(defaultSender);
+
+                if (firstReceiver.size() == 0)
                     selectedReceiver.postValue(null);
                 else
                     selectedReceiver.postValue(firstReceiver.get(0));
@@ -144,14 +144,48 @@ public class CreateTransactionVM {
 
     }
 
-    public void saveNewTransaction(){
+    public void selectReceiver(final int receiverId) {
 
-        final Transaction transaction=new Transaction();
-        transaction.groupId=groupId;
-        transaction.senderId=selectedSender.getValue().id;
-        transaction.receiverId=selectedReceiver.getValue().id;
-        transaction.amount=amount.getValue();
-        transaction.remarks=remarks.getValue();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Receiver receiver = db.getReceiverDao().getReceiver(receiverId);
+                selectedReceiver.postValue(receiver);
+            }
+        }).start();
+
+    }
+
+    public void selectSender(final int senderId) {
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Sender sender = db.getSenderDao().getSender(senderId);
+                selectedSender.postValue(sender);
+            }
+        }).start();
+
+    }
+
+    public void saveAmount(int amountToSave){
+        amount.setValue(amountToSave);
+    }
+
+    public void saveRemarks(String remarksToSave){
+        remarks.setValue(remarksToSave);
+    }
+
+    public void saveNewTransaction(int groupId) {
+
+        final Transaction transaction = new Transaction();
+        transaction.groupId = groupId;
+        transaction.senderId = Objects.requireNonNull(selectedSender.getValue()).id;
+        transaction.receiverId = Objects.requireNonNull(selectedReceiver.getValue()).id;
+        Objects.requireNonNull(amount.getValue());
+        transaction.amount = amount.getValue();
+
+        transaction.remarks = remarks.getValue();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -162,15 +196,16 @@ public class CreateTransactionVM {
 
     }
 
-    public void updateTransaction(){
+    public void updateTransaction(int groupId, int transactionId) {
 
-        final Transaction transaction=new Transaction();
-        transaction.id=transactionId;
-        transaction.groupId=groupId;
-        transaction.senderId=selectedSender.getValue().id;
-        transaction.receiverId=selectedReceiver.getValue().id;
-        transaction.amount=amount.getValue();
-        transaction.remarks=remarks.getValue();
+        final Transaction transaction = new Transaction();
+        transaction.id = transactionId;
+        transaction.groupId = groupId;
+        transaction.senderId = Objects.requireNonNull(selectedSender.getValue()).id;
+        transaction.receiverId = Objects.requireNonNull(selectedReceiver.getValue()).id;
+        Objects.requireNonNull(amount.getValue());
+        transaction.amount = amount.getValue();
+        transaction.remarks = remarks.getValue();
 
         new Thread(new Runnable() {
             @Override

@@ -1,9 +1,10 @@
 package com.papco.sundar.papcortgs.screens.sms;
 
 import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
-import android.arch.lifecycle.MutableLiveData;
-import android.support.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.annotation.NonNull;
+
+import androidx.lifecycle.MutableLiveData;
 
 import com.papco.sundar.papcortgs.database.common.MasterDatabase;
 import com.papco.sundar.papcortgs.database.common.TableOperation;
@@ -50,6 +51,7 @@ public class ActivitySMSVM extends AndroidViewModel implements TableWorkCallback
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onReadAllComplete(Object result) {
         smsList.setValue((List<Transaction>)result);
     }

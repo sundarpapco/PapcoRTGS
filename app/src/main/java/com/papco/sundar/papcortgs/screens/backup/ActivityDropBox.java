@@ -7,16 +7,15 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.android.Auth;
@@ -167,7 +166,7 @@ public class ActivityDropBox extends AppCompatActivity implements BackupTask.Bac
         builder.setTitle("Caution!");
         builder.setMessage("Restoring from backup will erase and overwrite all your current data with the dropbox data.\n" +
                 "Sure want to restore and overwrite?");
-        builder.setPositiveButton("RESORE", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("RESTORE", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
 
@@ -243,6 +242,7 @@ public class ActivityDropBox extends AppCompatActivity implements BackupTask.Bac
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode,permissions,grantResults);
 
         if(requestCode==PERMISSION_REQUEST_INTERNET){
             if(grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){

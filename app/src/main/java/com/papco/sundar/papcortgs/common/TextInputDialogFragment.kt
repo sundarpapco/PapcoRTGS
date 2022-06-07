@@ -1,7 +1,7 @@
 package com.papco.sundar.papcortgs.common
 
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
+import androidx.fragment.app.DialogFragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import com.papco.sundar.papcortgs.R
 
-class TextInputDialogFragment : DialogFragment() {
+class TextInputDialogFragment : androidx.fragment.app.DialogFragment() {
 
     companion object {
         const val TAG = "Tag:Number:input:dialog:fragment"
@@ -72,11 +72,8 @@ class TextInputDialogFragment : DialogFragment() {
 
         val userText = enteredText.text.toString().trim()
 
-        //Check the entered text is a number
-        if (userText.isBlank()) {
-            toast("Enter a valid text")
+        if (!validateText(userText))
             return
-        }
 
         if (tryToDispatchResult(userText))
             dismiss()
@@ -84,6 +81,23 @@ class TextInputDialogFragment : DialogFragment() {
     }
 
     private fun tryToDispatchResult(enteredText: String): Boolean {
+
+        val callback = getCallBack()
+
+        return if (callback == null)
+            false
+        else {
+            callback.onTextEntered(enteredText, getResponseCode())
+            true
+        }
+    }
+
+    private fun validateText(enteredText: String): Boolean {
+        val callback = getCallBack()
+        return callback?.onValidate(enteredText) ?: false
+    }
+
+    private fun getCallBack(): TextInputListener? {
 
         var callback: TextInputListener? = null
 
@@ -104,12 +118,7 @@ class TextInputDialogFragment : DialogFragment() {
             toast("Caller should implement Text Input Listener")
         }
 
-        return if (callback == null)
-            false
-        else {
-            callback.onTextEntered(enteredText, getResponseCode())
-            true
-        }
+        return callback
     }
 
     private fun getTitle(): String = arguments?.getString(Builder.KEY_TITLE) ?: defaultTitle
@@ -161,11 +170,12 @@ class TextInputDialogFragment : DialogFragment() {
 
     }
 
-    private fun toast(msg:String){
-        Toast.makeText(requireContext(),msg,Toast.LENGTH_SHORT).show()
+    private fun toast(msg: String) {
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
     }
 
     interface TextInputListener {
+        fun onValidate(enteredText: String): Boolean
         fun onTextEntered(text: String, responseCode: Int)
     }
 }

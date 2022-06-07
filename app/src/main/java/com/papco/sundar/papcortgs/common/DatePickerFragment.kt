@@ -3,13 +3,12 @@ package com.papco.sundar.papcortgs.common
 import android.app.DatePickerDialog
 import android.app.Dialog
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
 import android.widget.DatePicker
 import android.widget.Toast
 import com.papco.sundar.papcortgs.R
 import java.util.*
 
-class DatePickerFragment : DialogFragment(), DatePickerDialog.OnDateSetListener {
+class DatePickerFragment : androidx.fragment.app.DialogFragment(), DatePickerDialog.OnDateSetListener {
 
 
     companion object {

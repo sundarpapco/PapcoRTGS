@@ -1,36 +1,28 @@
 package com.papco.sundar.papcortgs.screens.transaction.createTransaction;
 
-import android.arch.lifecycle.LiveData;
-import android.content.Context;
+import android.app.Application;
 
-import com.papco.sundar.papcortgs.common.Observable;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+
 import com.papco.sundar.papcortgs.database.common.MasterDatabase;
-import java.util.List;
-
 import com.papco.sundar.papcortgs.database.sender.Sender;
 
-public class SenderSelectionVM extends Observable<SenderSelectionVM.SenderSelectionListener> {
+import java.util.List;
 
-    public interface SenderSelectionListener{
+public class SenderSelectionVM extends AndroidViewModel {
 
-        void onSenderSelected(Sender receiver);
-    }
 
-    private MasterDatabase db;
     private LiveData<List<Sender>> senders;
 
-    public SenderSelectionVM(Context context){
-        db=MasterDatabase.getInstance(context);
-        senders=db.getSenderDao().getAllSenders();
+    public SenderSelectionVM(Application application){
+        super(application);
+        MasterDatabase db = MasterDatabase.getInstance(application);
+        senders= db.getSenderDao().getAllSenders();
     }
 
     public LiveData<List<Sender>> getSenders() {
         return senders;
-    }
-
-    public void selectSender(Sender sender){
-        if(getCallback()!=null)
-            getCallback().onSenderSelected(sender);
     }
 
 }

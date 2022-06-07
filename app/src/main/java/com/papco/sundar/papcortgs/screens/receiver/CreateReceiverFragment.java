@@ -1,12 +1,6 @@
 package com.papco.sundar.papcortgs.screens.receiver;
 
-import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.TextInputLayout;
-import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -19,7 +13,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+
+import com.google.android.material.textfield.TextInputLayout;
 import com.papco.sundar.papcortgs.R;
 import com.papco.sundar.papcortgs.common.Event;
 import com.papco.sundar.papcortgs.database.receiver.Receiver;
@@ -29,19 +33,36 @@ import java.util.regex.Pattern;
 
 public class CreateReceiverFragment extends Fragment {
 
+    private static final String KEY_RECEIVER_ID = "key_for_editing_receiver_id";
+    public static final String EVENT_SUCCESS = "EVENT_SUCCESS";
+
+    static CreateReceiverFragment getInstance(int editingReceiverId) {
+
+        Bundle args = new Bundle();
+        args.putInt(KEY_RECEIVER_ID, editingReceiverId);
+        CreateReceiverFragment instance = new CreateReceiverFragment();
+        instance.setArguments(args);
+        return instance;
+
+    }
+
+
     EditText editName, editAccountNumber, confirmAccountNumber, editAccountType, editIfsc, editMobile, editBank, editEmail;
     TextInputLayout nameLayout, accountNumberLayout, confirmAccountNumberLayout, accountTypeLayout, ifscLayout, mobileLayout, bankLayout, emailLayout;
-    ReceiverActivityVM viewModel;
+    CreateReceiverVM viewModel;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        viewModel = ViewModelProviders.of(getActivity()).get(ReceiverActivityVM.class);
+        viewModel = new ViewModelProvider(this).get(CreateReceiverVM.class);
         setHasOptionsMenu(true);
+
+        if(isEditingMode())
+            viewModel.loadReceiver(getEditingReceiverId());
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_done, menu);
     }
 
@@ -59,20 +80,30 @@ public class CreateReceiverFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        if (viewModel.editingReceiver == null)
-            ((ReceiverActivity) getActivity()).getSupportActionBar().setTitle("Create receiver");
-        else
-            ((ReceiverActivity) getActivity()).getSupportActionBar().setTitle("Update receiver");
+        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            if (isEditingMode())
+                actionBar.setTitle("Update sender");
+            else
+                actionBar.setTitle("Create sender");
+        }
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_new_edit_person, container, false);
+    }
 
-        View view = inflater.inflate(R.layout.fragment_new_edit_person, container, false);
-
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         linkViews(view);
+        initViews();
+        observeViewModel();
+    }
 
+    private void initViews() {
         editName.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -119,33 +150,38 @@ public class CreateReceiverFragment extends Fragment {
 
         editBank.addTextChangedListener(new ClearErrorTextWatcher(editBank));
         editEmail.addTextChangedListener(new ClearErrorTextWatcher(editEmail));
-
-
-        if (viewModel.editingReceiver != null)
-            loadValues();
-
-
-        return view;
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    private void observeViewModel() {
 
-        viewModel.shouldPopUpBackStack.observe(getViewLifecycleOwner(), new Observer<Event<Boolean>>() {
+        viewModel.getEventStatus().observe(getViewLifecycleOwner(), new Observer<Event<String>>() {
             @Override
-            public void onChanged(@Nullable Event<Boolean> event) {
+            public void onChanged(@Nullable Event<String> event) {
 
-                if (event != null && !event.isAlreadyHandled()) {
+                if (event == null || event.isAlreadyHandled())
+                    return;
 
-                    Boolean result = event.handleEvent();
-                    if (result != null && result)
-                        ((ReceiverActivity) getActivity()).popBackStack();
-                }
+                String result = event.handleEvent();
+                if (result.equals(EVENT_SUCCESS))
+                    ((ReceiverActivity) requireActivity()).popBackStack();
+                else
+                    Toast.makeText(requireContext(), result, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.getReceiver().observe(getViewLifecycleOwner(), new Observer<Event<Receiver>>() {
+            @Override
+            public void onChanged(Event<Receiver> event) {
+
+                if (event == null || event.isAlreadyHandled())
+                    return;
+
+                loadValues(event.handleEvent());
             }
         });
 
     }
+
 
     private void linkViews(View view) {
         editName = view.findViewById(R.id.sender_account_name);
@@ -178,17 +214,16 @@ public class CreateReceiverFragment extends Fragment {
         }
     }
 
-    private void loadValues() {
+    private void loadValues(Receiver receiver) {
 
-        Receiver sender = viewModel.editingReceiver;
-        editName.setText(sender.name);
-        editAccountNumber.setText(sender.accountNumber);
-        confirmAccountNumber.setText(sender.accountNumber);
-        editAccountType.setText(sender.accountType);
-        editIfsc.setText(sender.ifsc);
-        editBank.setText(sender.bank);
-        editMobile.setText(sender.mobileNumber);
-        editEmail.setText(sender.email);
+        editName.setText(receiver.name);
+        editAccountNumber.setText(receiver.accountNumber);
+        confirmAccountNumber.setText(receiver.accountNumber);
+        editAccountType.setText(receiver.accountType);
+        editIfsc.setText(receiver.ifsc);
+        editBank.setText(receiver.bank);
+        editMobile.setText(receiver.mobileNumber);
+        editEmail.setText(receiver.email);
     }
 
     private void validateAndSave() {
@@ -196,35 +231,32 @@ public class CreateReceiverFragment extends Fragment {
         if (!isAllFieldsValid())
             return;
 
-        if (viewModel.editingReceiver == null) { //add as new sender
+        Receiver receiver = new Receiver();
+        if (!isEditingMode()) { //add as new receiver
 
-            Receiver sender = new Receiver();
-            sender.name = editName.getText().toString();
-            sender.accountNumber = editAccountNumber.getText().toString();
-            sender.accountType = editAccountType.getText().toString();
-            sender.ifsc = editIfsc.getText().toString();
-            sender.bank = editBank.getText().toString();
-            sender.mobileNumber = editMobile.getText().toString();
-            sender.email = editEmail.getText().toString();
+            receiver.name = editName.getText().toString().trim();
+            receiver.accountNumber = editAccountNumber.getText().toString().trim();
+            receiver.accountType = editAccountType.getText().toString().trim();
+            receiver.ifsc = editIfsc.getText().toString().trim();
+            receiver.bank = editBank.getText().toString().trim();
+            receiver.mobileNumber = editMobile.getText().toString().trim();
+            receiver.email = editEmail.getText().toString().trim();
 
-            viewModel.addReceiver(sender);
-            //((ReceiverActivity) getActivity()).popBackStack();
+            viewModel.addReceiver(receiver);
+
         } else {
 
-            Receiver sender = new Receiver();
-            sender.id = viewModel.editingReceiver.id;
-            sender.name = editName.getText().toString();
-            sender.accountNumber = editAccountNumber.getText().toString();
-            sender.accountType = editAccountType.getText().toString();
-            sender.ifsc = editIfsc.getText().toString();
-            sender.bank = editBank.getText().toString();
-            sender.mobileNumber = editMobile.getText().toString();
-            sender.email = editEmail.getText().toString();
+            receiver.id = getEditingReceiverId();
+            receiver.name = editName.getText().toString().trim();
+            receiver.accountNumber = editAccountNumber.getText().toString().trim();
+            receiver.accountType = editAccountType.getText().toString().trim();
+            receiver.ifsc = editIfsc.getText().toString().trim();
+            receiver.bank = editBank.getText().toString().trim();
+            receiver.mobileNumber = editMobile.getText().toString().trim();
+            receiver.email = editEmail.getText().toString().trim();
 
-            viewModel.editingReceiver = null;
-            viewModel.updateReceiver(sender);
-            //((ReceiverActivity) getActivity()).popBackStack();
-            return;
+            viewModel.updateReceiver(receiver);
+
         }
 
 
@@ -279,13 +311,26 @@ public class CreateReceiverFragment extends Fragment {
 
     private boolean isValidEmail(String email) {
 
-        String EMAIL_REGEX = "^[\\w-\\+]+(\\.[\\w]+)*@[\\w-]+(\\.[\\w]+)*(\\.[a-zA-Z]{2,})$";
+        String EMAIL_REGEX = "^[\\w-+]+(\\.[\\w]+)*@[\\w-]+(\\.[\\w]+)*(\\.[a-zA-Z]{2,})$";
         Pattern pattern = Pattern.compile(EMAIL_REGEX, Pattern.CASE_INSENSITIVE);
         Matcher matcher;
 
         matcher = pattern.matcher(email);
         return matcher.matches();
 
+    }
+
+    private int getEditingReceiverId() {
+
+        if (getArguments() != null)
+            return getArguments().getInt(KEY_RECEIVER_ID, -1);
+        else
+            return -1;
+
+    }
+
+    private boolean isEditingMode() {
+        return getEditingReceiverId() != -1;
     }
 
     private class CheckSameContentListener implements View.OnFocusChangeListener {

@@ -1,35 +1,34 @@
 package com.papco.sundar.papcortgs.screens.sender;
 
 import android.app.Activity;
-import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
 import com.papco.sundar.papcortgs.R;
+import com.papco.sundar.papcortgs.screens.receiver.CreateReceiverFragment;
 
 public class SenderActivity extends AppCompatActivity {
 
-    SenderActivityVM viewModel;
     ViewGroup container;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.container_layout);
-        container=findViewById(R.id.container);
+        container = findViewById(R.id.container);
 
-        viewModel = ViewModelProviders.of(this).get(SenderActivityVM.class);
-
-        if(savedInstanceState==null)
+        if (savedInstanceState == null)
             loadSenderListFragment();
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if (getSupportActionBar() != null)
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 
     }
@@ -37,9 +36,9 @@ public class SenderActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        if(item.getItemId()==android.R.id.home){
+        if (item.getItemId() == android.R.id.home) {
 
-            if(getSupportFragmentManager().getBackStackEntryCount()==0)
+            if (getSupportFragmentManager().getBackStackEntryCount() == 0)
                 finish();
             else
                 popBackStack();
@@ -53,26 +52,28 @@ public class SenderActivity extends AppCompatActivity {
     private void loadSenderListFragment() {
 
         FragmentManager manager = getSupportFragmentManager();
-        android.support.v4.app.FragmentTransaction transaction = manager.beginTransaction();
+        FragmentTransaction transaction = manager.beginTransaction();
         transaction.add(R.id.container, new SendersListFragment());
         transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         transaction.commit();
     }
 
 
-    public void showAddSenderFragment() {
+    public void showAddSenderFragment(int senderId) {
+
+        CreateSenderFragment fragment = CreateSenderFragment.getInstance(senderId);
 
         hideKeyBoard();
         FragmentManager manager = getSupportFragmentManager();
-        android.support.v4.app.FragmentTransaction transaction = manager.beginTransaction();
-        transaction.setCustomAnimations(R.anim.enter_from_right,R.anim.exit_to_left,R.anim.enter_from_left,R.anim.exit_to_right);
-        transaction.replace(R.id.container, new CreateSenderFragment());
+        FragmentTransaction transaction = manager.beginTransaction();
+        transaction.setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right);
+        transaction.replace(R.id.container, fragment);
         transaction.addToBackStack("addSenderFragment");
         transaction.commit();
 
     }
 
-    public void popBackStack(){
+    public void popBackStack() {
 
         hideKeyBoard();
         FragmentManager manager = getSupportFragmentManager();

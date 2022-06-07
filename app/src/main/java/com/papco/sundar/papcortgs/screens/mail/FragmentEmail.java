@@ -1,23 +1,16 @@
 package com.papco.sundar.papcortgs.screens.mail;
 
-import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
+import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,9 +20,31 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.papco.sundar.papcortgs.common.DividerDecoration;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.papco.sundar.papcortgs.R;
+import com.papco.sundar.papcortgs.common.DividerDecoration;
 import com.papco.sundar.papcortgs.database.transaction.Transaction;
 
 import java.util.ArrayList;
@@ -38,14 +53,19 @@ import java.util.List;
 public class FragmentEmail extends Fragment implements EmailCallBack {
 
 
+    public static final String TAG = "FragmentEmailTag";
+
     TextView currentLoginName, signOutView;
-    ActivityEmailVM viewmodel;
+    ActivityEmailVM viewModel;
     EmailAdapter adapter;
     RecyclerView recycler;
     EmailService emailService;
     EmailServiceConnection connection;
-    boolean mbound = false;
+    boolean mBound = false;
     FloatingActionButton fab;
+    GoogleSignInClient googleSignInClient;
+
+    ActivityResultLauncher<String> requestPermissionLauncher = createRequestPermissionsLauncher();
 
 
     // region Override methods ---------------------------------------------
@@ -53,24 +73,14 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        viewmodel = ViewModelProviders.of(getActivity()).get(ActivityEmailVM.class);
-        viewmodel.getEmailList().observe(this, new Observer<List<Transaction>>() {
-            @Override
-            public void onChanged(@Nullable List<Transaction> transactions) {
-                if (transactions == null)
-                    return;
-
-                adapter.setData(transactions);
-            }
-        });
-
+        viewModel = new ViewModelProvider(requireActivity()).get(ActivityEmailVM.class);
+        googleSignInClient = createGoogleClient();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (EmailService.isRunning() && !mbound) {
-
+        if (EmailService.isRunning() && !mBound) {
             bindToEmailService();
         }
 
@@ -84,7 +94,7 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
     @Override
     public void onPause() {
         super.onPause();
-        if (EmailService.isRunning() && mbound) {
+        if (EmailService.isRunning() && mBound) {
             unBindFromEmailService();
         }
     }
@@ -92,14 +102,31 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        if (container != null)
+            container.removeAllViews();
+        return inflater.inflate(R.layout.fragment_gmail, container, false);
+    }
 
-        View ui = inflater.inflate(R.layout.fragment_gmail, container, false);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        initViews(view);
+        observeViewModel();
+    }
+
+    private void initViews(View ui) {
+
         currentLoginName = ui.findViewById(R.id.current_login_email);
         signOutView = ui.findViewById(R.id.email_signout);
         recycler = ui.findViewById(R.id.email_recycler);
         fab = ui.findViewById(R.id.email_fab);
 
-        currentLoginName.setText(GoogleSignIn.getLastSignedInAccount(getActivity().getApplicationContext()).getEmail());
+        GoogleSignInAccount currentLogin = GoogleSignIn.getLastSignedInAccount(requireActivity().getApplicationContext());
+        if (currentLogin != null)
+            currentLoginName.setText(currentLogin.getEmail());
+        else
+            currentLoginName.setText("");
+
         signOutView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -111,30 +138,50 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
             public void onClick(View view) {
 
                 if (!weHaveInternetConnection()) {
-                    Toast.makeText(getActivity(), "No active internet connection found. Please try again later!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireActivity(), getString(R.string.error_no_internet_connection), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 checkPermissionAndStartSending();
-                //printProfileDetails();
             }
         });
 
         if (adapter == null)
             adapter = new EmailAdapter(new ArrayList<Transaction>());
 
-        recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recycler.addItemDecoration(new DividerDecoration(getActivity(), 1, getActivity().getResources().getColor(R.color.selectionGrey)));
+        recycler.setLayoutManager(new LinearLayoutManager(requireActivity()));
+        recycler.addItemDecoration(new DividerDecoration(requireActivity(), 1, requireActivity().getResources().getColor(R.color.selectionGrey)));
         recycler.setAdapter(adapter);
-        return ui;
+
+    }
+
+    private void observeViewModel() {
+
+        viewModel.getEmailList().observe(getViewLifecycleOwner(), new Observer<List<Transaction>>() {
+            @Override
+            public void onChanged(@Nullable List<Transaction> transactions) {
+                if (transactions == null)
+                    return;
+
+                adapter.setData(transactions);
+            }
+        });
+
     }
 
     // endregion override methods ---------------------------------------------
 
     private void showSignOutDialog() {
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setMessage("Sure want to sign out of " + GoogleSignIn.getLastSignedInAccount(getActivity().getApplicationContext()).getEmail() + "?");
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
+        GoogleSignInAccount currentLogin = GoogleSignIn.getLastSignedInAccount(requireActivity().getApplicationContext());
+        String currentEmail;
+        if (currentLogin != null)
+            currentEmail = currentLogin.getEmail();
+        else
+            currentEmail = "";
+
+        builder.setMessage("Sure want to sign out of " + currentEmail + "?");
         builder.setNegativeButton("CANCEL", null);
         builder.setPositiveButton("SIGN OUT", new DialogInterface.OnClickListener() {
             @Override
@@ -145,16 +192,16 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
         builder.show();
     }
 
-    private void signOut() {
-        viewmodel.clearEmailList();
-        ((ActivityEmail) getActivity()).signOut();
-    }
-
 
     public void startEmailService() {
 
-        Intent intent=EmailService.getStartingIntent(getActivity(),viewmodel.currentGroupId,viewmodel.currentGroupName);
-        getActivity().startService(intent);
+        Intent intent = EmailService.getStartingIntent(
+                requireContext(),
+                viewModel.currentGroupId,
+                viewModel.currentGroupName,
+                viewModel.currentDefaultSenderId);
+
+        requireActivity().startService(intent);
         bindToEmailService();
         updateLayout(true);
 
@@ -163,46 +210,45 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
     private void stopEmailService() {
 
         unBindFromEmailService();
-        getActivity().startService(EmailService.getStoppingIntent(getActivity()));
+        requireActivity().startService(EmailService.getStoppingIntent(requireActivity()));
         updateLayout(false);
 
     }
 
     private void bindToEmailService() {
 
-        mbound = true;
-        Intent bindIntent = new Intent(getActivity(), EmailService.class);
+        mBound = true;
+        Intent bindIntent = new Intent(requireActivity(), EmailService.class);
         if (connection == null)
             connection = new EmailServiceConnection();
-        getActivity().bindService(bindIntent, connection, Context.BIND_AUTO_CREATE);
+        requireActivity().bindService(bindIntent, connection, Context.BIND_AUTO_CREATE);
 
 
     }
 
     private void unBindFromEmailService() {
 
-        mbound = false;
+        mBound = false;
         //updateLayout(false);
         emailService.removeCallBack();
-        getActivity().unbindService(connection);
+        requireActivity().unbindService(connection);
 
 
     }
 
 
-
     private void checkPermissionAndStartSending() {
 
-        if (((ActivityEmail) getActivity()).weHaveAccountsPermission()) {
+        if (weHaveAccountsPermission()) {
             showSendConfirmDialog();
         } else {
-            ((ActivityEmail) getActivity()).requestAccountsPermission();
+            requestPermissionLauncher.launch(Manifest.permission.GET_ACCOUNTS);
         }
 
     }
 
     public void showSendConfirmDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("SEND EMAILS?");
         builder.setMessage("Start sending mails to all beneficiaries? This operation cannot be cancelled in the middle");
         builder.setNegativeButton("CANCEL", null);
@@ -224,7 +270,7 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
             if (fab.getVisibility() == View.GONE)
                 return;
 
-            fabAnim = AnimationUtils.loadAnimation(getActivity(), R.anim.hide_view_shrink);
+            fabAnim = AnimationUtils.loadAnimation(requireActivity(), R.anim.hide_view_shrink);
             fabAnim.setAnimationListener(new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {
@@ -242,7 +288,7 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
                 }
             });
 
-            signoutAnim = AnimationUtils.loadAnimation(getActivity(), R.anim.hide_view_shrink);
+            signoutAnim = AnimationUtils.loadAnimation(requireActivity(), R.anim.hide_view_shrink);
             signoutAnim.setAnimationListener(new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {
@@ -267,7 +313,7 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
             if (fab.getVisibility() == View.VISIBLE)
                 return;
 
-            fabAnim = AnimationUtils.loadAnimation(getActivity(), R.anim.show_view_grow);
+            fabAnim = AnimationUtils.loadAnimation(requireActivity(), R.anim.show_view_grow);
             fab.show();
             signOutView.setVisibility(View.VISIBLE);
             fab.startAnimation(fabAnim);
@@ -280,12 +326,9 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
 
     private boolean weHaveInternetConnection() {
 
-        ConnectivityManager cmanager = (ConnectivityManager) getActivity().getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cmanager = (ConnectivityManager) requireActivity().getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cmanager.getActiveNetworkInfo();
-        if (activeNetwork != null && activeNetwork.isConnectedOrConnecting())
-            return true;
-        else
-            return false;
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 
 
@@ -294,8 +337,8 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
     @Override
     public void onObserverAttached(List<Transaction> currentList) {
 
-        if(viewmodel.getEmailList().getValue()==null)
-            viewmodel.getEmailList().setValue(currentList);
+        if (viewModel.getEmailList().getValue() == null)
+            viewModel.getEmailList().setValue(currentList);
         else
             adapter.updateEmailStatus();
     }
@@ -313,8 +356,8 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
 
     @Override
     public void onComplete(List<Transaction> list) {
-        if (viewmodel.getEmailList().getValue() == null)
-            viewmodel.getEmailList().setValue(list);
+        if (viewModel.getEmailList().getValue() == null)
+            viewModel.getEmailList().setValue(list);
 
         stopEmailService();
     }
@@ -327,7 +370,7 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
         private final int COLOR_RED = getResources().getColor(android.R.color.holo_red_dark);
         private final int COLOR_GREEN = getResources().getColor(android.R.color.holo_green_dark);
         private final int COLOR_BLACK = getResources().getColor(android.R.color.black);
-        private final int COLOR_GREY=getResources().getColor(android.R.color.darker_gray);
+        private final int COLOR_GREY = getResources().getColor(android.R.color.darker_gray);
 
         private List<Transaction> data;
 
@@ -370,22 +413,22 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
 
             switch (transaction.emailStatus) {
                 case EmailService.STATUS_FAILED:
-                    holder.status.setText("SENDING FAILED");
+                    holder.status.setText(getString(R.string.sending_failed));
                     holder.status.setTextColor(COLOR_RED);
                     break;
 
                 case EmailService.STATUS_SENT:
-                    holder.status.setText("MAIL SENT");
+                    holder.status.setText(getString(R.string.mail_sent));
                     holder.status.setTextColor(COLOR_GREEN);
                     break;
 
                 case EmailService.STATUS_QUEUED:
-                    holder.status.setText("QUEUED");
+                    holder.status.setText(getString(R.string.queued));
                     holder.status.setTextColor(COLOR_GREY);
                     break;
 
                 case EmailService.STATUS_SENDING:
-                    holder.status.setText("SENDING...");
+                    holder.status.setText(getString(R.string.sending));
                     holder.status.setTextColor(COLOR_BLACK);
                     break;
 
@@ -439,10 +482,9 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
 
-            // TODO: 19-11-2018 update the layout for progress
             emailService = ((EmailService.EmailBinder) iBinder).getService();
             emailService.setCallBack(FragmentEmail.this);
-            emailService.setListAndStartSending(viewmodel.getEmailList().getValue());
+            emailService.setListAndStartSending(viewModel.getEmailList().getValue());
 
         }
 
@@ -452,4 +494,60 @@ public class FragmentEmail extends Fragment implements EmailCallBack {
 
         }
     }
+
+    private GoogleSignInClient createGoogleClient() {
+
+        String scopeSendMail = "https://www.googleapis.com/auth/gmail.send";
+        GoogleSignInOptions.Builder builder = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN);
+        builder.requestScopes(new Scope(scopeSendMail));
+        builder.requestIdToken(getString(R.string.client_id));
+        builder.requestEmail();
+        builder.requestProfile();
+        GoogleSignInOptions gso = builder.build();
+        return GoogleSignIn.getClient(requireActivity().getApplicationContext(), gso);
+
+    }
+
+    public void signOut() {
+
+        viewModel.clearEmailList();
+        googleSignInClient.signOut().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                navigateToSignInFragment();
+            }
+        });
+
+    }
+
+    private void navigateToSignInFragment() {
+
+        int containerId = R.id.container;
+        if (getView() != null)
+            containerId = ((ViewGroup) getView().getParent()).getId();
+
+        FragmentManager manager = getParentFragmentManager();
+        FragmentTransaction transaction = manager.beginTransaction();
+        transaction.replace(containerId, new FragmentGoogleSignIn());
+        transaction.commit();
+
+    }
+
+    private ActivityResultLauncher<String> createRequestPermissionsLauncher() {
+
+        return registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+            @Override
+            public void onActivityResult(Boolean result) {
+                if (result)
+                    showSendConfirmDialog();
+            }
+        });
+    }
+
+    public boolean weHaveAccountsPermission() {
+        return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.GET_ACCOUNTS)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+
 }

@@ -1,19 +1,8 @@
 package com.papco.sundar.papcortgs.screens.receiver;
 
-import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.PopupMenu;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -23,6 +12,20 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
+import androidx.appcompat.widget.SearchView;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.papco.sundar.papcortgs.R;
 import com.papco.sundar.papcortgs.common.DividerDecoration;
 import com.papco.sundar.papcortgs.common.TextFunctions;
@@ -36,47 +39,55 @@ public class ReceiverListFragment extends Fragment {
     RecyclerView recycler;
     FloatingActionButton fab;
     SearchView searchView;
-    ReceiverActivityVM viewModel;
+    ReceiverListVM viewModel;
     ReceiverAdapter adapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        viewModel = ViewModelProviders.of(getActivity()).get(ReceiverActivityVM.class);
-        viewModel.receivers.observe(this, new Observer<List<Receiver>>() {
-            @Override
-            public void onChanged(@Nullable List<Receiver> senders) {
-                if (senders != null) {
-                    adapter.setData(senders);
-                    setSubtitle(senders.size());
-                }
-            }
-        });
-
+        viewModel = new ViewModelProvider(this).get(ReceiverListVM.class);
         setHasOptionsMenu(true);
-
-
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        ((ReceiverActivity)getActivity()).getSupportActionBar().setTitle("Manage receivers");
+        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
+        if (actionBar != null)
+            actionBar.setTitle("Manage receivers");
         setSubtitle(adapter.getItemCount());
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        ((ReceiverActivity)getActivity()).getSupportActionBar().setSubtitle("");
+        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
+        if (actionBar != null)
+            actionBar.setTitle("");
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.senders_list_fragment, container, false);
+    }
 
-        View ui = inflater.inflate(R.layout.senders_list_fragment, container, false);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        initViews(view);
+        observeViewModel();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (recycler != null)
+            recycler.setAdapter(null);
+    }
+
+    private void initViews(View ui) {
 
         recycler = ui.findViewById(R.id.sender_fragment_recycler);
         fab = ui.findViewById(R.id.sender_fragment_fab);
@@ -85,9 +96,7 @@ public class ReceiverListFragment extends Fragment {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                viewModel.editingReceiver = null; //Indicating rhe dialog that new item to create
-                ((ReceiverActivity) getActivity()).showAddReceiverFragment();
+                ((ReceiverActivity) requireActivity()).showAddReceiverFragment(-1);
             }
         });
 
@@ -105,27 +114,38 @@ public class ReceiverListFragment extends Fragment {
             }
         });
 
-
-
-        recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recycler.addItemDecoration(new DividerDecoration(getActivity()));
-        if(adapter==null)
-            adapter=new ReceiverAdapter(new ArrayList<Receiver>());
+        //Recycler view
+        recycler.setLayoutManager(new LinearLayoutManager(requireActivity()));
+        recycler.addItemDecoration(new DividerDecoration(requireActivity()));
+        if (adapter == null)
+            adapter = new ReceiverAdapter(new ArrayList<Receiver>());
         recycler.setAdapter(adapter);
+    }
 
-        return ui;
+    private void observeViewModel() {
+        viewModel.getReceiver().observe(getViewLifecycleOwner(), new Observer<List<Receiver>>() {
+            @Override
+            public void onChanged(List<Receiver> receivers) {
+                if (receivers != null) {
+                    adapter.setData(receivers);
+                    setSubtitle(receivers.size());
+                }
+            }
+        });
     }
 
 
-    private void setSubtitle(int count){
+    private void setSubtitle(int count) {
 
         String subtitle;
-        if(count>0)
-            subtitle=Integer.toString(count)+ " Receivers";
+        if (count > 0)
+            subtitle = count + " Receivers";
         else
-            subtitle="";
+            subtitle = "";
 
-        ((ReceiverActivity)getActivity()).getSupportActionBar().setSubtitle(subtitle);
+        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
+        if (actionBar != null)
+            actionBar.setSubtitle(subtitle);
 
 
     }
@@ -133,7 +153,7 @@ public class ReceiverListFragment extends Fragment {
     private void deleteReceiver(final Receiver delReceiver) {
 
         //deleteReceiver here
-        AlertDialog.Builder builder=new AlertDialog.Builder(getActivity());
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Are you sure want to delete?");
         builder.setMessage("All transactions sent to this receiver will be deleted!");
         builder.setPositiveButton("DELETE", new DialogInterface.OnClickListener() {
@@ -142,28 +162,27 @@ public class ReceiverListFragment extends Fragment {
                 viewModel.deleteReceiver(delReceiver);
             }
         });
-        builder.setNegativeButton("CANCEL",null);
+        builder.setNegativeButton("CANCEL", null);
         builder.create().show();
     }
 
 
-    // RecyclerView item click and long click callbacks which will be called from the viewholder
-    private void recyclerItemClicked(View view, Receiver receiver, int adapterPosition) {
+    // RecyclerView item click and long click callbacks which will be called from the viewHolder
+    private void recyclerItemClicked(Receiver receiver) {
 
-        viewModel.editingReceiver = receiver;
-        ((ReceiverActivity) getActivity()).showAddReceiverFragment();
+        ((ReceiverActivity) requireActivity()).showAddReceiverFragment(receiver.id);
 
     }
 
     private void recyclerItemLongClicked(View view, final Receiver sender) {
 
-        PopupMenu popup=new PopupMenu(getActivity(),view);
-        popup.getMenuInflater().inflate(R.menu.menu_delete,popup.getMenu());
+        PopupMenu popup = new PopupMenu(requireActivity(), view);
+        popup.getMenuInflater().inflate(R.menu.menu_delete, popup.getMenu());
         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
 
-                if(item.getItemId()==R.id.action_delete){
+                if (item.getItemId() == R.id.action_delete) {
                     deleteReceiver(sender);
                     return true;
                 }
@@ -197,7 +216,7 @@ public class ReceiverListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull ReceiverAdapter.TagViewHolder holder, int position) {
-            if(!TextUtils.isEmpty(searchView.getQuery()))
+            if (!TextUtils.isEmpty(searchView.getQuery()))
                 holder.txtViewName.setText(data.get(holder.getAdapterPosition()).highlightedName);
             else
                 holder.txtViewName.setText(data.get(holder.getAdapterPosition()).name);
@@ -236,7 +255,7 @@ public class ReceiverListFragment extends Fragment {
 
                         for (Receiver sender : unfilteredData) {
                             if (sender.name.toLowerCase().contains(stringToSearch)) {
-                                sender.highlightedName= TextFunctions.getHighlitedString(sender.name,stringToSearch,Color.YELLOW);
+                                sender.highlightedName = TextFunctions.getHighlightedString(sender.name, stringToSearch, Color.YELLOW);
                                 filteredList.add(sender);
                             }
                         }
@@ -247,6 +266,7 @@ public class ReceiverListFragment extends Fragment {
                 }
 
                 @Override
+                @SuppressWarnings("unchecked")
                 protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
                     data = (List<Receiver>) filterResults.values;
                     notifyDataSetChanged();
@@ -267,14 +287,14 @@ public class ReceiverListFragment extends Fragment {
                     @Override
                     public void onClick(View view) {
 
-                        recyclerItemClicked(view, data.get(getAdapterPosition()), getAdapterPosition());
+                        recyclerItemClicked(data.get(getAdapterPosition()));
                     }
                 });
                 itemView.setOnLongClickListener(new View.OnLongClickListener() {
                     @Override
                     public boolean onLongClick(View view) {
 
-                        recyclerItemLongClicked(view,data.get(getAdapterPosition()));
+                        recyclerItemLongClicked(view, data.get(getAdapterPosition()));
                         return true;
 
                     }

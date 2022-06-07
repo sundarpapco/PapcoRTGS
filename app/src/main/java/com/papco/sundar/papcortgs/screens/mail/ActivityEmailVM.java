@@ -1,9 +1,10 @@
 package com.papco.sundar.papcortgs.screens.mail;
 
 import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
-import android.arch.lifecycle.MutableLiveData;
-import android.support.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.annotation.NonNull;
+
+import androidx.lifecycle.MutableLiveData;
 
 import com.papco.sundar.papcortgs.database.common.TableOperation;
 import com.papco.sundar.papcortgs.database.common.TableWorkCallback;
@@ -18,6 +19,7 @@ public class ActivityEmailVM extends AndroidViewModel implements TableWorkCallba
     private MutableLiveData<List<Transaction>> emailList;
     int currentGroupId=-1;
     String currentGroupName=null;
+    int currentDefaultSenderId=0;
     MasterDatabase db;
 
     public ActivityEmailVM(@NonNull Application application) {

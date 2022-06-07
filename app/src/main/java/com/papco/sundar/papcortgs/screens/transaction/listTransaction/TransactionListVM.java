@@ -1,34 +1,35 @@
 package com.papco.sundar.papcortgs.screens.transaction.listTransaction;
 
-import android.arch.lifecycle.LiveData;
-import android.content.Context;
+import android.app.Application;
+
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
 
 import com.papco.sundar.papcortgs.database.common.MasterDatabase;
-import com.papco.sundar.papcortgs.database.transaction.Transaction;
 import com.papco.sundar.papcortgs.database.transaction.TransactionForList;
 
 import java.util.List;
 
-public class TransactionListVM {
+public class TransactionListVM extends AndroidViewModel {
 
-    private int groupId;
     private MasterDatabase db;
     private LiveData<List<TransactionForList>> transactions;
 
-    public TransactionListVM(Context context,int groupId){
-        db=MasterDatabase.getInstance(context);
-        this.groupId=groupId;
+    public TransactionListVM(Application application) {
+        super(application);
+        db = MasterDatabase.getInstance(application);
     }
 
-    public LiveData<List<TransactionForList>> getTransactions() {
 
-        if(transactions==null)
-            transactions=db.getTransactionDao().getAllTransactionListItems(groupId);
+    public LiveData<List<TransactionForList>> getTransactions(int groupId) {
+
+        if (transactions == null)
+            transactions = db.getTransactionDao().getAllTransactionListItems(groupId);
 
         return transactions;
     }
 
-    public void deleteTransaction(final int transactionId){
+    public void deleteTransaction(final int transactionId) {
         new Thread(new Runnable() {
             @Override
             public void run() {

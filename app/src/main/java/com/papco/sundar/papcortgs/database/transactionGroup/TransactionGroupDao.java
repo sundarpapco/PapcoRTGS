@@ -1,40 +1,52 @@
 package com.papco.sundar.papcortgs.database.transactionGroup;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.persistence.room.Dao;
-import android.arch.persistence.room.Delete;
-import android.arch.persistence.room.Insert;
-import android.arch.persistence.room.Query;
-import android.arch.persistence.room.Update;
+import androidx.lifecycle.LiveData;
+import androidx.room.Dao;
+import androidx.room.Delete;
+import androidx.room.Insert;
+import androidx.room.Query;
+import androidx.room.Transaction;
+import androidx.room.Update;
 
 import java.util.List;
 
-import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
+import static androidx.room.OnConflictStrategy.REPLACE;
 
 @Dao
 public interface TransactionGroupDao {
 
     @Query("select * from TransactionGroup order by id DESC")
-    public LiveData<List<TransactionGroup>> getAllTransactionGroups();
+    LiveData<List<TransactionGroup>> getAllTransactionGroups();
+
+    @Transaction
+    @Query("select * from TransactionGroup order by id DESC")
+    LiveData<List<TransactionGroupListItem>> getAllTransactionGroupsForList();
+
+    @Transaction
+    @Query("select * from TransactionGroup where id=:groupId")
+    TransactionGroupListItem getTransactionGroupListItem(int groupId);
 
     @Query("select * from TransactionGroup")
-    public List<TransactionGroup> getAllGroupsNonLive();
+    List<TransactionGroup> getAllGroupsNonLive();
 
     @Query("select * from TransactionGroup where id=:id")
-    public TransactionGroup getTransactionGroup(int id);
+    TransactionGroup getTransactionGroup(int id);
+
+    @Query("delete from TransactionGroup where id=:id")
+    int deleteTransactionGroup(int id);
 
     @Update
-    public int updateTransactionGroup(TransactionGroup updatedGroup);
+    int updateTransactionGroup(TransactionGroup updatedGroup);
 
     @Delete
-    public int deleteTransactionGroup(TransactionGroup TransactionToDelete);
+    int deleteTransactionGroup(TransactionGroup TransactionToDelete);
 
     @Insert(onConflict = REPLACE)
-    public long addTransactionGroup(TransactionGroup newGroup);
+    long addTransactionGroup(TransactionGroup newGroup);
 
     @Insert(onConflict = REPLACE)
-    public void addAllTransactionGroups(List<TransactionGroup> groups);
+    void addAllTransactionGroups(List<TransactionGroup> groups);
 
     @Query("delete from TransactionGroup")
-    public void deleteAllTransactionGroups();
+    void deleteAllTransactionGroups();
 }

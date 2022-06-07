@@ -68,7 +68,7 @@ public class TextFunctions {
 
 
 
-    public static SpannableString getHighlitedString(String source, String toHighlight,int highlightColour) {
+    public static SpannableString getHighlightedString(String source, String toHighlight, int highlightColour) {
 
         int searchStart = 0;
         int searchLength = toHighlight.length();
