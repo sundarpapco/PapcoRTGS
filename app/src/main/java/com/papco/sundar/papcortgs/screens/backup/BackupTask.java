@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.dropbox.core.v2.DbxClientV2;
@@ -139,6 +140,7 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
         publishProgress("Checking for valid backup...");
         if(!whetherValidBackupExists()){
 
+            Log.d("SUNDAR","BACKUP NOT FOUND");
             return RESULT_NO_BACKUP_FOUND;
         }
 
