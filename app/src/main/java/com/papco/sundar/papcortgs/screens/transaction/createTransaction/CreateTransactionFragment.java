@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentResultListener;
@@ -64,7 +66,6 @@ public class CreateTransactionFragment extends Fragment {
         super.onCreate(savedInstanceState);
         viewModel = new ViewModelProvider(this).get(CreateTransactionVM.class);
         setHasOptionsMenu(true);
-
         installSenderAndReceiverSelectionListeners();
 
         if (isEditingTransaction())
@@ -74,6 +75,7 @@ public class CreateTransactionFragment extends Fragment {
 
     }
 
+
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_done, menu);
@@ -81,6 +83,7 @@ public class CreateTransactionFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d("SUNDAR", "Menu Item selected");
         if (item.getItemId() == R.id.action_done) {
             validateAndSave();
             return true;
