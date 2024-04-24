@@ -14,6 +14,7 @@ public class Receiver {
     public String accountType;
     public String accountNumber;
     public String name;
+    public String displayName;
     public String mobileNumber;
     public String ifsc;
     public String bank;

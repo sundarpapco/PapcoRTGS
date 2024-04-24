@@ -40,7 +40,7 @@ class CreateSenderVM(application: Application) : AndroidViewModel(application) {
 
     fun addSender(newSender: Sender) {
         viewModelScope.launch(Dispatchers.IO) {
-            if (isNameAlreadyExists(newSender.name)) {
+            if (isNameAlreadyExists(newSender.displayName)) {
                 _eventStatus.postValue(Event(getDuplicateString()))
             } else {
                 db.senderDao.addSender(newSender)
@@ -64,11 +64,11 @@ class CreateSenderVM(application: Application) : AndroidViewModel(application) {
 
     private fun isNameAlreadyExists(givenName: String): Boolean {
 
-        val newNameInLowerCase = givenName.toLowerCase(Locale.getDefault())
+        val newNameInLowerCase = givenName.lowercase(Locale.getDefault())
         var nameInLowerCase: String
         val senderNames = db.senderDao.allSenderNames
         for (senderName in senderNames) {
-            nameInLowerCase = senderName.toLowerCase(Locale.getDefault())
+            nameInLowerCase = senderName.lowercase(Locale.getDefault())
             if (newNameInLowerCase == nameInLowerCase) return true
         }
         return false
@@ -76,12 +76,12 @@ class CreateSenderVM(application: Application) : AndroidViewModel(application) {
 
     private fun isNameAlreadyExistsExceptCurrent(updatingSender: Sender): Boolean {
 
-        val newNameInLowerCase = updatingSender.name.toLowerCase(Locale.getDefault())
+        val newNameInLowerCase = updatingSender.displayName.lowercase(Locale.getDefault())
         var nameInLowerCase: String
         val senders = db.senderDao.allSendersNonLive
         for (sender in senders) {
             if (sender.id != updatingSender.id) {
-                nameInLowerCase = sender.name.toLowerCase(Locale.getDefault())
+                nameInLowerCase = sender.displayName.lowercase(Locale.getDefault())
                 if (newNameInLowerCase == nameInLowerCase) return true
             }
         }

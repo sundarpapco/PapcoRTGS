@@ -47,8 +47,8 @@ public class CreateReceiverFragment extends Fragment {
     }
 
 
-    EditText editName, editAccountNumber, confirmAccountNumber, editAccountType, editIfsc, editMobile, editBank, editEmail;
-    TextInputLayout nameLayout, accountNumberLayout, confirmAccountNumberLayout, accountTypeLayout, ifscLayout, mobileLayout, bankLayout, emailLayout;
+    EditText editName, editAccountNumber, confirmAccountNumber, editAccountType, editIfsc, editMobile, editBank, editEmail,editDisplayName;
+    TextInputLayout nameLayout, accountNumberLayout, confirmAccountNumberLayout, accountTypeLayout, ifscLayout, mobileLayout, bankLayout, emailLayout,displayNameLayout;
     CreateReceiverVM viewModel;
 
     @Override
@@ -120,6 +120,24 @@ public class CreateReceiverFragment extends Fragment {
                 editName.setError(null);
             }
         });
+
+        editDisplayName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                editDisplayName.setError(null);
+            }
+        });
+
         editAccountNumber.addTextChangedListener(new ClearErrorTextWatcher(editAccountNumber));
         editAccountNumber.addTextChangedListener(new ClearErrorTextWatcher(confirmAccountNumber));
         editAccountNumber.setOnFocusChangeListener(new CheckSameContentListener(confirmAccountNumber));
@@ -185,6 +203,7 @@ public class CreateReceiverFragment extends Fragment {
 
     private void linkViews(View view) {
         editName = view.findViewById(R.id.sender_account_name);
+        editDisplayName=view.findViewById(R.id.sender_display_name);
         editAccountNumber = view.findViewById(R.id.sender_account_number);
         confirmAccountNumber = view.findViewById(R.id.sender_confirm_account_number);
         editAccountType = view.findViewById(R.id.sender_account_type);
@@ -194,6 +213,7 @@ public class CreateReceiverFragment extends Fragment {
         editEmail = view.findViewById(R.id.sender_email);
         nameLayout = view.findViewById(R.id.sender_name_layout);
         accountNumberLayout = view.findViewById(R.id.sender_account_number_layout);
+        displayNameLayout=view.findViewById(R.id.sender_display_name_layout);
         confirmAccountNumberLayout = view.findViewById(R.id.sender_confirm_account_number_layout);
         accountTypeLayout = view.findViewById(R.id.sender_account_type_layout);
         ifscLayout = view.findViewById(R.id.sender_account_ifsc_layout);
@@ -217,6 +237,7 @@ public class CreateReceiverFragment extends Fragment {
     private void loadValues(Receiver receiver) {
 
         editName.setText(receiver.name);
+        editDisplayName.setText(receiver.displayName);
         editAccountNumber.setText(receiver.accountNumber);
         confirmAccountNumber.setText(receiver.accountNumber);
         editAccountType.setText(receiver.accountType);
@@ -232,29 +253,20 @@ public class CreateReceiverFragment extends Fragment {
             return;
 
         Receiver receiver = new Receiver();
+
+        receiver.name = editName.getText().toString().trim();
+        receiver.accountNumber = editAccountNumber.getText().toString().trim();
+        receiver.accountType = editAccountType.getText().toString().trim();
+        receiver.ifsc = editIfsc.getText().toString().trim();
+        receiver.bank = editBank.getText().toString().trim();
+        receiver.mobileNumber = editMobile.getText().toString().trim();
+        receiver.email = editEmail.getText().toString().trim();
+        receiver.displayName=editDisplayName.getText().toString();
+
         if (!isEditingMode()) { //add as new receiver
-
-            receiver.name = editName.getText().toString().trim();
-            receiver.accountNumber = editAccountNumber.getText().toString().trim();
-            receiver.accountType = editAccountType.getText().toString().trim();
-            receiver.ifsc = editIfsc.getText().toString().trim();
-            receiver.bank = editBank.getText().toString().trim();
-            receiver.mobileNumber = editMobile.getText().toString().trim();
-            receiver.email = editEmail.getText().toString().trim();
-
             viewModel.addReceiver(receiver);
-
         } else {
-
             receiver.id = getEditingReceiverId();
-            receiver.name = editName.getText().toString().trim();
-            receiver.accountNumber = editAccountNumber.getText().toString().trim();
-            receiver.accountType = editAccountType.getText().toString().trim();
-            receiver.ifsc = editIfsc.getText().toString().trim();
-            receiver.bank = editBank.getText().toString().trim();
-            receiver.mobileNumber = editMobile.getText().toString().trim();
-            receiver.email = editEmail.getText().toString().trim();
-
             viewModel.updateReceiver(receiver);
 
         }
@@ -265,6 +277,12 @@ public class CreateReceiverFragment extends Fragment {
     private boolean isAllFieldsValid() {
 
         boolean result = true;
+
+        if (TextUtils.isEmpty(editDisplayName.getEditableText())) {
+            editDisplayName.setError("Enter a valid display name");
+            result = false;
+        }
+
         if (TextUtils.isEmpty(editName.getEditableText())) {
             editName.setError("Enter a valid name");
             result = false;

@@ -219,7 +219,7 @@ public class ReceiverListFragment extends Fragment {
             if (!TextUtils.isEmpty(searchView.getQuery()))
                 holder.txtViewName.setText(data.get(holder.getAdapterPosition()).highlightedName);
             else
-                holder.txtViewName.setText(data.get(holder.getAdapterPosition()).name);
+                holder.txtViewName.setText(data.get(holder.getAdapterPosition()).displayName);
         }
 
         @Override
@@ -254,8 +254,8 @@ public class ReceiverListFragment extends Fragment {
                     } else {
 
                         for (Receiver sender : unfilteredData) {
-                            if (sender.name.toLowerCase().contains(stringToSearch)) {
-                                sender.highlightedName = TextFunctions.getHighlightedString(sender.name, stringToSearch, Color.YELLOW);
+                            if (sender.displayName.toLowerCase().contains(stringToSearch)) {
+                                sender.highlightedName = TextFunctions.getHighlightedString(sender.displayName, stringToSearch, Color.YELLOW);
                                 filteredList.add(sender);
                             }
                         }

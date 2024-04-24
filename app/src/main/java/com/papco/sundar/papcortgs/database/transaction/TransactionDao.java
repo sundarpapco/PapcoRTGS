@@ -23,7 +23,7 @@ public interface TransactionDao {
     @Query("select * from `Transaction`") //used while creating backup to dropbox
     List<Transaction> getAllTransactionsNonLive();
 
-    @Query("select `Transaction`.id AS id, Sender.name AS sender, Receiver.name as receiver, Receiver.mobileNumber as receiverMobile, `Transaction`.amount as" +
+    @Query("select `Transaction`.id AS id, Sender.displayName AS sender, Receiver.displayName as receiver, Receiver.mobileNumber as receiverMobile, `Transaction`.amount as" +
             " amount from `Transaction` inner join Sender on `Transaction`.senderId=Sender.id " +
             "inner join Receiver on `Transaction`.receiverId=Receiver.id where `Transaction`.groupId=:id")
     LiveData<List<TransactionForList>> getAllTransactionListItems(int id);

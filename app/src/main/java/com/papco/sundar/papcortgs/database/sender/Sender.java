@@ -15,6 +15,7 @@ public class Sender {
     public String accountType;
     public String accountNumber;
     public String name;
+    public String displayName;
     public String mobileNumber;
     public String ifsc;
     public String bank;
@@ -25,6 +26,6 @@ public class Sender {
     @NonNull
     @Override
     public String toString() {
-        return name;
+        return displayName;
     }
 }

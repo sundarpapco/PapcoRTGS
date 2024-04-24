@@ -217,7 +217,7 @@ public class GroupListFragment extends Fragment {
                 holder.defaultSender.setText(" ");
                 holder.defaultSender.setVisibility(View.GONE);
             } else {
-                holder.defaultSender.setText(listItem.sender.name);
+                holder.defaultSender.setText(listItem.sender.displayName);
                 holder.defaultSender.setVisibility(View.VISIBLE);
             }
 

@@ -186,9 +186,9 @@ class ManageTransactionGroupDialog : DialogFragment(), ConfirmationDialog.Confir
         if (sender == null) {
             spinner?.setText(selectedSenderName)
         } else {
-            spinner?.setText(sender.name)
+            spinner?.setText(sender.displayName)
             selectedSenderId = sender.id
-            selectedSenderName = sender.name
+            selectedSenderName = sender.displayName
         }
 
         enableSaveButtonIfNecessary()

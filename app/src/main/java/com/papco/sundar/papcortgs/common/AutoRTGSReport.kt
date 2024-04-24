@@ -2,7 +2,7 @@
 
 package com.papco.sundar.papcortgs.common
 
-import android.os.Environment
+import android.content.Context
 import android.text.TextUtils
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.transaction.Transaction
@@ -24,7 +24,8 @@ import kotlin.math.max
 
 @Suppress("BlockingMethodInNonBlockingContext")
 class AutoRTGSReport(
-        private val db: MasterDatabase,
+    private val context:Context,
+    private val db: MasterDatabase,
         time: Long
 ) {
 
@@ -107,18 +108,10 @@ class AutoRTGSReport(
 
     private fun createWorkBook(): WritableWorkbook {
 
-        val sdCard = Environment.getExternalStorageDirectory()
-        val destinationDirectoryPath = sdCard.absolutePath + "/papcoRTGS"
-        val destinationDirectory = File(destinationDirectoryPath)
-
-        if (!destinationDirectory.isDirectory) {
-            destinationDirectory.mkdirs()
-        }
-
         val workBookSettings = WorkbookSettings()
         workBookSettings.locale = Locale("en", "EN")
 
-        val excelFile = File(destinationDirectory, filename)
+        val excelFile = File(context.cacheDir, filename)
         return Workbook.createWorkbook(excelFile, workBookSettings)
 
     }

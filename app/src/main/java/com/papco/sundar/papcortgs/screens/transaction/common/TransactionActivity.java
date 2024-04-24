@@ -263,7 +263,7 @@ public class TransactionActivity extends AppCompatActivity implements
     }
 
     private void createAutoXLFile(long time) {
-        new AutoFileExporter(MasterDatabase.getInstance(this), this, time).execute(transactionGroup);
+        new AutoFileExporter(this,MasterDatabase.getInstance(this), this, time).execute(transactionGroup);
     }
 
     private void requestStoragePermission() {

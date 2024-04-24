@@ -183,7 +183,7 @@ public class CreateTransactionFragment extends Fragment {
                     senderField.setText("Tap to add a Sender");
                 } else {
                     //Toast.makeText(requireContext(),"Selecting sender " + sender.name,Toast.LENGTH_SHORT).show();
-                    senderField.setText(sender.name);
+                    senderField.setText(sender.displayName);
                 }
             }
         });
@@ -196,7 +196,7 @@ public class CreateTransactionFragment extends Fragment {
                 if (receiver == null)
                     receiverField.setText("Tap to add beneficiary");
                 else {
-                    receiverField.setText(receiver.name);
+                    receiverField.setText(receiver.displayName);
                 }
             }
         });

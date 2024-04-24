@@ -50,7 +50,7 @@ public class ReceiverTableWorker extends AsyncTask<Object, Void, Object> {
 
     private long createReceiver(Receiver receiver) {
 
-        if (isNameAlreadyExists(receiver.name))
+        if (isNameAlreadyExists(receiver.displayName))
             return -1L;
         else
             return db.getReceiverDao().addReceiver(receiver);
@@ -80,7 +80,7 @@ public class ReceiverTableWorker extends AsyncTask<Object, Void, Object> {
 
         String newNameInLowerCase = givenName.toLowerCase();
         String nameInLowerCase;
-        List<String> receivers = db.getReceiverDao().getAllReceiverNames();
+        List<String> receivers = db.getReceiverDao().getAllReceiverDisplayNames();
         for (String receiver : receivers) {
             nameInLowerCase = receiver.toLowerCase();
             if (newNameInLowerCase.equals(nameInLowerCase))

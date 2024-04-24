@@ -278,7 +278,7 @@ public class TransactionListFragment extends Fragment implements DatePickerFragm
         if (TextUtils.isEmpty(filename)) {
             fullPath = "File creation failed for some reason";
         } else {
-            fullPath = "File created \npapcoRTGS/" + filename;
+            fullPath = "File created \n" + filename;
         }
 
         Snackbar snackbar = Snackbar.make(rootView, fullPath, Snackbar.LENGTH_LONG);
@@ -289,9 +289,8 @@ public class TransactionListFragment extends Fragment implements DatePickerFragm
                 @Override
                 public void onClick(View view) {
 
-                    File sd = Environment.getExternalStorageDirectory();
-                    String appDirectory = sd.getAbsolutePath() + "/papcoRTGS";
-                    File filelocation = new File(appDirectory, filename);
+                    File sd = requireContext().getCacheDir();
+                    File filelocation = new File(sd, filename);
                     Uri path = FileProvider.getUriForFile(requireContext(), "com.papco.sundar.papcortgs.fileprovider", filelocation);
                     Intent emailIntent = new Intent(Intent.ACTION_SEND);
                     //emailIntent.setDataAndType(path,"file/*");

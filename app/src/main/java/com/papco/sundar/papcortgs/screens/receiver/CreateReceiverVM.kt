@@ -40,7 +40,7 @@ class CreateReceiverVM(application: Application) :AndroidViewModel(application) 
 
     fun addReceiver(newReceiver: Receiver) {
         viewModelScope.launch(Dispatchers.IO) {
-            if (isNameAlreadyExists(newReceiver.name)) {
+            if (isNameAlreadyExists(newReceiver.displayName)) {
                 _eventStatus.postValue(Event(getDuplicateString()))
             } else {
                 db.receiverDao.addReceiver(newReceiver)
@@ -64,11 +64,11 @@ class CreateReceiverVM(application: Application) :AndroidViewModel(application) 
 
     private fun isNameAlreadyExists(givenName: String): Boolean {
 
-        val newNameInLowerCase = givenName.toLowerCase(Locale.getDefault())
+        val newNameInLowerCase = givenName.lowercase(Locale.getDefault())
         var nameInLowerCase: String
-        val receiverNames = db.receiverDao.allReceiverNames
+        val receiverNames = db.receiverDao.allReceiverDisplayNames
         for (receiverName in receiverNames) {
-            nameInLowerCase = receiverName.toLowerCase(Locale.getDefault())
+            nameInLowerCase = receiverName.lowercase(Locale.getDefault())
             if (newNameInLowerCase == nameInLowerCase) return true
         }
         return false
@@ -76,12 +76,12 @@ class CreateReceiverVM(application: Application) :AndroidViewModel(application) 
 
     private fun isNameAlreadyExistsExceptCurrent(updatingReceiver: Receiver): Boolean {
 
-        val newNameInLowerCase = updatingReceiver.name.toLowerCase(Locale.getDefault())
+        val newNameInLowerCase = updatingReceiver.displayName.lowercase(Locale.getDefault())
         var nameInLowerCase: String
         val receivers = db.receiverDao.allReceiversNonLive
         for (receiver in receivers) {
             if (receiver.id != updatingReceiver.id) {
-                nameInLowerCase = receiver.name.toLowerCase(Locale.getDefault())
+                nameInLowerCase = receiver.displayName.lowercase(Locale.getDefault())
                 if (newNameInLowerCase == nameInLowerCase) return true
             }
         }

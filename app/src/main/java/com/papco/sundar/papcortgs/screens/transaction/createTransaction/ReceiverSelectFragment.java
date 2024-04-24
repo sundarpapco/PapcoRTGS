@@ -191,7 +191,7 @@ public class ReceiverSelectFragment extends Fragment {
             if (!TextUtils.isEmpty(searchView.getQuery()))
                 holder.txtViewName.setText(receiver.highlightedName);
             else
-                holder.txtViewName.setText(receiver.name);
+                holder.txtViewName.setText(receiver.displayName);
 
             if (receiver.accountNumber.equals("-1"))
                 holder.txtViewName.setTextColor(grey);
@@ -231,9 +231,9 @@ public class ReceiverSelectFragment extends Fragment {
                     } else {
 
                         for (Receiver sender : unfilteredData) {
-                            if (sender.name.toLowerCase().contains(stringToSearch)) {
+                            if (sender.displayName.toLowerCase().contains(stringToSearch)) {
 
-                                sender.highlightedName = TextFunctions.getHighlightedString(sender.name, stringToSearch, Color.YELLOW);
+                                sender.highlightedName = TextFunctions.getHighlightedString(sender.displayName, stringToSearch, Color.YELLOW);
                                 filteredList.add(sender);
                             }
                         }

@@ -35,8 +35,8 @@ import java.util.regex.Pattern;
 
 public class CreateSenderFragment extends Fragment {
 
-    EditText editName, editAccountNumber, confirmAccountNumber, editAccountType, editIfsc, editMobile, editBank, editEmail;
-    TextInputLayout nameLayout, accountNumberLayout, confirmAccountNumberLayout, accountTypeLayout, ifscLayout, mobileLayout, bankLayout, emailLayout;
+    EditText editName, editAccountNumber, confirmAccountNumber, editAccountType, editIfsc, editMobile, editBank, editEmail,displayName;
+    TextInputLayout nameLayout, accountNumberLayout, confirmAccountNumberLayout, accountTypeLayout, ifscLayout, mobileLayout, bankLayout, emailLayout,displayNameLayout;
     CreateSenderVM viewModel;
 
     private static final String KEY_SENDER_ID = "key_editing_sender_id";
@@ -104,6 +104,7 @@ public class CreateSenderFragment extends Fragment {
     private void linkViews(View view) {
 
         editName = view.findViewById(R.id.sender_account_name);
+        displayName=view.findViewById(R.id.sender_display_name);
         editAccountNumber = view.findViewById(R.id.sender_account_number);
         confirmAccountNumber = view.findViewById(R.id.sender_confirm_account_number);
         editAccountType = view.findViewById(R.id.sender_account_type);
@@ -137,6 +138,23 @@ public class CreateSenderFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable s) {
                 editName.setError(null);
+            }
+        });
+
+        displayName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                displayName.setError(null);
             }
         });
         editAccountNumber.addTextChangedListener(new ClearErrorTextWatcher(editAccountNumber));
@@ -216,6 +234,7 @@ public class CreateSenderFragment extends Fragment {
 
     private void loadValues(Sender sender) {
 
+        displayName.setText(sender.displayName);
         editName.setText(sender.name);
         editAccountNumber.setText(sender.accountNumber);
         confirmAccountNumber.setText(sender.accountNumber);
@@ -232,29 +251,20 @@ public class CreateSenderFragment extends Fragment {
             return;
 
         Sender sender = new Sender();
+
+        sender.name = editName.getText().toString();
+        sender.accountNumber = editAccountNumber.getText().toString();
+        sender.accountType = editAccountType.getText().toString();
+        sender.ifsc = editIfsc.getText().toString();
+        sender.bank = editBank.getText().toString();
+        sender.mobileNumber = editMobile.getText().toString();
+        sender.email = editEmail.getText().toString();
+        sender.displayName=displayName.getText().toString();
+
         if (!isEditMode()) { //add as new sender
-
-            sender.name = editName.getText().toString();
-            sender.accountNumber = editAccountNumber.getText().toString();
-            sender.accountType = editAccountType.getText().toString();
-            sender.ifsc = editIfsc.getText().toString();
-            sender.bank = editBank.getText().toString();
-            sender.mobileNumber = editMobile.getText().toString();
-            sender.email = editEmail.getText().toString();
-
             viewModel.addSender(sender);
-
         } else {
-
             sender.id = getEditingSenderId();
-            sender.name = editName.getText().toString();
-            sender.accountNumber = editAccountNumber.getText().toString();
-            sender.accountType = editAccountType.getText().toString();
-            sender.ifsc = editIfsc.getText().toString();
-            sender.bank = editBank.getText().toString();
-            sender.mobileNumber = editMobile.getText().toString();
-            sender.email = editEmail.getText().toString();
-
             viewModel.updateSender(sender);
         }
 
@@ -266,6 +276,11 @@ public class CreateSenderFragment extends Fragment {
         boolean result = true;
         if (TextUtils.isEmpty(editName.getEditableText())) {
             editName.setError("Enter a valid name");
+            result = false;
+        }
+
+        if (TextUtils.isEmpty(displayName.getEditableText())) {
+            displayName.setError("Enter a valid Display name");
             result = false;
         }
 

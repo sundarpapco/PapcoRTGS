@@ -21,7 +21,7 @@ public interface SenderDao {
     @Query("select * from Sender")
     List<Sender> getAllSendersNonLive();
 
-    @Query(("select name from Sender"))
+    @Query(("select displayName from Sender"))
     List<String> getAllSenderNames();
 
     @Query("select * from Sender where id=:id")
