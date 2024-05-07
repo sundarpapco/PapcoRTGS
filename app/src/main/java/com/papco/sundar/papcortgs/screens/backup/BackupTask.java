@@ -419,7 +419,19 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
             currentReceiver.ifsc=sheet.getCell(5,row).getContents();
             currentReceiver.bank=sheet.getCell(6,row).getContents();
             currentReceiver.email=sheet.getCell(7,row).getContents();
-            currentReceiver.displayName=sheet.getCell(8,row).getContents();
+
+             /*
+            A try block is required because this field wont exist in the backup file
+            if the backup file is for older database version than the current version. So,
+            in case the display name field is not there in the backup file, simply migrate by making
+            the display name same as the account name field
+             */
+            try{
+                currentReceiver.displayName=sheet.getCell(8,row).getContents();
+            }catch(Exception e){
+                currentReceiver.displayName=currentReceiver.name;
+            }
+
 
             receivers.add(currentReceiver);
             row++;
@@ -458,7 +470,18 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
             currentSender.ifsc=sheet.getCell(5,row).getContents();
             currentSender.bank=sheet.getCell(6,row).getContents();
             currentSender.email=sheet.getCell(7,row).getContents();
-            currentSender.displayName=sheet.getCell(8,row).getContents();
+
+            /*
+            A try block is required because this field wont exist in the backup file
+            if the backup file is for older database version than the current version. So,
+            in case the display name field is not there in the backup file, simply migrate by making
+            the display name same as the account name field
+             */
+            try{
+                currentSender.displayName=sheet.getCell(8,row).getContents();
+            }catch(Exception e){
+                currentSender.displayName=currentSender.name;
+            }
 
             senders.add(currentSender);
             row++;
