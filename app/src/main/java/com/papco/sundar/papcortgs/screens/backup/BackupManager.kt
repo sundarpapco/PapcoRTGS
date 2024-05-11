@@ -29,7 +29,7 @@ class BackupManager(
 ) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun doBackup()= flow<String>{
+    fun doBackup()= flow{
 
         //Create the backup file in local drive
         val receiversFile: File = File(appPreferences.getLocalBackupFilePath())
@@ -100,30 +100,30 @@ class BackupManager(
         val receivers: List<Receiver> = db.getReceiverDao().getAllReceiversNonLive()
         val sheet = workbook.createSheet("receivers", 0)
 
-        //prepare the cellformat for writing
+        //prepare the cell format for writing
         val contentFont = WritableFont(WritableFont.ARIAL, 10, WritableFont.NO_BOLD)
-        val contentformat = WritableCellFormat(contentFont)
-        contentformat.alignment = Alignment.CENTRE
-        contentformat.verticalAlignment = VerticalAlignment.BOTTOM
-        contentformat.wrap = false
+        val contentFormat = WritableCellFormat(contentFont)
+        contentFormat.alignment = Alignment.CENTRE
+        contentFormat.verticalAlignment = VerticalAlignment.BOTTOM
+        contentFormat.wrap = false
 
         //write the receivers to the file
         var row = 0
         for (receiver in receivers) {
             if (receiver.email == null) //since its added in the later version, older objects may have null value
                 receiver.email = ""
-            sheet.addCell(Number(0, row, receiver.id.toDouble(), contentformat))
-            sheet.addCell(Label(1, row, receiver.accountType, contentformat))
-            sheet.addCell(Label(2, row, receiver.accountNumber, contentformat))
-            sheet.addCell(Label(3, row, receiver.name, contentformat))
-            sheet.addCell(Label(4, row, receiver.mobileNumber, contentformat))
-            sheet.addCell(Label(5, row, receiver.ifsc, contentformat))
-            sheet.addCell(Label(6, row, receiver.bank, contentformat))
-            sheet.addCell(Label(7, row, receiver.email, contentformat))
-            sheet.addCell(Label(8, row, receiver.displayName, contentformat))
+            sheet.addCell(Number(0, row, receiver.id.toDouble(), contentFormat))
+            sheet.addCell(Label(1, row, receiver.accountType, contentFormat))
+            sheet.addCell(Label(2, row, receiver.accountNumber, contentFormat))
+            sheet.addCell(Label(3, row, receiver.name, contentFormat))
+            sheet.addCell(Label(4, row, receiver.mobileNumber, contentFormat))
+            sheet.addCell(Label(5, row, receiver.ifsc, contentFormat))
+            sheet.addCell(Label(6, row, receiver.bank, contentFormat))
+            sheet.addCell(Label(7, row, receiver.email, contentFormat))
+            sheet.addCell(Label(8, row, receiver.displayName, contentFormat))
             row++
         }
-        sheet.addCell(Label(0, row, "--end--", contentformat))
+        sheet.addCell(Label(0, row, "--end--", contentFormat))
 
     }
 
