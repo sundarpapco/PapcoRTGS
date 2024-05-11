@@ -368,9 +368,7 @@ public class BackupTask extends AsyncTask<Void, String, Integer> {
 
 
         try{
-
             client.files().getMetadata(PATH_DBX_BACKUP_XL_FILE);
-
         }catch (Exception e){
 
             return false;

@@ -28,6 +28,7 @@
     <string name="queued">QUEUED</string>
     <string name="sending" tools:ignore="TypographyEllipsis">SENDING...</string>
     <string name="error_no_internet_connection">No active internet connection found. Please try again later!</string>
-
+    <string name="link_to_dropbox">LINK TO DROPBOX</string>
+    <string name="unlink_from_dropbox">UNLINK FROM DROPBOX</string>
 
 </resources>
