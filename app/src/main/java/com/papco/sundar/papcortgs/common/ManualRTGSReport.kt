@@ -2,6 +2,7 @@
 
 package com.papco.sundar.papcortgs.common
 
+import android.content.Context
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
@@ -26,6 +27,7 @@ import kotlin.math.max
 
 @Suppress("BlockingMethodInNonBlockingContext")
 class ManualRTGSReport(
+    private val context:Context,
         private val db: MasterDatabase,
         private val chequeNumber: String) {
 
@@ -43,7 +45,7 @@ class ManualRTGSReport(
     }
 
 
-    fun createReport(transactionGroup: TransactionGroup): String {
+    suspend fun createReport(transactionGroup: TransactionGroup): String {
 
         this.transactionGroup = transactionGroup
         val transactions = loadTransactions(transactionGroup.id)
@@ -61,7 +63,7 @@ class ManualRTGSReport(
 
     }
 
-    private fun loadTransactions(groupId: Int): List<Transaction> {
+    private suspend fun loadTransactions(groupId: Int): List<Transaction> {
 
         val transactions = db.transactionDao.getTransactionsNonLive(groupId)
 
@@ -97,18 +99,10 @@ class ManualRTGSReport(
 
     private fun createWorkBook(): WritableWorkbook {
 
-        val sdCard = Environment.getExternalStorageDirectory()
-        val destinationDirectoryPath = sdCard.absolutePath + "/papcoRTGS"
-        val destinationDirectory = File(destinationDirectoryPath)
-
-        if (!destinationDirectory.isDirectory) {
-            destinationDirectory.mkdirs()
-        }
-
         val workBookSettings = WorkbookSettings()
         workBookSettings.locale = Locale("en", "EN")
 
-        val excelFile = File(destinationDirectory, filename)
+        val excelFile = File(context.cacheDir, filename)
         return Workbook.createWorkbook(excelFile, workBookSettings)
 
     }
@@ -194,8 +188,8 @@ class ManualRTGSReport(
 
     private fun writeTransaction(sheet: WritableSheet, transaction: Transaction, row: Int, format: CellFormat) {
 
-        val sender = transaction.sender
-        val receiver = transaction.receiver
+        val sender = transaction.sender!!
+        val receiver = transaction.receiver!!
 
         sheet.addCell(Label(0, row, row.toString(), format))
         calculateColumnWidth(0, row.toString())

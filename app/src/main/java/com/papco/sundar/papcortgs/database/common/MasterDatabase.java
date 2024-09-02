@@ -18,7 +18,7 @@ import com.papco.sundar.papcortgs.database.sender.SenderDao;
 import com.papco.sundar.papcortgs.database.transaction.Transaction;
 import com.papco.sundar.papcortgs.database.transaction.TransactionDao;
 
-@Database(entities = {Sender.class, Receiver.class, Transaction.class, TransactionGroup.class},version = 4)
+@Database(entities = {Sender.class, Receiver.class, Transaction.class, TransactionGroup.class},version = 5)
 public abstract class MasterDatabase extends RoomDatabase {
 
     static MasterDatabase db;
@@ -48,13 +48,24 @@ public abstract class MasterDatabase extends RoomDatabase {
         }
     };
 
+    private static final Migration MIGRATION_4_5=new Migration(4,5){
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+
+            database.execSQL("ALTER TABLE 'Transaction' ADD COLUMN mailSent INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE 'Transaction' ADD COLUMN messageSent INTEGER NOT NULL DEFAULT 0");
+        }
+    };
+
     public static MasterDatabase getInstance(Context context){
 
         if(db==null)
             db= Room.databaseBuilder(context,MasterDatabase.class,"master_database")
-                    .addMigrations(MIGRATION_1_2)
-                    .addMigrations(MIGRATION_2_3)
-                    .addMigrations(MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2,
+                            MIGRATION_2_3,
+                            MIGRATION_3_4,
+                            MIGRATION_3_4,
+                            MIGRATION_4_5)
                     .build();
 
         return db;

@@ -2,9 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.papco.sundar.papcortgs">
 
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -12,6 +15,7 @@
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
 
     <application
+        android:name=".PapcoRTGSApp"
         android:allowBackup="true"
         android:icon="@drawable/app_icon"
         android:label="@string/app_name"
@@ -30,14 +34,8 @@
                 android:resource="@xml/file_path" />
         </provider>
 
-        <service
-            android:name=".screens.sms.SmsService"
-            android:exported="false" />
-        <service
-            android:name=".screens.mail.EmailService"
-            android:exported="false" />
 
-        <activity android:name=".screens.transactionGroup.GroupActivity"
+        <activity android:name=".screens.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -45,27 +43,8 @@
             </intent-filter>
 
         </activity>
-        <activity
-            android:name=".screens.sender.SenderActivity"
-            android:parentActivityName=".screens.transactionGroup.GroupActivity" />
-        <activity
-            android:name=".screens.receiver.ReceiverActivity"
-            android:parentActivityName=".screens.transactionGroup.GroupActivity" />
-        <activity
-            android:name=".screens.transaction.common.TransactionActivity"
-            android:parentActivityName=".screens.transactionGroup.GroupActivity" />
-        <activity
-            android:name=".screens.sms.ActivitySMS"
-            android:parentActivityName=".screens.transaction.common.TransactionActivity"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".screens.backup.ActivityDropBox"
-            android:parentActivityName=".screens.transactionGroup.GroupActivity"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".screens.mail.ActivityEmail"
-            android:parentActivityName=".screens.transaction.common.TransactionActivity"
-            android:screenOrientation="portrait" />
+
+
         <activity
             android:name="com.dropbox.core.android.AuthActivity"
             android:configChanges="orientation|keyboard"
@@ -80,9 +59,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".screens.sms.ActivityComposeMessage"
-            android:screenOrientation="portrait" />
 
     </application>
 

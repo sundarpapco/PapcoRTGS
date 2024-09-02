@@ -39,13 +39,13 @@ class AutoRTGSReport(
 
     private val date by lazy{
         val dateFormat = SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault())
-        dateFormat.format(Date(time)).toUpperCase(Locale.getDefault())
+        dateFormat.format(Date(time)).uppercase(Locale.getDefault())
     }
 
     private var rowSize:Int=0
 
 
-    fun createReport(transactionGroup: TransactionGroup): String {
+    suspend fun createReport(transactionGroup: TransactionGroup): String {
 
         this.transactionGroup=transactionGroup
         val transactions = loadTransactions(transactionGroup.id)
@@ -64,7 +64,7 @@ class AutoRTGSReport(
 
     }
 
-    private fun loadTransactions(groupId: Int): List<Transaction> {
+    private suspend fun loadTransactions(groupId: Int): List<Transaction> {
 
         val transactions = db.transactionDao.getTransactionsNonLive(groupId)
 
@@ -238,8 +238,8 @@ class AutoRTGSReport(
 
     private fun writeTransaction(sheet: WritableSheet, transaction: Transaction, row: Int, format: CellFormat) {
 
-        val sender = transaction.sender
-        val receiver = transaction.receiver
+        val sender = transaction.sender!!
+        val receiver = transaction.receiver!!
 
         sheet.addCell(Label(0, row, sender.accountNumber, format))
         calculateColumnWidth(0, sender.accountNumber)

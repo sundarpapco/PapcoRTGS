@@ -27,15 +27,36 @@
             android:hint="Text"
             android:selectAllOnFocus="true"/>
 
-        <TextView
-            android:id="@+id/text_input_dialog_ok"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OK"
-            style="@style/DialogButton"
-            android:layout_marginBottom="0dp"
-            android:layout_gravity="end"/>
+            android:orientation="horizontal"
+            android:layout_gravity="end">
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/text_input_dialog_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CANCEL"
+                style="@style/DialogButton"
+                android:layout_marginBottom="0dp"
+                android:layout_gravity="end"/>
+
+            <TextView
+                android:id="@+id/text_input_dialog_ok"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OK"
+                style="@style/DialogButton"
+                android:layout_marginBottom="0dp"
+                android:layout_gravity="end"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 

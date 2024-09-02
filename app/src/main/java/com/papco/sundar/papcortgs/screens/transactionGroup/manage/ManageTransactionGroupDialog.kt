@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.AdapterView
-import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
@@ -18,7 +17,7 @@ import com.papco.sundar.papcortgs.common.Event
 import com.papco.sundar.papcortgs.common.NoFilterArrayAdapter
 import com.papco.sundar.papcortgs.database.sender.Sender
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
-import kotlinx.android.synthetic.main.dialog_manage_group.*
+import com.papco.sundar.papcortgs.databinding.DialogManageGroupBinding
 
 class ManageTransactionGroupDialog : DialogFragment(), ConfirmationDialog.ConfirmationDialogListener {
 
@@ -42,9 +41,13 @@ class ManageTransactionGroupDialog : DialogFragment(), ConfirmationDialog.Confir
 
     }
 
-    private var spinner: AutoCompleteTextView? = null
+    private var _viewBinding:DialogManageGroupBinding?=null
+    private val viewBinding:DialogManageGroupBinding
+        get() = _viewBinding!!
+
+
     private val viewModel: ManageTransactionGroupVM by lazy {
-        ViewModelProvider(this).get(ManageTransactionGroupVM::class.java)
+        ViewModelProvider(this)[ManageTransactionGroupVM::class.java]
     }
     private val adapter: NoFilterArrayAdapter<Sender> by lazy {
         NoFilterArrayAdapter(requireContext(), R.layout.spinner_drop_down, R.id.text1, mutableListOf())
@@ -68,13 +71,14 @@ class ManageTransactionGroupDialog : DialogFragment(), ConfirmationDialog.Confir
             viewModel.loadTransactionGroup(getGroupId())
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.dialog_manage_group, container, false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _viewBinding=DialogManageGroupBinding.inflate(layoutInflater,container,false)
+        return viewBinding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initView(view)
+        initView()
 
         if (isEditMode())
             updateTextsForEditMode()
@@ -95,41 +99,43 @@ class ManageTransactionGroupDialog : DialogFragment(), ConfirmationDialog.Confir
 
     override fun onDestroyView() {
         super.onDestroyView()
-        spinner = null
+        _viewBinding=null
     }
 
-    private fun initView(view: View) {
-        spinner = view.findViewById(R.id.spinner_senders)
-        spinner?.setAdapter(adapter)
-        spinner?.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-            selectSender(adapter.getItem(position))
-        }
-        selectSender(null)
+    private fun initView() {
 
-        xl_file_name.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+        with(viewBinding){
+
+            spinnerSenders.setAdapter(adapter)
+            spinnerSenders.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+                selectSender(adapter.getItem(position))
+            }
+            selectSender(null)
+
+            xlFileName.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                }
+
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                }
+
+                override fun afterTextChanged(s: Editable?) {
+                    enableSaveButtonIfNecessary()
+                }
+            })
+
+            btnSave.setOnClickListener {
+                onButtonSaveClicked()
             }
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            btnCancel.setOnClickListener {
+                dismiss()
             }
 
-            override fun afterTextChanged(s: Editable?) {
-                enableSaveButtonIfNecessary()
+            btnDelete.setOnClickListener {
+                showDeleteGroupConfirmationDialog()
             }
-        })
-
-        btn_save.setOnClickListener {
-            onButtonSaveClicked()
         }
-
-        btn_cancel.setOnClickListener {
-            dismiss()
-        }
-
-        btn_delete.setOnClickListener {
-            showDeleteGroupConfirmationDialog()
-        }
-
         enableSaveButtonIfNecessary()
 
     }
@@ -163,7 +169,7 @@ class ManageTransactionGroupDialog : DialogFragment(), ConfirmationDialog.Confir
                 return@observe
 
             val result = it.handleEvent()
-            xl_file_name.setText(result.transactionGroup.name)
+            viewBinding.xlFileName.setText(result.transactionGroup.name)
             selectSender(result.sender)
 
         }
@@ -184,9 +190,9 @@ class ManageTransactionGroupDialog : DialogFragment(), ConfirmationDialog.Confir
 
     private fun selectSender(sender: Sender?) {
         if (sender == null) {
-            spinner?.setText(selectedSenderName)
+            viewBinding.spinnerSenders.setText(selectedSenderName)
         } else {
-            spinner?.setText(sender.displayName)
+            viewBinding.spinnerSenders.setText(sender.displayName)
             selectedSenderId = sender.id
             selectedSenderName = sender.displayName
         }
@@ -195,16 +201,18 @@ class ManageTransactionGroupDialog : DialogFragment(), ConfirmationDialog.Confir
     }
 
     private fun enableSaveButtonIfNecessary() {
-        btn_save.isEnabled = !(xl_file_name.text?.isBlank() ?: true || selectedSenderId == 0)
+        with(viewBinding){
+            btnSave.isEnabled = !(xlFileName.text?.isBlank() ?: true || selectedSenderId == 0)
+        }
     }
 
     private fun onButtonSaveClicked() {
 
 
-        if (selectedSenderId > 0 && xl_file_name.text.toString().isNotBlank()) {
+        if (selectedSenderId > 0 && viewBinding.xlFileName.text.toString().isNotBlank()) {
 
             val group = TransactionGroup()
-            group.name = xl_file_name.text.toString().trim()
+            group.name = viewBinding.xlFileName.text.toString().trim()
             group.defaultSenderId = selectedSenderId
 
             if (isEditMode()) {
@@ -219,10 +227,11 @@ class ManageTransactionGroupDialog : DialogFragment(), ConfirmationDialog.Confir
 
     private fun updateTextsForEditMode() {
 
-        btn_save.text = getString(R.string.save)
-        title.text = getString(R.string.update_xl_file)
-        btn_delete.visibility=View.VISIBLE
-
+        with(viewBinding){
+            btnSave.text = getString(R.string.save)
+            title.text = getString(R.string.update_xl_file)
+            btnDelete.visibility=View.VISIBLE
+        }
     }
 
     private fun showDeleteGroupConfirmationDialog() {

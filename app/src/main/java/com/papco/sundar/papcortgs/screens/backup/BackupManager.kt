@@ -32,7 +32,7 @@ class BackupManager(
     fun doBackup()= flow{
 
         //Create the backup file in local drive
-        val receiversFile: File = File(appPreferences.getLocalBackupFilePath())
+        val receiversFile = File(appPreferences.getLocalBackupFilePath())
 
         //prepare and create the workbook and writable sheet
         val workbook: WritableWorkbook
@@ -161,10 +161,10 @@ class BackupManager(
     }
 
     @Throws(Exception::class)
-    private fun writeTransactionsToWorkBook(workbook: WritableWorkbook) {
+    private suspend fun writeTransactionsToWorkBook(workbook: WritableWorkbook) {
 
         //prepare the list of transactions to backup
-        val transactions: List<Transaction> = db.getTransactionDao().getAllTransactionsNonLive()
+        val transactions: List<Transaction> = db.getTransactionDao().getAllTransactions()
         val sheet = workbook.createSheet("transactions", 3)
 
         //prepare the cellformat for writing
@@ -220,7 +220,7 @@ class BackupManager(
 
     // region ********** Methods for backup
     @Throws(java.lang.Exception::class)
-    private fun clearAllTables() {
+    private suspend fun clearAllTables() {
         db.getReceiverDao().deleteAllReceivers()
         db.getSenderDao().deleteAllSenders()
         db.getTransactionGroupDao().deleteAllTransactionGroups()
@@ -347,7 +347,7 @@ class BackupManager(
     }
 
     @Throws(java.lang.Exception::class)
-    private fun restoreTransactions(workbook: Workbook) {
+    private suspend fun restoreTransactions(workbook: Workbook) {
         val transactions: MutableList<Transaction> = ArrayList()
         var notReachedEnd: Boolean
         var currentCell: Cell

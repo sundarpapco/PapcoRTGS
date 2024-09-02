@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/groupListFragment">
+
+    <fragment
+        android:id="@+id/groupListFragment"
+        android:name="com.papco.sundar.papcortgs.screens.transactionGroup.GroupListFragment"
+        android:label="GroupListFragment" >
+        <action
+            android:id="@+id/action_groupListFragment_to_sendersListFragment"
+            app:destination="@id/sendersListFragment" />
+        <action
+            android:id="@+id/action_groupListFragment_to_receiverListFragment"
+            app:destination="@id/receiverListFragment" />
+        <action
+            android:id="@+id/action_groupListFragment_to_dropBoxFragment"
+            app:destination="@id/dropBoxFragment" />
+        <action
+            android:id="@+id/action_groupListFragment_to_composeMessageFragment"
+            app:destination="@id/composeMessageFragment" />
+        <action
+            android:id="@+id/action_groupListFragment_to_transactionListFragment"
+            app:destination="@id/transactionListFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/sendersListFragment"
+        android:name="com.papco.sundar.papcortgs.screens.sender.SendersListFragment"
+        android:label="SendersListFragment" >
+        <action
+            android:id="@+id/action_sendersListFragment_to_createSenderFragment"
+            app:destination="@id/createSenderFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/receiverListFragment"
+        android:name="com.papco.sundar.papcortgs.screens.receiver.ReceiverListFragment"
+        android:label="ReceiverListFragment" >
+        <action
+            android:id="@+id/action_receiverListFragment_to_createReceiverFragment"
+            app:destination="@id/createReceiverFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/dropBoxFragment"
+        android:name="com.papco.sundar.papcortgs.screens.backup.DropBoxFragment"
+        android:label="DropBoxFragment" />
+    <fragment
+        android:id="@+id/composeMessageFragment"
+        android:name="com.papco.sundar.papcortgs.screens.sms.ComposeMessageFragment"
+        android:label="ComposeMessageFragment" />
+    <fragment
+        android:id="@+id/transactionListFragment"
+        android:name="com.papco.sundar.papcortgs.screens.transaction.listTransaction.TransactionListFragment"
+        android:label="TransactionListFragment" >
+        <action
+            android:id="@+id/action_transactionListFragment_to_SMSFragment"
+            app:destination="@id/SMSFragment" />
+        <action
+            android:id="@+id/action_transactionListFragment_to_fragmentGoogleSignIn"
+            app:destination="@id/fragmentGoogleSignIn" />
+        <action
+            android:id="@+id/action_transactionListFragment_to_createTransactionFragment"
+            app:destination="@id/createTransactionFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/SMSFragment"
+        android:name="com.papco.sundar.papcortgs.screens.sms.SMSFragment"
+        android:label="SMSFragment" />
+    <fragment
+        android:id="@+id/fragmentGoogleSignIn"
+        android:name="com.papco.sundar.papcortgs.screens.mail.FragmentGoogleSignIn"
+        android:label="FragmentGoogleSignIn" >
+        <action
+            android:id="@+id/action_fragmentGoogleSignIn_to_fragmentEmail"
+            app:destination="@id/fragmentEmail"
+            app:popUpTo="@id/fragmentGoogleSignIn"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/createTransactionFragment"
+        android:name="com.papco.sundar.papcortgs.screens.transaction.createTransaction.CreateTransactionFragment"
+        android:label="CreateTransactionFragment" >
+        <action
+            android:id="@+id/action_createTransactionFragment_to_senderSelectFragment"
+            app:destination="@id/senderSelectFragment" />
+        <action
+            android:id="@+id/action_createTransactionFragment_to_receiverSelectFragment"
+            app:destination="@id/receiverSelectFragment" />
+        <action
+            android:id="@+id/action_createTransactionFragment_to_sendersListFragment"
+            app:destination="@id/sendersListFragment" />
+        <action
+            android:id="@+id/action_createTransactionFragment_to_receiverListFragment"
+            app:destination="@id/receiverListFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/createSenderFragment"
+        android:name="com.papco.sundar.papcortgs.screens.sender.CreateSenderFragment"
+        android:label="CreateSenderFragment" />
+    <fragment
+        android:id="@+id/createReceiverFragment"
+        android:name="com.papco.sundar.papcortgs.screens.receiver.CreateReceiverFragment"
+        android:label="CreateReceiverFragment" />
+    <fragment
+        android:id="@+id/senderSelectFragment"
+        android:name="com.papco.sundar.papcortgs.screens.transaction.createTransaction.SenderSelectFragment"
+        android:label="SenderSelectFragment" />
+    <fragment
+        android:id="@+id/receiverSelectFragment"
+        android:name="com.papco.sundar.papcortgs.screens.transaction.createTransaction.ReceiverSelectFragment"
+        android:label="ReceiverSelectFragment" />
+    <fragment
+        android:id="@+id/fragmentEmail"
+        android:name="com.papco.sundar.papcortgs.screens.mail.FragmentEmail"
+        android:label="FragmentEmail" />
+</navigation>

@@ -11,7 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import com.papco.sundar.papcortgs.R
 
-class TextInputDialogFragment : androidx.fragment.app.DialogFragment() {
+class TextInputDialogFragment : DialogFragment() {
 
     companion object {
         const val TAG = "Tag:Number:input:dialog:fragment"
@@ -26,6 +26,7 @@ class TextInputDialogFragment : androidx.fragment.app.DialogFragment() {
     private lateinit var title: TextView
     private lateinit var enteredText: EditText
     private lateinit var okButton: TextView
+    private lateinit var cancelButton:TextView
 
 
     override fun onResume() {
@@ -52,12 +53,18 @@ class TextInputDialogFragment : androidx.fragment.app.DialogFragment() {
         okButton.setOnClickListener {
             onOkButtonClicked()
         }
+
+        cancelButton.setOnClickListener {
+            dismiss()
+        }
     }
 
     private fun linkViews(view: View) {
         title = view.findViewById(R.id.text_input_dialog_title)
         enteredText = view.findViewById(R.id.text_input_dialog_text)
         okButton = view.findViewById(R.id.text_input_dialog_ok)
+        cancelButton=view.findViewById(R.id.text_input_dialog_cancel)
+
     }
 
     private fun initViews() {

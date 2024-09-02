@@ -1,13 +1,19 @@
 package com.papco.sundar.papcortgs.screens.transactionGroup
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.viewModelScope
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.common.TableOperation
 import com.papco.sundar.papcortgs.database.transactionGroup.GroupTableWorker
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroupListItem
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 
 class GroupActivityVM(application: Application) : AndroidViewModel(application) {
 
@@ -35,4 +41,7 @@ class GroupActivityVM(application: Application) : AndroidViewModel(application) 
     }
 
 
+
+
 }
+

@@ -30,5 +30,32 @@
     <string name="error_no_internet_connection">No active internet connection found. Please try again later!</string>
     <string name="link_to_dropbox">LINK TO DROPBOX</string>
     <string name="unlink_from_dropbox">UNLINK FROM DROPBOX</string>
+    <string name="default_mail_subject">RTGS Payment intimation</string>
+    <string name="error_email_not_found">Email ID not found</string>
+    <string name="default_sender_name">Papco Offset Private Limited</string>
+    <string name="gmail_not_logged_in">Gmail Not Logged In</string>
+    <string name="channel_name_intimation">Papco RTGS</string>
+    <string name="notification_channel_description">Notifications from papcoRTGS app</string>
+    <string name="sending_email_intimation">Sending Email Intimations</string>
+    <string name="sending_sms_intimation">Sending Message Intimations</string>
+    <string name="intimation_sending_status">%1$d / %2$d</string>
+    <string name="sending_email_failed">Sending Email Failed</string>
+    <string name="unknown_error">Unknown Error</string>
+    <string name="check_internet_connection">Check Internet Connection</string>
+    <string name="sending_emails">Sending Email Intimations</string>
+    <string name="email_receivers">Email Receivers</string>
+    <string name="default_text_input_dialog_title">Text Input</string>
+    <string name="ok">OK</string>
+    <string name="incorrect_password">Incorrect password. Please try again</string>
+    <string name="message_sent">SENT</string>
+    <string name="message_not_sent">NOT SENT</string>
+    <string name="message_number_not_valid">INVALID NUMBER</string>
+    <string name="message_limit_exceeded">LIMIT EXCEEDED</string>
+    <string name="message_no_service">NO SERVICE</string>
+    <string name="message_generic_failure">GENERIC FAILURE</string>
+    <string name="message_unknown_error">UNKNOWN ERROR</string>
+    <string name="message_already_sent">ALREADY SENT</string>
+    <string name="message_time_out">TIME OUT</string>
+
 
 </resources>

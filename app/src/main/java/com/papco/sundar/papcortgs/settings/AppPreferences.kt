@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.dropbox.core.json.JsonReadException
 import com.dropbox.core.oauth.DbxCredential
+import com.papco.sundar.papcortgs.common.TextFunctions
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.io.File
@@ -30,6 +31,7 @@ class AppPreferences(private val context: Context) {
 
     companion object {
         private val KEY_DROPBOX_CREDENTIALS = stringPreferencesKey("key:dropbox_credentials")
+        private val KEY_MESSAGE_TEMPLATE= stringPreferencesKey("message_template")
     }
 
     fun getLocalBackupFilePath():String{
@@ -42,6 +44,18 @@ class AppPreferences(private val context: Context) {
         if (!sdDir.isDirectory) sdDir.mkdirs()
 
         return "$dirPath/papcortgsbackup.xls"
+    }
+
+    fun getMessageTemplate():Flow<String?> =
+        dataStore.data.map {
+            val format=it[KEY_MESSAGE_TEMPLATE]
+            format ?: TextFunctions.getDefaultMessageFormat()
+        }
+
+    suspend fun saveMessageTemplate(template:String){
+        dataStore.edit {
+            it[KEY_MESSAGE_TEMPLATE]=template
+        }
     }
 
     fun getDropBoxCredentials():Flow<DbxCredential?> =
