@@ -30,6 +30,13 @@ class MessageDispatcher(
     private val appPreferences: AppPreferences,
     private val transactions: List<CohesiveTransaction>
 ) {
+    companion object{
+        const val NOT_SENT=0
+        const val SENT=1
+        const val QUEUED=2
+        const val ERROR=3
+        const val TIMEOUT=4
+    }
 
     private val smsManager = context.getSystemService(SmsManager::class.java)
     private val messageList = prepareList()
@@ -46,7 +53,7 @@ class MessageDispatcher(
     val totalCount: Int
         get() = messageList.size
 
-    private suspend fun sendNextMessage(): MessageSentStatus {
+    private suspend fun sendNextMessage(): Int {
         require(hasNext) { "No more transactions to send message to" }
         val trans = iterator.next()
         val result = dispatchMessage(trans)
@@ -54,7 +61,7 @@ class MessageDispatcher(
         return result
     }
 
-    private suspend fun dispatchMessage(trans: CohesiveTransaction): MessageSentStatus {
+    private suspend fun dispatchMessage(trans: CohesiveTransaction): Int {
 
         //we have a valid number. send the message
         val requestCode = trans.transaction.id
@@ -81,14 +88,14 @@ class MessageDispatcher(
                 val sentIntents = ArrayList<PendingIntent>()
                 sentIntents.add(sentPI)
                 smsManager.sendMultipartTextMessage(number, null, parts, sentIntents, null)
-                MessageSentStatus.SENT
+                SENT
             } else {
                 smsManager.sendTextMessage(number, null, message, sentPI, null)
-                MessageSentStatus.SENT
+                SENT
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            MessageSentStatus.UNKNOWN_ERROR
+           ERROR
         }
     }
 
@@ -116,10 +123,9 @@ class MessageDispatcher(
 
                 receiverFlow().timeout(3000.milliseconds).catch { e ->
                         if (e is TimeoutCancellationException) {
-                            emit(
-                                MessageDispatchResult(lastDispatchedId, MessageSentStatus.TIMEOUT)
-                            )
-                        }
+                            emit(MessageDispatchResult(lastDispatchedId, TIMEOUT))
+                        }else
+                            throw e
                     }.collect {
                         trySend(it)
                         if (hasNext) {
@@ -157,8 +163,12 @@ class MessageDispatcher(
 
     private fun prepareList(): List<CohesiveTransaction> {
         return transactions.filter {
-                it.transaction.messageSent != MessageSentStatus.SENT.code && it.receiver.hasValidMobileNumber()
+                it.transaction.messageSent != SENT && it.receiver.hasValidMobileNumber()
             }
     }
 
 }
+
+class MessageDispatchResult(
+    val transactionId: Int, val status: Int
+)

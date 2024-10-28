@@ -1,8 +1,8 @@
 package com.papco.sundar.papcortgs.ui.components
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -12,28 +12,43 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
-import com.sivakasi.papco.jobflow.ui.MenuAction
-import com.sivakasi.papco.jobflow.ui.OptionsMenu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RTGSAppBar(
     title:String,
     modifier:Modifier=Modifier,
+    subtitle:String?=null,
     isBackEnabled:Boolean=false,
+    titleStyle: TextStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
     onBackPressed:()->Unit={},
     optionsMenu:(@Composable ()->Unit)={}
 ){
     TopAppBar(
-        modifier = modifier,
+        modifier = modifier
+            .shadow(3.dp),
         title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
-            )
+            Column {
+                Text(
+                    text = title,
+                    style = titleStyle
+                )
+
+                subtitle?.let{
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
         },
         navigationIcon = {
             if(isBackEnabled)
@@ -70,13 +85,13 @@ private fun TopAppBarPreview(){
     RTGSTheme {
         RTGSAppBar(
             title = "Create Sender",
-            isBackEnabled = true,
-            optionsMenu = {
-                OptionsMenu(menuItems = menuActions) {
-                    
-                }
+            subtitle = "34 Receivers",
+            isBackEnabled = true
+        ) {
+            OptionsMenu(menuItems = menuActions) {
+
             }
-        )
+        }
     }
 
 }

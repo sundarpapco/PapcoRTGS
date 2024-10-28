@@ -13,6 +13,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import androidx.work.WorkQuery
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.papco.sundar.papcortgs.PapcoRTGSApp
@@ -20,7 +21,9 @@ import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.extentions.weHaveNotificationPermission
+import com.papco.sundar.papcortgs.screens.sms.MessageDispatcher.Companion.TIMEOUT
 import com.papco.sundar.papcortgs.settings.AppPreferences
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
@@ -35,6 +38,7 @@ class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         fun startWith(context: Context, groupId: Int = -1) {
             val request = OneTimeWorkRequestBuilder<MessageWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .addTag(groupId.toString())
                 .setInputData(
                     workDataOf(
                         GROUP_ID to groupId
@@ -44,9 +48,17 @@ class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorke
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME,
-                ExistingWorkPolicy.KEEP,
+                ExistingWorkPolicy.APPEND,
                 request
             )
+        }
+
+        fun getWorkStatusFlow(context: Context,groupId: Int): Flow<List<WorkInfo>> {
+            val query=WorkQuery.Builder
+                .fromTags(listOf(groupId.toString()))
+                .addUniqueWorkNames(listOf(WORK_NAME))
+                .build()
+            return WorkManager.getInstance(context).getWorkInfosFlow(query)
         }
 
         fun getWorkStatusLiveData(context: Context): LiveData<List<WorkInfo>> {
@@ -103,25 +115,21 @@ class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorke
 
         messageDispatcher.dispatchMessages()
             .collect{
-                val processedResult=processDispatchResult(it)
-                database.transactionDao.updateMessageSentStatus(it.transactionId,processedResult.code)
-                updateProgressNotification(
-                    messageDispatcher.dispatchCount,messageDispatcher.totalCount)
+                //If there is a timeout and the flow is closing, then mark all the remaining messages as Error
+                if(it.status==TIMEOUT){
+                    database.transactionDao.timeoutMessagesQueuedForMessage(getGroupId())
+                    updateProgressNotification(
+                        messageDispatcher.totalCount,messageDispatcher.totalCount)
+                }else{
+                    database.transactionDao.updateMessageSentStatus(it.transactionId,it.status)
+                    updateProgressNotification(
+                        messageDispatcher.dispatchCount,messageDispatcher.totalCount)
+                }
             }
     }
 
-    private fun processDispatchResult(result:MessageDispatchResult):MessageSentStatus{
-
-        return when(result.status){
-            MessageSentStatus.SENT->MessageSentStatus.SENT
-            MessageSentStatus.ALREADY_SENT->MessageSentStatus.SENT
-            MessageSentStatus.NOT_SENT->MessageSentStatus.NOT_SENT
-            MessageSentStatus.INVALID_NUMBER->MessageSentStatus.INVALID_NUMBER
-            else->MessageSentStatus.NOT_SENT
-        }
-    }
-
     private suspend fun fetchTransactionsToMail(): List<CohesiveTransaction> {
+        database.transactionDao.queueUpTransactionsForMessage(getGroupId())
         return database.transactionDao.getAllCohesiveTransactionsOfGroup(getGroupId()).first()
     }
 
@@ -140,7 +148,6 @@ class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         }.build()
 
         notify(notification)
-
     }
 
     private fun postFailureNotification(reason: String) {

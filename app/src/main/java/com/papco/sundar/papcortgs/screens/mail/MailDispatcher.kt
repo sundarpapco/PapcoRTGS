@@ -25,6 +25,13 @@ class MailDispatcher(
     private val context: Context
 ) {
 
+    companion object{
+        const val NOT_SENT=0
+        const val SENT=1
+        const val QUEUED = 2
+        const val ERROR = 3
+    }
+
     private val gmailService:Gmail by lazy{ buildGmailService() }
 
     private val account:GoogleSignInAccount by lazy{

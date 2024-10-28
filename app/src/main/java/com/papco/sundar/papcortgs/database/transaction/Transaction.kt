@@ -46,23 +46,6 @@ data class Transaction(
     @Ignore
     var smsStatus = -1
 
-    val amountAsString: String
-        get() {
-            val value = amount.toString()
-            val lastDigit = value[value.length - 1]
-            var result = ""
-            val len = value.length - 1
-            var nDigits = 0
-            for (i in len - 1 downTo 0) {
-                result = value[i].toString() + result
-                nDigits++
-                if (nDigits % 2 == 0 && i > 0) {
-                    result = ",$result"
-                }
-            }
-            return "\u20B9 $result$lastDigit"
-        }
-
     companion object {
         @JvmStatic
         fun formatAmountAsString(amount: Int): String {

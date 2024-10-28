@@ -1,14 +1,14 @@
 package com.papco.sundar.papcortgs.screens.backup
 
 import android.app.Application
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.example.payroll.dropbox.DropBox
+import com.papco.sundar.papcortgs.dropbox.DropBox
 import com.example.payroll.dropbox.DropBoxAppConfig
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.settings.AppPreferences
+import com.papco.sundar.papcortgs.ui.backup.BackupScreenState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
@@ -17,20 +17,38 @@ class DropBoxFragmentVM(application: Application): AndroidViewModel(application)
 
     private val appPreferences = AppPreferences(application)
     private val dropBox = DropBox(application, appPreferences, DropBoxAppConfig())
-
-    private val _backupOperationStatus=MutableLiveData("");
-    val backupOperationStatus:LiveData<String> = _backupOperationStatus
-
-    private var isWorking=false
-
+    val screenState = BackupScreenState()
     private val backupManager = BackupManager(
         MasterDatabase.getInstance(application),
         AppPreferences((application)),
         dropBox
     )
 
-    suspend fun isDropBoxConnected():Boolean{
-        return dropBox.isConnected()
+    init {
+        initialize()
+    }
+
+    private fun initialize(){
+
+        viewModelScope.launch(Dispatchers.IO) {
+            dropBox.connectionStatus()
+                .collect{connected->
+                    screenState.isDropBoxConnected=connected
+                }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            dropBox.loggedInAccount()
+                .collect{
+                    screenState.account=it
+                }
+        }
+    }
+
+    fun refreshDropBoxConnection(){
+        viewModelScope.launch{
+            dropBox.refreshConnection()
+        }
     }
 
     fun linkToDropBox(){
@@ -46,44 +64,46 @@ class DropBoxFragmentVM(application: Application): AndroidViewModel(application)
     }
 
     fun backupFile(){
-        if(isWorking)
-            return
-
         viewModelScope.launch {
             try{
-                isWorking=true
+                screenState.showProgressDialog("")
                 backupManager
                     .doBackup()
                     .flowOn(Dispatchers.IO)
                     .collect{
-                        _backupOperationStatus.value=it
+                        screenState.showProgressDialog(it)
                     }
             }catch (e:Exception){
-                _backupOperationStatus.value=e.message ?: "Unknown Error"
+                Toast.makeText(
+                    getApplication(),
+                    e.message ?: "Unknown Error",
+                    Toast.LENGTH_LONG
+                ).show()
             }finally {
-                isWorking=false
+                screenState.hideDialog()
             }
         }
 
     }
 
     fun restoreBackup(){
-        if(isWorking)
-            return
-
         viewModelScope.launch {
             try{
-                isWorking=true
+                screenState.showProgressDialog("")
                 backupManager
                     .restoreBackup()
                     .flowOn(Dispatchers.IO)
                     .collect{
-                        _backupOperationStatus.value=it
+                        screenState.showProgressDialog(it)
                     }
             }catch (e:Exception){
-                _backupOperationStatus.value=e.message ?: "Unknown Error"
+                Toast.makeText(
+                    getApplication(),
+                    e.message ?: "Unknown Error",
+                    Toast.LENGTH_LONG
+                ).show()
             }finally {
-                isWorking=false
+                screenState.hideDialog()
             }
         }
     }

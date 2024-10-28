@@ -1,6 +1,6 @@
 @file:Suppress("BlockingMethodInNonBlockingContext")
 
-package com.example.payroll.dropbox
+package com.papco.sundar.papcortgs.dropbox
 
 import android.content.Context
 import com.dropbox.core.DbxRequestConfig
@@ -8,13 +8,17 @@ import com.dropbox.core.android.Auth
 import com.dropbox.core.oauth.DbxCredential
 import com.dropbox.core.util.IOUtil
 import com.dropbox.core.v2.DbxClientV2
+import com.dropbox.core.v2.auth.DbxUserAuthRequests
 import com.dropbox.core.v2.files.FileMetadata
 import com.dropbox.core.v2.files.GetMetadataErrorException
 import com.dropbox.core.v2.files.WriteMode
+import com.example.payroll.dropbox.DropBoxAppConfig
 import com.papco.sundar.papcortgs.settings.AppPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
@@ -31,10 +35,11 @@ class DropBox(
         const val DBX_BACKUP_FILE_PATH = "/apps/papcortgs/papcortgsbackup.xls"
     }
 
-    suspend fun isConnected(): Boolean {
+    private var isAwaitingForResult=false
+
+    private suspend fun isConnected(): Boolean {
 
         if (appSettings.getDropBoxCredentials().first() != null) return true
-
         val mCredentials = Auth.getDbxCredential()
         if (mCredentials != null) {
             appSettings.saveDropBoxCredentials(mCredentials)
@@ -44,18 +49,40 @@ class DropBox(
         return false
     }
 
-    suspend fun tryToConnect() {
+    suspend fun refreshConnection() {
 
-        if (isConnected()) return
+        if(!isAwaitingForResult)
+            return
 
+        withContext(Dispatchers.IO) {
+
+            isAwaitingForResult=false
+
+            val connected = isConnected()
+            if (connected) {
+                refreshLoggedInAccount()
+            }
+        }
+    }
+
+    fun connectionStatus(): Flow<Boolean> {
+        return appSettings
+            .getDropBoxCredentials()
+            .map { it!=null }
+    }
+
+    fun loggedInAccount():Flow<DropBoxAccount?>{
+        return appSettings.getDropBoxAccount()
+    }
+
+    fun tryToConnect() {
         startAuthorization()
+        isAwaitingForResult=true
     }
 
     private fun startAuthorization() {
-
         val requestConfig = DbxRequestConfig(dropBoxAppConfig.clientIdentifier)
         Auth.startOAuth2PKCE(context, dropBoxAppConfig.appKey, requestConfig)
-
     }
 
     suspend fun disConnect() {
@@ -100,7 +127,7 @@ class DropBox(
 
 
     @ExperimentalCoroutinesApi
-    suspend fun uploadBackupFile(){
+    suspend fun uploadBackupFile() {
 
         val clientV2 = initDropBoxClient()
 
@@ -131,6 +158,19 @@ class DropBox(
         val dbxConfig = DbxRequestConfig(dropBoxAppConfig.clientIdentifier)
 
         return DbxClientV2(dbxConfig, credential)
+    }
+
+    private suspend fun refreshLoggedInAccount() {
+
+        val savedLogin = appSettings.getDropBoxAccount().first()
+        if (savedLogin == null) {
+            val clientV2 = initDropBoxClient()
+            val fullAccount = clientV2.users().currentAccount
+            fullAccount?.let {
+                val account = DropBoxAccount(fullAccount.name.displayName, fullAccount.email)
+                appSettings.saveDropBoxAccount(account)
+            }
+        }
     }
 
 

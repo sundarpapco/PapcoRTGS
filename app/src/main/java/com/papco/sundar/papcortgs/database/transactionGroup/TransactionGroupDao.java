@@ -12,6 +12,8 @@ import java.util.List;
 
 import static androidx.room.OnConflictStrategy.REPLACE;
 
+import kotlinx.coroutines.flow.Flow;
+
 @Dao
 public interface TransactionGroupDao {
 
@@ -20,7 +22,7 @@ public interface TransactionGroupDao {
 
     @Transaction
     @Query("select * from TransactionGroup order by id DESC")
-    LiveData<List<TransactionGroupListItem>> getAllTransactionGroupsForList();
+    Flow<List<TransactionGroupListItem>> getAllTransactionGroupsForList();
 
     @Transaction
     @Query("select * from TransactionGroup where id=:groupId")

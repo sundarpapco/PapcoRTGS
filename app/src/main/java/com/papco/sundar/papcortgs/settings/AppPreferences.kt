@@ -10,6 +10,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.dropbox.core.json.JsonReadException
 import com.dropbox.core.oauth.DbxCredential
 import com.papco.sundar.papcortgs.common.TextFunctions
+import com.papco.sundar.papcortgs.dropbox.DropBoxAccount
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.io.File
@@ -32,6 +33,8 @@ class AppPreferences(private val context: Context) {
     companion object {
         private val KEY_DROPBOX_CREDENTIALS = stringPreferencesKey("key:dropbox_credentials")
         private val KEY_MESSAGE_TEMPLATE= stringPreferencesKey("message_template")
+        private val KEY_DBX_USER_NAME= stringPreferencesKey("dbx_user_name")
+        private val KEY_DBX_USER_EMAIL= stringPreferencesKey("dbx_user_email")
     }
 
     fun getLocalBackupFilePath():String{
@@ -82,6 +85,26 @@ class AppPreferences(private val context: Context) {
     suspend fun clearDropBoxCredentials() {
         dataStore.edit {
             it.remove(KEY_DROPBOX_CREDENTIALS)
+            it.remove(KEY_DBX_USER_NAME)
+            it.remove(KEY_DBX_USER_EMAIL)
         }
     }
+
+    suspend fun saveDropBoxAccount(account:DropBoxAccount){
+        dataStore.edit {
+            it[KEY_DBX_USER_NAME]=account.userName
+            it[KEY_DBX_USER_EMAIL]=account.email
+        }
+    }
+
+    fun getDropBoxAccount():Flow<DropBoxAccount?> =
+        dataStore.data.map {
+            val username = it[KEY_DBX_USER_NAME]
+            val email = it[KEY_DBX_USER_EMAIL]
+
+            if(username==null || email==null)
+                null
+            else
+                DropBoxAccount(username,email)
+        }
 }

@@ -1,34 +1,19 @@
 package com.papco.sundar.papcortgs.screens.mail
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.work.WorkInfo
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
-import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
+import com.papco.sundar.papcortgs.ui.screens.mail.MailScreenState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class FragmentEmailVM(application: Application) : AndroidViewModel(application) {
 
     private val db = MasterDatabase.getInstance(application)
-
-    private var _emailList: MutableLiveData<List<CohesiveTransaction>> =
-        MutableLiveData(emptyList())
-    val emailList: LiveData<List<CohesiveTransaction>> = _emailList
-    val isIntimationRunning=MediatorLiveData(false)
-
-    init{
-        isIntimationRunning.addSource(MailWorker.getWorkStatusLiveData(application)) { workInfo ->
-            isIntimationRunning.value = workInfo?.let {
-                it.isNotEmpty() && it.first().state == WorkInfo.State.RUNNING
-            } ?: false
-        }
-    }
+    val screenState = MailScreenState()
 
     private var alreadyLoaded: Boolean = false
 
@@ -36,13 +21,25 @@ class FragmentEmailVM(application: Application) : AndroidViewModel(application) 
 
         if (alreadyLoaded) return else alreadyLoaded = true
 
+        val currentLogin = GoogleSignIn.getLastSignedInAccount(getApplication())
+        screenState.loggedInGmail= currentLogin?.email
+
         viewModelScope.launch {
             db.transactionDao
                 .getAllCohesiveTransactionsOfGroup(groupId)
                 .collect {
-                    _emailList.value = it
+                    screenState.transactions=it
                 }
-
         }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            MailWorker.getWorkStatusFlow(getApplication(),groupId)
+               .collectLatest {workInformations->
+                   if(workInformations.isNotEmpty()){
+                       screenState.dispatcherState=workInformations.first().state
+                   }
+               }
+        }
+
     }
 }

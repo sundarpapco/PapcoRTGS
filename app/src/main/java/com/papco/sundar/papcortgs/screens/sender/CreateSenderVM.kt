@@ -2,25 +2,26 @@ package com.papco.sundar.papcortgs.screens.sender
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.common.Event
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.sender.Sender
+import com.papco.sundar.papcortgs.ui.screens.party.AddEditPartyState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Locale
 
 class CreateSenderVM(application: Application) : AndroidViewModel(application) {
 
     private var isAlreadyLoaded = false
 
-    private val _sender = MutableLiveData<Event<Sender>>()
-    private val _eventStatus = MutableLiveData<Event<String>>()
+    val screenState=AddEditPartyState(application)
+    private val _eventStatus: MutableStateFlow<Event<String>?> = MutableStateFlow(null)
+    val eventStatus:Flow<Event<String>?> = _eventStatus
 
-    val sender = _sender
-    val eventStatus = _eventStatus
     private val db = MasterDatabase.getInstance(application)
 
 
@@ -32,19 +33,23 @@ class CreateSenderVM(application: Application) : AndroidViewModel(application) {
             isAlreadyLoaded = true
 
         viewModelScope.launch(Dispatchers.IO) {
+            screenState.isWaiting=true
             val sender = db.senderDao.getSender(senderId)
-            _sender.postValue(Event(sender))
+            screenState.loadSender(sender)
+            screenState.isWaiting=false
         }
 
     }
 
     fun addSender(newSender: Sender) {
         viewModelScope.launch(Dispatchers.IO) {
+            screenState.isWaiting=true
             if (isNameAlreadyExists(newSender.displayName)) {
-                _eventStatus.postValue(Event(getDuplicateString()))
+                screenState.isWaiting=false
+                _eventStatus.value=Event(getDuplicateString())
             } else {
                 db.senderDao.addSender(newSender)
-                _eventStatus.postValue(Event(CreateSenderFragment.EVENT_SUCCESS))
+                _eventStatus.value=Event(CreateSenderFragment.EVENT_SUCCESS)
             }
         }
 
@@ -52,12 +57,13 @@ class CreateSenderVM(application: Application) : AndroidViewModel(application) {
 
     fun updateSender(senderToUpdate: Sender) {
         viewModelScope.launch(Dispatchers.IO) {
-
+            screenState.isWaiting=true
             if (isNameAlreadyExistsExceptCurrent(senderToUpdate)) {
-                _eventStatus.postValue(Event(getDuplicateString()))
+                screenState.isWaiting=false
+                _eventStatus.value=Event(getDuplicateString())
             } else {
                 db.senderDao.updateSender(senderToUpdate)
-                _eventStatus.postValue(Event(CreateSenderFragment.EVENT_SUCCESS))
+                _eventStatus.value=Event(CreateSenderFragment.EVENT_SUCCESS)
             }
         }
     }

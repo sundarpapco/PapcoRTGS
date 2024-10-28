@@ -11,12 +11,16 @@ import java.util.List;
 
 import static androidx.room.OnConflictStrategy.REPLACE;
 
+import com.papco.sundar.papcortgs.database.pojo.Party;
+
+import kotlinx.coroutines.flow.Flow;
+
 
 @Dao
 public interface ReceiverDao {
 
     @Query("select * from Receiver order by name")
-    LiveData<List<Receiver>> getAllReceivers();
+    Flow<List<Receiver>> getAllReceivers();
 
 
     @Query("select * from Receiver order by name")
@@ -36,6 +40,9 @@ public interface ReceiverDao {
 
     @Delete
     int deleteReceiver(Receiver ReceiverToDelete);
+
+    @Query("delete from Receiver where id =:id")
+    void deleteReceiverById(int id);
 
     @Query("delete from Receiver")
     void deleteAllReceivers();

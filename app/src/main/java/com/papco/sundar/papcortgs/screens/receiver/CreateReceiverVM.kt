@@ -8,7 +8,10 @@ import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.common.Event
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.receiver.Receiver
+import com.papco.sundar.papcortgs.ui.screens.party.AddEditPartyState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -16,11 +19,10 @@ class CreateReceiverVM(application: Application) :AndroidViewModel(application) 
 
     private var isAlreadyLoaded = false
 
-    private val _receiver = MutableLiveData<Event<Receiver>>()
-    private val _eventStatus = MutableLiveData<Event<String>>()
+    val screenState= AddEditPartyState(application)
+    private val _eventStatus: MutableStateFlow<Event<String>?> = MutableStateFlow(null)
+    val eventStatus: Flow<Event<String>?> = _eventStatus
 
-    val receiver = _receiver
-    val eventStatus = _eventStatus
     private val db = MasterDatabase.getInstance(application)
 
 
@@ -32,19 +34,23 @@ class CreateReceiverVM(application: Application) :AndroidViewModel(application) 
             isAlreadyLoaded = true
 
         viewModelScope.launch(Dispatchers.IO) {
+            screenState.isWaiting=true
             val receiver = db.receiverDao.getReceiver(receiverId)
-            _receiver.postValue(Event(receiver))
+            screenState.loadReceiver(receiver)
+            screenState.isWaiting=false
         }
 
     }
 
     fun addReceiver(newReceiver: Receiver) {
         viewModelScope.launch(Dispatchers.IO) {
+            screenState.isWaiting=true
             if (isNameAlreadyExists(newReceiver.displayName)) {
-                _eventStatus.postValue(Event(getDuplicateString()))
+                screenState.isWaiting=false
+                _eventStatus.value=Event(getDuplicateString())
             } else {
                 db.receiverDao.addReceiver(newReceiver)
-                _eventStatus.postValue(Event(CreateReceiverFragment.EVENT_SUCCESS))
+                _eventStatus.value=Event(CreateReceiverFragment.EVENT_SUCCESS)
             }
         }
 
@@ -52,12 +58,13 @@ class CreateReceiverVM(application: Application) :AndroidViewModel(application) 
 
     fun updateReceiver(receiverToUpdate: Receiver) {
         viewModelScope.launch(Dispatchers.IO) {
-
+            screenState.isWaiting=true
             if (isNameAlreadyExistsExceptCurrent(receiverToUpdate)) {
-                _eventStatus.postValue(Event(getDuplicateString()))
+                screenState.isWaiting=false
+                _eventStatus.value=Event(getDuplicateString())
             } else {
                 db.receiverDao.updateReceiver(receiverToUpdate)
-                _eventStatus.postValue(Event(CreateReceiverFragment.EVENT_SUCCESS))
+                _eventStatus.value=Event(CreateReceiverFragment.EVENT_SUCCESS)
             }
         }
     }

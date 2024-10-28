@@ -26,6 +26,7 @@ import com.papco.sundar.papcortgs.common.SpacingDecoration
 import com.papco.sundar.papcortgs.common.TextFunctions
 import com.papco.sundar.papcortgs.databinding.ActivityComposeMessageBinding
 import com.papco.sundar.papcortgs.extentions.enableBackArrow
+import com.papco.sundar.papcortgs.extentions.getActionBar
 import com.papco.sundar.papcortgs.extentions.updateTitle
 import com.papco.sundar.papcortgs.settings.AppPreferences
 import kotlinx.coroutines.flow.first
@@ -47,6 +48,7 @@ class ComposeMessageFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
+        getActionBar()?.show()
         _viewBinding = ActivityComposeMessageBinding.inflate(inflater, container, false)
         return viewBinding.root
     }

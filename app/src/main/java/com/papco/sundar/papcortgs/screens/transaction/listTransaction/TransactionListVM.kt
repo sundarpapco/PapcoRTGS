@@ -1,6 +1,7 @@
 package com.papco.sundar.papcortgs.screens.transaction.listTransaction
 
 import android.app.Application
+import androidx.compose.runtime.MutableState
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -10,7 +11,11 @@ import com.papco.sundar.papcortgs.common.ManualFileExporter
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.transaction.TransactionForList
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
+import com.papco.sundar.papcortgs.ui.screens.transaction.TransactionListScreenState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -19,8 +24,9 @@ class TransactionListVM(application: Application) : AndroidViewModel(application
     private val db: MasterDatabase
 
     private var isAlreadyLoaded=false
-    val reportGenerated = MutableLiveData<Event<String>>()
-    val transactions=MutableLiveData<List<TransactionForList>>()
+    private val _reportGenerated:MutableStateFlow<Event<String>?> = MutableStateFlow(null)
+    val reportGenerated: Flow<Event<String>?> = _reportGenerated
+    val screenState = TransactionListScreenState()
 
     init {
         db = MasterDatabase.getInstance(application)
@@ -32,7 +38,7 @@ class TransactionListVM(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             db.transactionDao.getAllTransactionListItems(groupId)
                 .collect{
-                    transactions.value=it
+                    screenState.transactions=it
                 }
         }
     }
@@ -48,7 +54,7 @@ class TransactionListVM(application: Application) : AndroidViewModel(application
             val exporter=ManualFileExporter(getApplication(),db,chequeNumber)
             val fileName=exporter.export(transactionGroup)
             withContext(Dispatchers.Main){
-                reportGenerated.value=Event(fileName)
+                _reportGenerated.value=Event(fileName)
             }
         }
     }
@@ -58,7 +64,7 @@ class TransactionListVM(application: Application) : AndroidViewModel(application
             val exporter=AutoFileExporter(getApplication(),db,time)
             val fileName=exporter.export(transactionGroup)
             withContext(Dispatchers.Main){
-                reportGenerated.value=Event(fileName)
+                _reportGenerated.value=Event(fileName)
             }
         }
     }

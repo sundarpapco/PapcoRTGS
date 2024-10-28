@@ -1,4 +1,4 @@
-package com.sivakasi.papco.jobflow.ui
+package com.papco.sundar.papcortgs.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,7 +31,18 @@ data class MenuAction(
     var iconId:Int?=null,
     var imageVector: ImageVector?=null,
     var label:String=""
-)
+){
+    override fun equals(other: Any?): Boolean {
+        return label==(other as MenuAction).label
+    }
+
+    override fun hashCode(): Int {
+        var result = iconId ?: 0
+        result = 31 * result + (imageVector?.hashCode() ?: 0)
+        result = 31 * result + label.hashCode()
+        return result
+    }
+}
 
 @Composable
 fun OptionsMenu(
@@ -77,7 +88,11 @@ fun OptionsMenu(
                 )
             }
 
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenu(
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
 
                 overFlowItems.forEach {
                     MenuItem(text = it.label) {

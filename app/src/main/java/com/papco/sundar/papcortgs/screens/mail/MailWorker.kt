@@ -3,16 +3,20 @@ package com.papco.sundar.papcortgs.screens.mail
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.content.Context
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.lifecycle.LiveData
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import androidx.work.WorkQuery
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.papco.sundar.papcortgs.PapcoRTGSApp
@@ -21,6 +25,7 @@ import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.extentions.isInternetConnected
 import com.papco.sundar.papcortgs.extentions.weHaveNotificationPermission
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
@@ -33,24 +38,33 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         private const val NOTIFICATION_ID_FAILURE = 2
 
         fun startWith(context: Context, groupId: Int = -1) {
+            val constraints = Constraints
+                .Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
             val request = OneTimeWorkRequestBuilder<MailWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setInputData(
-                    workDataOf(
-                        GROUP_ID to groupId
-                    )
+                    workDataOf(GROUP_ID to groupId)
                 )
+                .setConstraints(constraints)
+                .addTag(groupId.toString())
                 .build()
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME,
-                ExistingWorkPolicy.KEEP,
+                ExistingWorkPolicy.APPEND,
                 request
             )
         }
 
-        fun getWorkStatusLiveData(context: Context): LiveData<List<WorkInfo>> {
-            return WorkManager.getInstance(context).getWorkInfosForUniqueWorkLiveData(WORK_NAME)
+        fun getWorkStatusFlow(context: Context, groupId: Int): Flow<List<WorkInfo>> {
+            val query = WorkQuery.Builder
+                .fromTags(listOf(groupId.toString()))
+                .addUniqueWorkNames(listOf(WORK_NAME))
+                .build()
+
+            return WorkManager.getInstance(context).getWorkInfosFlow(query)
         }
     }
 
@@ -69,8 +83,8 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         }
 
         return try {
+            addTransactionsToQueue()
             sendMails()
-            Result.success()
         } catch (e: Exception) {
             postFailureNotification(
                 e.message ?: applicationContext.getString(R.string.unknown_error)
@@ -91,27 +105,38 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         return ForegroundInfo(NOTIFICATION_ID_PROGRESS,notification)
     }
 
-    private suspend fun sendMails() {
+    private suspend fun sendMails():Result {
 
         val mailingList = fetchTransactionsToMail()
 
-        run mailSendingBlock@{
+        return run mailSendingBlock@{
             mailingList.forEachIndexed { index, recipient ->
 
-                if (isStopped) return@mailSendingBlock
-                if(recipient.transaction.mailSent==1) return@forEachIndexed
+                if (isStopped) return@mailSendingBlock Result.retry()
+                if(recipient.transaction.mailSent==MailDispatcher.SENT) return@forEachIndexed
 
                 updateProgressNotification(index + 1, mailingList.size)
-                if (recipient.receiver.email.isNotEmpty()) {
-                    val sendingSuccess = mailDispatcher.dispatchEmail(recipient)
-                    if (sendingSuccess) database.transactionDao.updateMailSentStatus(
-                        recipient.transaction.id, 1
-                    )
-                } else {
-                    database.transactionDao.updateMailSentStatus(recipient.transaction.id, 2)
+                try {
+                    if (recipient.receiver.email.isNotEmpty()) {
+                        val sendingSuccess = mailDispatcher.dispatchEmail(recipient)
+                        if (sendingSuccess) database.transactionDao.updateMailSentStatus(
+                            recipient.transaction.id, MailDispatcher.SENT
+                        )
+                    } else {
+                        database.transactionDao.updateMailSentStatus(
+                            recipient.transaction.id, MailDispatcher.ERROR)
+                    }
+                } catch (e: Exception) {
+                    database.transactionDao.updateMailSentStatus(
+                        recipient.transaction.id, MailDispatcher.ERROR)
                 }
             }
+            Result.success()
         }
+    }
+
+    private suspend fun addTransactionsToQueue(){
+        database.transactionDao.queueUpTransactionsForMail(getGroupId())
     }
 
     private suspend fun fetchTransactionsToMail(): List<CohesiveTransaction> {
@@ -172,15 +197,15 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 addAction(
                     R.drawable.ic_close, applicationContext.getString(R.string.cancel), cancelIntent
                 )
+
+                Icons.Filled.Close
             }
 
     }
 
     private fun getGroupId(): Int {
         val groupId = inputData.getInt(GROUP_ID, -1)
-        require(groupId != -1) {
-            "Group ID not set for the Mail Worker"
-        }
+        require(groupId != -1) { "Group ID not set for the Mail Worker" }
         return groupId
     }
 }

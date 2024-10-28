@@ -12,11 +12,13 @@ import java.util.List;
 
 import static androidx.room.OnConflictStrategy.REPLACE;
 
+import kotlinx.coroutines.flow.Flow;
+
 @Dao
 public interface SenderDao {
 
     @Query("select * from Sender order by name")
-    LiveData<List<Sender>> getAllSenders();
+    Flow<List<Sender>> getAllSenders();
 
     @Query("select * from Sender")
     List<Sender> getAllSendersNonLive();
@@ -35,6 +37,9 @@ public interface SenderDao {
 
     @Delete
     int deleteSender(Sender senderToDelete);
+
+    @Query("delete from Sender where id=:id")
+    void deleteSenderById(int id);
 
     @Insert(onConflict = REPLACE)
     long addSender(Sender newSender);

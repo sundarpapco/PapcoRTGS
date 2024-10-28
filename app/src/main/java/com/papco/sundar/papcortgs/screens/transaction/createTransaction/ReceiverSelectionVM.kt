@@ -2,36 +2,49 @@ package com.papco.sundar.papcortgs.screens.transaction.createTransaction
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
-import com.papco.sundar.papcortgs.database.receiver.Receiver
+import com.papco.sundar.papcortgs.database.pojo.Party
+import com.papco.sundar.papcortgs.ui.screens.party.SearchablePartyListState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class ReceiverSelectionVM(application: Application) : AndroidViewModel(application) {
 
     private val db = MasterDatabase.getInstance(application)
-    private val receiversList = MutableLiveData<List<Receiver>>()
-    fun loadReceivers(groupId: Int) {
+    val screenState = SearchablePartyListState()
+    private var isAlreadyLoaded =false
+
+    fun loadReceivers(groupId: Int){
+        if(isAlreadyLoaded){
+            isAlreadyLoaded=true
+            return
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
-            val receivers = db.receiverDao.allReceiversNonLive
-            val receiversIdsAlreadyInGroup = db.transactionDao.getReceiverIdsOfGroup(groupId)
-            receiversIdsAlreadyInGroup.forEach { id ->
-                receivers.forEach { receiver ->
-                    if (receiver.id == id) receiver.accountNumber = "-1"
-                }
-            }
 
-            withContext(Dispatchers.Main) {
-                receiversList.value = receivers
-            }
+            val receiversIdsAlreadyInGroup = db.transactionDao.getReceiverIdsOfGroup(groupId)
+
+            db.receiverDao.allReceivers
+                .combine(screenState.query){receivers,query->
+                    receivers
+                        .filter {
+                            if(query.isBlank())
+                                true
+                            else
+                                it.displayName.contains(query,true)
+                        }.map {
+                            Party(
+                                id = it.id,
+                                name = it.displayName,
+                                highlightWord = query,
+                                disabled = receiversIdsAlreadyInGroup.contains(it.id)
+                            )
+                        }
+                }.collect{
+                    screenState.data=it
+                }
         }
     }
-
-    val receivers: LiveData<List<Receiver>>
-        get() = receiversList
 }

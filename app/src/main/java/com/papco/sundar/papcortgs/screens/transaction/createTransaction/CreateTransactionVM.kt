@@ -1,49 +1,27 @@
 package com.papco.sundar.papcortgs.screens.transaction.createTransaction
 
 import android.app.Application
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
-import com.papco.sundar.papcortgs.database.receiver.Receiver
-import com.papco.sundar.papcortgs.database.sender.Sender
-import com.papco.sundar.papcortgs.database.transaction.Transaction
+import com.papco.sundar.papcortgs.ui.screens.transaction.ManageTransactionScreenState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class CreateTransactionVM(application: Application) : AndroidViewModel(application) {
 
     private val db: MasterDatabase = MasterDatabase.getInstance(application)
-    val selectedSender = MutableLiveData<Sender?>()
-    val selectedReceiver = MutableLiveData<Receiver?>()
-    val amount = MutableLiveData(0)
-    val remarks = MutableLiveData<String>()
+    val screenState = ManageTransactionScreenState()
     private var isAlreadyLoaded = false
 
+    private val _navigateBack:MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val navigateBack: Flow<Boolean> = _navigateBack
 
-    // setters -------------------------------------------------
-    fun setSender(sender: Sender?) {
-        selectedSender.value = sender
-    }
-
-    fun setReceiver(receiver: Receiver?) {
-        selectedReceiver.value = receiver
-    }
-
-    fun setAmount(amount: Int) {
-        this.amount.value = amount
-    }
-
-    fun setRemarks(remarks: String) {
-        this.remarks.value = remarks
-    }
-
-    // getters ----------------------------------------------------
-    fun getAmount(): LiveData<Int> {
-        return amount
-    }
 
     // utility methods ---------------------------------------------------
     fun loadTransaction(transactionId: Int) {
@@ -51,16 +29,10 @@ class CreateTransactionVM(application: Application) : AndroidViewModel(applicati
         isAlreadyLoaded = if (isAlreadyLoaded) return else true
 
         viewModelScope.launch(Dispatchers.IO) {
-            val transaction = db.getTransactionDao().getTransaction(transactionId)
-            val sender = db.getSenderDao().getSender(transaction!!.senderId)
-            val receiver = db.getReceiverDao().getReceiver(
-                transaction.receiverId
-            )
+            val transaction = db.getTransactionDao().getCohesiveTransaction(transactionId)
+
             withContext(Dispatchers.Main) {
-                selectedSender.postValue(sender)
-                selectedReceiver.postValue(receiver)
-                amount.postValue(transaction.amount)
-                remarks.postValue(transaction.remarks)
+                screenState.loadTransaction(transaction)
             }
         }
     }
@@ -75,19 +47,27 @@ class CreateTransactionVM(application: Application) : AndroidViewModel(applicati
 
         viewModelScope.launch(Dispatchers.IO) {
 
-            val firstSender = db.getSenderDao().getFirstSender()
             val defaultSender = db.getSenderDao().getSender(defaultSenderId)
+            val firstSender = db.getSenderDao().getFirstSender()
             val firstReceiver = db.getReceiverDao().getFirstReceiverForSelection(groupId)
 
             withContext(Dispatchers.Main) {
-                if (firstSender.size == 0) selectedSender.postValue(null) else if (defaultSender == null) selectedSender.postValue(
-                    firstSender[0]
-                ) else selectedSender.postValue(defaultSender)
-                if (firstReceiver.size == 0) selectedReceiver.postValue(null) else selectedReceiver.postValue(
-                    firstReceiver[0]
+
+                val sender = when {
+                    firstSender.isEmpty() -> { null }
+                    defaultSender == null -> { firstSender[0] }
+                    else -> { defaultSender }
+                }
+
+                val receiver = if (firstReceiver.isEmpty()) null else firstReceiver.first()
+
+                screenState.createBlankTransaction(
+                    sender = sender,
+                    receiver = receiver,
+                    amount = 0,
+                    remarks = getApplication<Application>().getString(R.string.on_account)
                 )
-                amount.postValue(0)
-                remarks.postValue("ON ACCOUNT")
+
             }
         }
     }
@@ -96,7 +76,7 @@ class CreateTransactionVM(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch(Dispatchers.IO) {
             val receiver = db.getReceiverDao().getReceiver(receiverId)
             withContext(Dispatchers.Main) {
-                selectedReceiver.postValue(receiver)
+                screenState.selectReceiver(receiver)
             }
         }
     }
@@ -105,61 +85,46 @@ class CreateTransactionVM(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch(Dispatchers.IO) {
             val sender = db.getSenderDao().getSender(senderId)
             withContext(Dispatchers.Main) {
-                selectedSender.postValue(sender)
+                screenState.selectSender(sender)
             }
         }
     }
 
-    fun saveAmount(amountToSave: Int) {
-        amount.value = amountToSave
-    }
-
-    fun saveRemarks(remarksToSave: String) {
-        remarks.value = remarksToSave
-    }
-
     fun saveNewTransaction(groupId: Int) {
-        val transaction = Transaction()
-        transaction.groupId = groupId
-        transaction.senderId = selectedSender.value?.id ?: error("No Sender Selected")
-        transaction.receiverId = selectedReceiver.value?.id ?: error("No Receiver Selected")
 
-        amount.value?.let {
-            require(it > 0) { "Amount should be greater than zero" }
-            transaction.amount = it
-        } ?: error("Amount cannot be null")
-
-        remarks.value?.let {
-            transaction.remarks = it
-        } ?: run {
-            transaction.remarks = ""
-        }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            db.getTransactionDao().addTransaction(transaction)
+        try {
+            screenState.isWaiting=true
+            val transaction = screenState.createTransaction(groupId)
+            viewModelScope.launch(Dispatchers.IO) {
+                db.getTransactionDao().addTransaction(transaction)
+                _navigateBack.value=true
+            }
+        } catch (e: Exception) {
+            screenState.isWaiting=false
+            toastError(e)
         }
     }
 
     fun updateTransaction(groupId: Int, transactionId: Int) {
-        val transaction = Transaction()
-        transaction.id = transactionId
-        transaction.groupId = groupId
-        transaction.senderId = selectedSender.value?.id ?: error("No Sender Selected")
-        transaction.receiverId = selectedReceiver.value?.id ?: error("No Receiver Selected")
-
-        amount.value?.let {
-            require(it > 0) { "Amount should be greater than zero" }
-            transaction.amount = it
-        } ?: error("Amount cannot be null")
-
-        remarks.value?.let {
-            transaction.remarks = it
-        } ?: run {
-            transaction.remarks = ""
+        try {
+            screenState.isWaiting=true
+            val transaction = screenState.createTransaction(groupId, transactionId)
+            viewModelScope.launch(Dispatchers.IO) {
+                db.getTransactionDao().updateTransaction(transaction)
+                _navigateBack.value=true
+            }
+        } catch (e: Exception) {
+            screenState.isWaiting=false
+            toastError(e)
         }
+    }
 
-        viewModelScope.launch(Dispatchers.IO) {
-            db.getTransactionDao().updateTransaction(transaction)
-        }
+    private fun toastError(e:Exception){
+        val error= e.message ?: getApplication<Application>().getString(R.string.unknown_error)
+        Toast.makeText(
+            getApplication(),
+            error,
+            Toast.LENGTH_LONG
+        ).show()
     }
 }

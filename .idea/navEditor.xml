@@ -13,8 +13,8 @@
                       <LayoutPositions>
                         <option name="myPosition">
                           <Point>
-                            <option name="x" value="-143" />
-                            <option name="y" value="-305" />
+                            <option name="x" value="-121" />
+                            <option name="y" value="-244" />
                           </Point>
                         </option>
                       </LayoutPositions>
@@ -125,6 +125,15 @@
                             <option name="y" value="-295" />
                           </Point>
                         </option>
+                        <option name="myPositions">
+                          <map>
+                            <entry key="action_fragmentGoogleSignIn_to_fragmentEmail">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                          </map>
+                        </option>
                       </LayoutPositions>
                     </value>
                   </entry>
@@ -149,6 +158,11 @@
                                 <LayoutPositions />
                               </value>
                             </entry>
+                            <entry key="action_groupListFragment_to_manageGroupFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                             <entry key="action_groupListFragment_to_receiverListFragment">
                               <value>
                                 <LayoutPositions />
@@ -165,6 +179,18 @@
                               </value>
                             </entry>
                           </map>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
+                  <entry key="manageGroupFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="472" />
+                            <option name="y" value="76" />
+                          </Point>
                         </option>
                       </LayoutPositions>
                     </value>

@@ -15,7 +15,7 @@
     <string name="receiver_name_already_exist">This receiver name already exist. Try different name</string>
     <string name="add_a_sender_first">Please add a sender first</string>
     <string name="create_new_xl_file">Create XL file</string>
-    <string name="update_xl_file">Update XL file</string>
+    <string name="update_xl_file">Update Excel file</string>
     <string name="xl_file_name">XL file name</string>
     <string name="default_sender">Default Sender</string>
     <string name="save">Save</string>
@@ -30,6 +30,8 @@
     <string name="error_no_internet_connection">No active internet connection found. Please try again later!</string>
     <string name="link_to_dropbox">LINK TO DROPBOX</string>
     <string name="unlink_from_dropbox">UNLINK FROM DROPBOX</string>
+    <string name="send_to_drop_box">SEND TO DROPBOX</string>
+    <string name="download_from_drop_box">DOWNLOAD FROM DROPBOX</string>
     <string name="default_mail_subject">RTGS Payment intimation</string>
     <string name="error_email_not_found">Email ID not found</string>
     <string name="default_sender_name">Papco Offset Private Limited</string>
@@ -78,6 +80,84 @@
     <string name="email">Email</string>
 
     <string name="create_sender">Create Sender</string>
+    <string name="update_sender">Update Sender</string>
     <string name="done">Done</string>
-
+    <string name="one_moment_please">One moment please…</string>
+    <string name="create_receiver">Create Receiver</string>
+    <string name="update_receiver">Update Receiver</string>
+    <string name="manage_receivers">Manage Receivers</string>
+    <string name="xx_receivers">%1d Receivers</string>
+    <string name="xx_senders">%1d Senders</string>
+    <string name="search_receivers">Search Receivers</string>
+    <string name="receiver_delete_confirmation_title">Delete this Receiver?</string>
+    <string name="receiver_delete_confirmation_msg">Are you sure want to delete the receiver %1$s?
+        All the transactions done to this receiver will also be deleted</string>
+    <string name="manage_senders">Manage Senders</string>
+    <string name="search_senders">Search Senders</string>
+    <string name="sender_delete_confirmation_title">Delete this Sender?</string>
+    <string name="sender_delete_confirmation_msg">Are you sure want to delete the Sender %1$s?
+        All the transactions done from this Sender will also be deleted</string>
+    <string name="enter_password">Enter Password</string>
+    <string name="password">Password</string>
+    <string name="please_add_a_sender_first">Please add a Sender first</string>
+    <string name="sender">Sender</string>
+    <string name="name">Name</string>
+    <string name="create_xl_file">Create Excel file</string>
+    <string name="xl_file">Excel File</string>
+    <string name="delete_xl_file">Delete File?</string>
+    <string name="delete_xl_file_message">Are you sure you want to delete this Excel file?</string>
+    <string name="excel_files">Excel Files</string>
+    <string name="senders">Senders</string>
+    <string name="receivers">Receivers</string>
+    <string name="dropbox_backup">DropBox Backup</string>
+    <string name="message_format">Message Format</string>
+    <string name="export_excel_file">Export excel file</string>
+    <string name="export_auto_excel_file">Export auto RTGS file</string>
+    <string name="delete_transaction">Delete Transaction?</string>
+    <string name="delete_transaction_msg">Are you sure you want to delete this transaction?</string>
+    <string name="enter_cheque_number">Enter Cheque Number</string>
+    <string name="cheque_number">Cheque Number</string>
+    <string name="report_generated">Report Generated</string>
+    <string name="report_generated_msg"> Report %1$s has been generated. Do you want to share this report?</string>
+    <string name="share">Share</string>
+    <string name="error_in_creating_the_excel_file">Error in creating the excel file</string>
+    <string name="email_subject_line">RTGS File from PAPCO</string>
+    <string name="share_report_chooser_heading">Share XL file via</string>
+    <string name="file_provider_authority">com.papco.sundar.papcortgs.fileprovider</string>
+    <string name="add_at_least_one_transaction_to_export">Please add at least one transaction to export</string>
+    <string name="date_to_send_payment">Date to send payment</string>
+    <string name="amount">Amount</string>
+    <string name="receiver">Receiver</string>
+    <string name="please_add_a_receiver_first">Please add a receiver first</string>
+    <string name="on_account">ON ACCOUNT</string>
+    <string name="remarks">Remarks</string>
+    <string name="create_transaction">Create Transaction</string>
+    <string name="update_transaction">Update Transaction</string>
+    <string name="no_sender_selected">No Sender Selected</string>
+    <string name="no_receiver_selected">No Receiver Selected</string>
+    <string name="enter_valid_amount">Enter a valid amount</string>
+    <string name="select_receiver">Select Receiver</string>
+    <string name="select_sender">Select Sender</string>
+    <string name="this_beneficiary_already_added">This Beneficiary has already been added</string>
+    <string name="sent">Sent</string>
+    <string name="error">Error</string>
+    <string name="sign_out">SIGN OUT</string>
+    <string name="send_emails">Send Emails</string>
+    <string name="send_emails_confirmation">Sure you want to start sending the Email notifications?</string>
+    <string name="send">Send</string>
+    <string name="sign_out_dialog_title">Sign Out</string>
+    <string name="sign_out_dialog_message">Sure you want to sign out of the gmail?</string>
+    <string name="send_messages">Send Messages</string>
+    <string name="email_dispatcher_scheduled_info">The Email is already scheduled for dispatching
+        and will start once the required condition is met. Tap here to cancel the scheduled work</string>
+    <string name="message_dispatcher_scheduled_info">The Messages are already scheduled for dispatching
+        and will start once the required condition is met. Tap here to cancel the scheduled work</string>
+    <string name="send_messages_confirmation">Sure you want to start sending the Message notifications?</string>
+    <string name="restore_dialog_title">Caution!</string>
+    <string name="restore_dialog_msg">Restoring from backup will erase and overwrite all your current data with the dropbox data.
+    Sure want to restore and overwrite?</string>
+    <string name="restore">Restore</string>
+    <string name="connect_to_drop_box">Connect to DropBox</string>
+    <string name="backup_to_drop_box">Backup to DropBox</string>
+    <string name="restore_from_dropBox">Restore from DropBox</string>
 </resources>

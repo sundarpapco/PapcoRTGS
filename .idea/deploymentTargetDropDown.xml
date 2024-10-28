@@ -2,13 +2,19 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
-      <entry key="PreviewAddEditSenderScreen">
+      <entry key="PreviewDatePicker">
         <State />
       </entry>
-      <entry key="TestTextInputField">
+      <entry key="PreviewExcelListItem">
         <State />
       </entry>
-      <entry key="TopAppBarPreview">
+      <entry key="PreviewScreen">
+        <State />
+      </entry>
+      <entry key="PreviewSpinner">
+        <State />
+      </entry>
+      <entry key="PreviewTransactionListScreen">
         <State />
       </entry>
       <entry key="app">

@@ -12,6 +12,8 @@ import com.papco.sundar.papcortgs.database.sender.Sender
 
 class AddEditPartyState(private val context:Context){
 
+    var isWaiting:Boolean by mutableStateOf(false)
+
     var displayName:String by mutableStateOf("")
         private set
 

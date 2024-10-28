@@ -1,12 +1,13 @@
 package com.papco.sundar.papcortgs.database.transaction
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
+import com.papco.sundar.papcortgs.screens.mail.MailDispatcher
+import com.papco.sundar.papcortgs.screens.sms.MessageDispatcher
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -52,6 +53,15 @@ interface TransactionDao {
     @androidx.room.Transaction
     @Query("select * from `transaction` where groupId=:groupId")
     fun getAllCohesiveTransactionsOfGroup(groupId: Int): Flow<List<CohesiveTransaction>>
+
+    @Query("update `Transaction` set mailSent=${MailDispatcher.QUEUED} where groupId=:groupId and mailSent <> ${MailDispatcher.SENT}")
+    suspend fun queueUpTransactionsForMail(groupId:Int)
+
+    @Query("update `Transaction` set messageSent=${MessageDispatcher.QUEUED} where groupId=:groupId and messageSent <> ${MessageDispatcher.SENT}")
+    suspend fun queueUpTransactionsForMessage(groupId:Int)
+
+    @Query("update `Transaction` set messageSent=${MessageDispatcher.ERROR} where groupId=:groupId and messageSent = ${MessageDispatcher.QUEUED}")
+    suspend fun timeoutMessagesQueuedForMessage(groupId:Int)
 
     @Query("update `Transaction` set mailSent=:status where id=:id")
     suspend fun updateMailSentStatus(id:Int,status:Int)
