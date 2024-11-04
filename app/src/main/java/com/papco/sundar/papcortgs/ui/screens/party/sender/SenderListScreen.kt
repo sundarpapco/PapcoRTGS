@@ -23,7 +23,7 @@ import com.papco.sundar.papcortgs.ui.screens.party.SearchablePartyList
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 
 @Composable
-fun ManageSendersScreen(
+fun SenderListScreen(
     state: ManagePartyScreenState,
     onSenderClicked: (Party) -> Unit,
     onBackPressed: () -> Unit,
@@ -107,7 +107,7 @@ private fun PreviewManageReceiversScreen() {
     }
 
     RTGSTheme {
-        ManageSendersScreen(state = state,
+        SenderListScreen(state = state,
             onSenderClicked = {},
             onBackPressed = {},
             onAddNewSender = {},

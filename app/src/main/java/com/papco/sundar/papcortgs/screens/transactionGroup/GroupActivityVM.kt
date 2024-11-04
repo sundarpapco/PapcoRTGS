@@ -16,7 +16,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class GroupActivityVM(application: Application) : AndroidViewModel(application) {
 
@@ -29,8 +31,9 @@ class GroupActivityVM(application: Application) : AndroidViewModel(application) 
     }
 
     private fun loadExcelFiles(){
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch{
             db.transactionGroupDao.allTransactionGroupsForList
+                .flowOn(Dispatchers.IO)
                 .collect{
                     screenState.list=it
                 }

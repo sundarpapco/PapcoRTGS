@@ -20,8 +20,6 @@ public class Sender {
     public String ifsc;
     public String bank;
     public String email;
-    @Ignore
-    public SpannableString highlightedName;
 
     @NonNull
     @Override

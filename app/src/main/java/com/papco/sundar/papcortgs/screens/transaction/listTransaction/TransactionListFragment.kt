@@ -1,5 +1,6 @@
 package com.papco.sundar.papcortgs.screens.transaction.listTransaction
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -88,7 +89,7 @@ class TransactionListFragment : Fragment() {
                         },
                         onDispatchMessages = { navigateToSMSFragment() },
                         onDispatchMails = { navigateToGMailSignInFragment() },
-                        onShareFile = { shareFile(it) })
+                        onShareFile = { shareFile(requireContext(),it) })
                 }
             }
         }
@@ -154,30 +155,13 @@ class TransactionListFragment : Fragment() {
         )
     }
 
-    private fun shareFile(filename: String) {
-
-        val sd = requireContext().cacheDir
-        val fileLocation = File(sd, filename)
-        val path = FileProvider.getUriForFile(
-            requireContext(), getString(R.string.file_provider_authority), fileLocation
-        )
-        val emailIntent = Intent(Intent.ACTION_SEND)
-        //emailIntent.setDataAndType(path,"file/*");
-        //emailIntent.setType("vnd.android.cursor.dir/email");
-        emailIntent.setType("file/*")
-        emailIntent.putExtra(Intent.EXTRA_STREAM, path)
-        emailIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.email_subject_line))
-        startActivity(
-            Intent.createChooser(
-                emailIntent,
-                getString(R.string.share_report_chooser_heading)
-            )
-        )
-
+    private fun shareFile(context: Context, filename: String) {
+        viewModel.shareFile(context,filename)
     }
 
     private fun onDateSelected(selectedDayId: Long) {
-        if (viewModel.screenState.transactions.isNotEmpty()) viewModel.createAutoXlFile(
+        if (viewModel.screenState.transactions.isNotEmpty())
+            viewModel.createAutoXlFile(
             transactionGroup,
             selectedDayId
         )

@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 
@@ -26,4 +27,12 @@ fun Context.isInternetConnected(): Boolean =
                 || hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
                 || hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
     } ?: false
+}
+
+fun Context.toast(msgId:Int,duration:Int=Toast.LENGTH_SHORT){
+    Toast.makeText(this,getString(msgId),duration).show()
+}
+
+fun Context.toast(msg:String,duration:Int=Toast.LENGTH_SHORT){
+    Toast.makeText(this,msg,duration).show()
 }

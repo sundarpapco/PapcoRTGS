@@ -1,5 +1,11 @@
 package com.papco.sundar.papcortgs.ui.screens.message
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,20 +20,21 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.work.WorkInfo
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.database.receiver.Receiver
 import com.papco.sundar.papcortgs.database.sender.Sender
 import com.papco.sundar.papcortgs.database.transaction.Transaction
-import com.papco.sundar.papcortgs.screens.mail.MailDispatcher
 import com.papco.sundar.papcortgs.screens.sms.MessageDispatcher
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
-import com.papco.sundar.papcortgs.ui.screens.message.MessageScreenState.*
+import com.papco.sundar.papcortgs.ui.screens.message.MessageScreenState.Dialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 
 
@@ -37,6 +44,22 @@ fun MessageScreen(
     onSendMessages: () -> Unit,
     onBackPressed: () -> Unit
 ) {
+
+    val permissionsRequestLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = {
+            var granted = true
+            for(pair in it){
+                if(!pair.value)
+                    granted=false
+            }
+
+            if(granted)
+                screenState.showSendConfirmationDialog()
+        }
+    )
+    val context = LocalContext.current
+
     Scaffold(topBar = {
         RTGSAppBar(
             title = stringResource(id = R.string.send_messages),
@@ -47,7 +70,12 @@ fun MessageScreen(
 
         floatingActionButton = {
             if(screenState.dispatcherState.isFinished){
-                    FloatingActionButton(onClick = { screenState.showSendConfirmationDialog() }) {
+                    FloatingActionButton(onClick = {
+                        if(weHaveSMSPermission(context))
+                            screenState.showSendConfirmationDialog()
+                        else
+                            permissionsRequestLauncher.launch(requiredPermissionsArray())
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send messages"
@@ -108,6 +136,32 @@ fun MessageTransactionsList(
             MessageListItem(transaction = it)
         }
     }
+}
+
+private fun weHaveSMSPermission(context: Context): Boolean {
+    if (ContextCompat.checkSelfPermission(
+            context, Manifest.permission.SEND_SMS
+        ) != PackageManager.PERMISSION_GRANTED
+    ) return false
+
+    return ContextCompat.checkSelfPermission(
+        context, Manifest.permission.READ_PHONE_STATE
+    ) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun requiredPermissionsArray():Array<String> {
+
+    val requiredPermissions= mutableListOf(Manifest.permission.READ_PHONE_STATE,
+        Manifest.permission.SEND_SMS,
+        Manifest.permission.RECEIVE_SMS,
+        Manifest.permission.READ_SMS)
+
+    if(Build.VERSION.SDK_INT > 32)
+        requiredPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
+
+
+    return requiredPermissions.toTypedArray()
+
 }
 
 @Preview

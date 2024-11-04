@@ -1,5 +1,10 @@
 package com.papco.sundar.papcortgs.ui.screens.mail
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,21 +18,27 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.work.WorkInfo
 import com.papco.sundar.papcortgs.R
+import com.papco.sundar.papcortgs.common.GMailUtil
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.database.receiver.Receiver
 import com.papco.sundar.papcortgs.database.sender.Sender
 import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.screens.mail.MailDispatcher
+import com.papco.sundar.papcortgs.screens.mail.MailWorker
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.screens.mail.MailScreenState.Dialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -37,6 +48,16 @@ fun MailScreen(
     onBackPressed: () -> Unit,
     onSignOut: () -> Unit
 ) {
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract =ActivityResultContracts.RequestPermission(),
+        onResult = {granted->
+            if(granted)
+                onSendMails()
+        }
+    )
+    val context = LocalContext.current
+
     Scaffold(topBar = {
         RTGSAppBar(
             title = stringResource(id = R.string.email_receivers),
@@ -47,7 +68,12 @@ fun MailScreen(
 
         floatingActionButton = {
             if(screenState.dispatcherState.isFinished){
-                    FloatingActionButton(onClick = { screenState.showSendConfirmationDialog() }) {
+                    FloatingActionButton(onClick = {
+                        if(weHaveAccountsPermission(context))
+                            screenState.showSendConfirmationDialog()
+                        else
+                            permissionLauncher.launch(Manifest.permission.GET_ACCOUNTS)
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send mails"
@@ -65,7 +91,7 @@ fun MailScreen(
 
             screenState.loggedInGmail?.let { email ->
                 GmailInfo(
-                    email = email, onSignOutClicked = { screenState.showSignOutConfirmationDialog() }
+                    email = email, onSignOutClicked = {screenState.showSignOutConfirmationDialog()}
                 )
             }
 
@@ -125,6 +151,11 @@ fun MailTransactionsList(
             MailListItem(transaction = it)
         }
     }
+}
+private fun weHaveAccountsPermission(context:Context): Boolean {
+    return (ContextCompat.checkSelfPermission(
+        context, Manifest.permission.GET_ACCOUNTS
+    ) == PackageManager.PERMISSION_GRANTED)
 }
 
 @Preview

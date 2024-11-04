@@ -137,6 +137,36 @@ class AddEditPartyState(private val context:Context){
         email=receiver.email
     }
 
+    fun asSender(id:Int=0):Sender{
+        val sender = Sender()
+        sender.id=id
+        sender.displayName = displayName
+        sender.name = accountName
+        sender.accountNumber = accountNumber
+        sender.accountType = accountType
+        sender.ifsc = ifsCode
+        sender.bank = bankAndBranch
+        sender.mobileNumber = mobileNumber
+        sender.email = email
+
+        return sender
+    }
+
+    fun asReceiver(id:Int=0):Receiver{
+        val receiver = Receiver()
+        receiver.id=id
+        receiver.displayName = displayName
+        receiver.name = accountName
+        receiver.accountNumber = accountNumber
+        receiver.accountType = accountType
+        receiver.ifsc = ifsCode
+        receiver.bank = bankAndBranch
+        receiver.mobileNumber = mobileNumber
+        receiver.email = email
+
+        return receiver
+    }
+
 
    fun validateState():Boolean{
 

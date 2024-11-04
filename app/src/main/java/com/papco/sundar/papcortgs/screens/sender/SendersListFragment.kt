@@ -10,7 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.extentions.getActionBar
-import com.papco.sundar.papcortgs.ui.screens.party.sender.ManageSendersScreen
+import com.papco.sundar.papcortgs.ui.screens.party.sender.SenderListScreen
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 
 class SendersListFragment : Fragment() {
@@ -26,7 +26,7 @@ class SendersListFragment : Fragment() {
        return ComposeView(requireContext()).apply {
            setContent {
                RTGSTheme {
-                   ManageSendersScreen(
+                   SenderListScreen(
                        state = viewModel.screenState,
                        onSenderClicked = {navigateToEditSenderScreen(it.id)},
                        onBackPressed = { findNavController().popBackStack() },

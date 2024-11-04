@@ -160,4 +160,6 @@
     <string name="connect_to_drop_box">Connect to DropBox</string>
     <string name="backup_to_drop_box">Backup to DropBox</string>
     <string name="restore_from_dropBox">Restore from DropBox</string>
+    <string name="connect_to_gmail">Connect to GMail</string>
+    <string name="gmail">GMail</string>
 </resources>

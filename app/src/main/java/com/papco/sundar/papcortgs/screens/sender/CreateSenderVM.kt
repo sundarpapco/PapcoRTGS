@@ -1,6 +1,7 @@
 package com.papco.sundar.papcortgs.screens.sender
 
 import android.app.Application
+import android.os.Bundle
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.papco.sundar.papcortgs.R
@@ -15,6 +16,10 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 class CreateSenderVM(application: Application) : AndroidViewModel(application) {
+
+    companion object {
+        const val EVENT_SUCCESS = "EVENT_SUCCESS"
+    }
 
     private var isAlreadyLoaded = false
 

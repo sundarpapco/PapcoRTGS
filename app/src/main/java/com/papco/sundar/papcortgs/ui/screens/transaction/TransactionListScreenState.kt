@@ -10,6 +10,10 @@ class TransactionListScreenState {
     var transactions:List<TransactionForList> by mutableStateOf(emptyList())
     var dialog:Dialog? by mutableStateOf(null)
 
+    fun showReportGeneratedDialog(fileName: String){
+        dialog=Dialog.ReportGenerated(fileName)
+    }
+
     sealed class Dialog{
         class DeleteConfirmation(val id:Int):Dialog()
         class ReportGenerated(val fileName:String):Dialog()

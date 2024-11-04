@@ -180,6 +180,7 @@ private fun PartyDetailsForm(
                 focusManager.moveFocus(FocusDirection.Down)
             }),
             keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
                 capitalization = KeyboardCapitalization.Characters, imeAction = ImeAction.Next
             )
         ) {
