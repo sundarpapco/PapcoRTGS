@@ -1,7 +1,6 @@
 package com.papco.sundar.papcortgs.screens.sender
 
 import android.app.Application
-import android.os.Bundle
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.papco.sundar.papcortgs.R
@@ -54,7 +53,7 @@ class CreateSenderVM(application: Application) : AndroidViewModel(application) {
                 _eventStatus.value=Event(getDuplicateString())
             } else {
                 db.senderDao.addSender(newSender)
-                _eventStatus.value=Event(CreateSenderFragment.EVENT_SUCCESS)
+                _eventStatus.value=Event(EVENT_SUCCESS)
             }
         }
 
@@ -68,7 +67,7 @@ class CreateSenderVM(application: Application) : AndroidViewModel(application) {
                 _eventStatus.value=Event(getDuplicateString())
             } else {
                 db.senderDao.updateSender(senderToUpdate)
-                _eventStatus.value=Event(CreateSenderFragment.EVENT_SUCCESS)
+                _eventStatus.value=Event(EVENT_SUCCESS)
             }
         }
     }

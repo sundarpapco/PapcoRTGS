@@ -66,7 +66,7 @@ class ManageTransactionGroupVM(application: Application) : AndroidViewModel(appl
         viewModelScope.launch(Dispatchers.IO) {
             screenState.getLoadedGroup()?.let{
                 db.transactionGroupDao.addTransactionGroup(it)
-                _event.value= Event(ManageGroupFragment.EVENT_SUCCESS)
+                _event.value= Event("Success")
             }
         }
     }
@@ -76,7 +76,7 @@ class ManageTransactionGroupVM(application: Application) : AndroidViewModel(appl
         viewModelScope.launch(Dispatchers.IO) {
             screenState.getLoadedGroup()?.let{
                 db.transactionGroupDao.updateTransactionGroup(it)
-                _event.value= Event(ManageGroupFragment.EVENT_SUCCESS)
+                _event.value= Event("Success")
             }
         }
 
@@ -87,7 +87,7 @@ class ManageTransactionGroupVM(application: Application) : AndroidViewModel(appl
         viewModelScope.launch(Dispatchers.IO){
             screenState.dialog=ManageGroupScreenState.Dialog.WaitDialog
             db.transactionGroupDao.deleteTransactionGroup(groupId)
-            _event.value= Event(ManageGroupFragment.EVENT_SUCCESS)
+            _event.value= Event("Success")
         }
 
     }

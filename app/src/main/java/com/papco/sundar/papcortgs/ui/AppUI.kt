@@ -1,6 +1,7 @@
 package com.papco.sundar.papcortgs.ui
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -189,7 +190,7 @@ fun AppUI() {
             }
 
             LaunchedEffect(key1 = true) {
-                viewModel.reportGenerated.collect { it ->
+                viewModel.reportGenerated.collect {
                     it?.let { event ->
                         if (event.isAlreadyHandled) return@collect
                         val fileName = event.handleEvent()
@@ -204,7 +205,6 @@ fun AppUI() {
                         }
                     }
                 }
-
             }
         }
 
@@ -403,7 +403,7 @@ fun AppUI() {
                     it?.let{event->
                         if(!event.isAlreadyHandled){
                             val msg=event.handleEvent()
-                            if(msg==CreateSenderVM.EVENT_SUCCESS){
+                            if(msg==CreateReceiverVM.EVENT_SUCCESS){
                                 navController.popBackStack()
                             }else{
                                 context.toast(msg)
@@ -498,6 +498,16 @@ fun AppUI() {
                     viewModel.loadEmailList(args.groupId)
 
                 isAlreadyLoaded = true
+            }
+
+            BackHandler {
+                navController.popBackStack(
+                    TransactionList(
+                        args.groupId,
+                        args.groupName,
+                        args.defaultSenderId
+                    ),false
+                )
             }
 
         }

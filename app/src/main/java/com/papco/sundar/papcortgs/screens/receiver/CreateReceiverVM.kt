@@ -2,7 +2,6 @@ package com.papco.sundar.papcortgs.screens.receiver
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.common.Event
@@ -13,9 +12,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Locale
 
 class CreateReceiverVM(application: Application) :AndroidViewModel(application) {
+
+    companion object {
+        const val EVENT_SUCCESS = "EVENT_SUCCESS"
+    }
 
     private var isAlreadyLoaded = false
 
@@ -50,7 +53,7 @@ class CreateReceiverVM(application: Application) :AndroidViewModel(application) 
                 _eventStatus.value=Event(getDuplicateString())
             } else {
                 db.receiverDao.addReceiver(newReceiver)
-                _eventStatus.value=Event(CreateReceiverFragment.EVENT_SUCCESS)
+                _eventStatus.value=Event(EVENT_SUCCESS)
             }
         }
 
@@ -64,7 +67,7 @@ class CreateReceiverVM(application: Application) :AndroidViewModel(application) 
                 _eventStatus.value=Event(getDuplicateString())
             } else {
                 db.receiverDao.updateReceiver(receiverToUpdate)
-                _eventStatus.value=Event(CreateReceiverFragment.EVENT_SUCCESS)
+                _eventStatus.value=Event(EVENT_SUCCESS)
             }
         }
     }
