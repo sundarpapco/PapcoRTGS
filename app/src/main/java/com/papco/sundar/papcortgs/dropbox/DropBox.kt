@@ -3,6 +3,7 @@
 package com.papco.sundar.papcortgs.dropbox
 
 import android.content.Context
+import android.util.Log
 import com.dropbox.core.DbxRequestConfig
 import com.dropbox.core.android.Auth
 import com.dropbox.core.oauth.DbxCredential
@@ -45,7 +46,6 @@ class DropBox(
             appSettings.saveDropBoxCredentials(mCredentials)
             return true
         }
-
         return false
     }
 

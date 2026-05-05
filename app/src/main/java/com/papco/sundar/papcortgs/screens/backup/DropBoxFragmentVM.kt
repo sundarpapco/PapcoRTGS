@@ -1,6 +1,7 @@
 package com.papco.sundar.papcortgs.screens.backup
 
 import android.app.Application
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -33,6 +34,7 @@ class DropBoxFragmentVM(application: Application): AndroidViewModel(application)
         viewModelScope.launch(Dispatchers.IO) {
             dropBox.connectionStatus()
                 .collect{connected->
+                    Log.d("SUNDAR","DropBox Connected: $connected")
                     screenState.isDropBoxConnected=connected
                 }
         }

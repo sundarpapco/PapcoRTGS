@@ -1,5 +1,6 @@
 package com.papco.sundar.papcortgs.ui.screens.mail
 
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -47,9 +48,12 @@ fun GmailSignInScreen(
             val completedTask=GoogleSignIn.getSignedInAccountFromIntent(it.data)
             try {
                 completedTask.getResult(ApiException::class.java)
+                Log.d("SUNDAR","Gmail Connected Successfully")
                 // Signed in successfully, show authenticated UI.
                 onConnected()
             } catch (e: ApiException) {
+                Log.d("SUNDAR","Gmail Connection Failed")
+                e.printStackTrace()
                 // The ApiException status code indicates the detailed failure reason.
                 // Please refer to the GoogleSignInStatusCodes class reference for more information.
             }
