@@ -26,6 +26,7 @@ import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.pojo.Party
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.components.TextInputField
+import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.dialogs.DeleteConfirmationDialog
 import com.papco.sundar.papcortgs.ui.dialogs.WaitDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
@@ -61,8 +62,8 @@ fun ManageGroupScreen(
     state.dialog?.let{
         RenderDialog(
             dialogsState = it,
-            onDelete = onDelete,
-            onDismiss = {state.dialog=null}
+            onPositiveClick = onDelete,
+            onNegativeClick = {state.dialog=null}
         )
     }
 }
@@ -70,8 +71,8 @@ fun ManageGroupScreen(
 @Composable
 private fun RenderDialog(
     dialogsState:ManageGroupScreenState.Dialog,
-    onDelete: () -> Unit,
-    onDismiss:()->Unit
+    onPositiveClick: () -> Unit,
+    onNegativeClick:()->Unit
 ){
     when(dialogsState){
 
@@ -83,8 +84,8 @@ private fun RenderDialog(
             DeleteConfirmationDialog(
                 title = stringResource(id = R.string.delete_xl_file),
                 message = stringResource(id = R.string.delete_xl_file_message),
-                onDelete = onDelete,
-                onDismiss =onDismiss
+                onDelete = onPositiveClick,
+                onDismiss =onNegativeClick
             )
         }
 

@@ -1,53 +1,46 @@
-@file:Suppress("INACCESSIBLE_TYPE")
-
-package com.papco.sundar.papcortgs.common
+package com.papco.sundar.papcortgs.reports
 
 import android.content.Context
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Typeface
-import android.os.Environment
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
 import jxl.Workbook
 import jxl.WorkbookSettings
-import jxl.format.*
 import jxl.format.Alignment
 import jxl.format.Border
 import jxl.format.BorderLineStyle
+import jxl.format.CellFormat
 import jxl.format.Colour
 import jxl.format.VerticalAlignment
-import jxl.write.*
+import jxl.write.Label
+import jxl.write.WritableCellFormat
+import jxl.write.WritableFont
+import jxl.write.WritableSheet
+import jxl.write.WritableWorkbook
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.math.ceil
+import java.util.Locale
 import kotlin.math.max
 
-@Suppress("BlockingMethodInNonBlockingContext")
-class ManualRTGSReport(
-    private val context:Context,
-        private val db: MasterDatabase,
-        private val chequeNumber: String) {
+class ChequeRTGSReport(
+    private val context: Context,
+    private val db: MasterDatabase,
+    private val chequeNumber: String) {
 
-    private val columnDetails = ArrayList<ColumnDetail>(14)
+    private val columnWidths = ArrayList<ColumnWidth>(14)
     private var transactionGroup: TransactionGroup? = null
-    private val widthOfOneCharacterinPixels:Double=4.712
 
     private val filename by lazy {
         val prefix = transactionGroup?.name ?: "papcoRtgs"
         "${prefix}.xls"
     }
 
-    private val textPaint by lazy {
-        createTextPaint()
-    }
 
+    suspend fun createReport(transactionGroup: TransactionGroup): String
+    = withContext(Dispatchers.IO){
 
-    suspend fun createReport(transactionGroup: TransactionGroup): String {
-
-        this.transactionGroup = transactionGroup
+        this@ChequeRTGSReport.transactionGroup = transactionGroup
         val transactions = loadTransactions(transactionGroup.id)
         setDefaultColumnWidths()
         val workbook = createWorkBook()
@@ -59,7 +52,7 @@ class ManualRTGSReport(
         workbook.write()
         workbook.close()
 
-        return filename
+        filename
 
     }
 
@@ -78,20 +71,20 @@ class ManualRTGSReport(
 
     private fun setDefaultColumnWidths() {
 
-        columnDetails.add(0, ColumnDetail(5))
-        columnDetails.add(1, ColumnDetail(8))
-        columnDetails.add(2, ColumnDetail(10))
-        columnDetails.add(3, ColumnDetail(9))
-        columnDetails.add(4, ColumnDetail(12))
-        columnDetails.add(5, ColumnDetail(28))
-        columnDetails.add(6, ColumnDetail(8))
-        columnDetails.add(7, ColumnDetail(20))
-        columnDetails.add(8, ColumnDetail(28))
-        columnDetails.add(9, ColumnDetail(11))
-        columnDetails.add(10, ColumnDetail(14))
-        columnDetails.add(11, ColumnDetail(12))
-        columnDetails.add(12, ColumnDetail(10))
-        columnDetails.add(13, ColumnDetail(10))
+        columnWidths.add(0, ColumnWidth(5))
+        columnWidths.add(1, ColumnWidth(8))
+        columnWidths.add(2, ColumnWidth(10))
+        columnWidths.add(3, ColumnWidth(9))
+        columnWidths.add(4, ColumnWidth(12))
+        columnWidths.add(5, ColumnWidth(28))
+        columnWidths.add(6, ColumnWidth(8))
+        columnWidths.add(7, ColumnWidth(20))
+        columnWidths.add(8, ColumnWidth(28))
+        columnWidths.add(9, ColumnWidth(11))
+        columnWidths.add(10, ColumnWidth(14))
+        columnWidths.add(11, ColumnWidth(12))
+        columnWidths.add(12, ColumnWidth(10))
+        columnWidths.add(13, ColumnWidth(10))
 
 
     }
@@ -237,25 +230,17 @@ class ManualRTGSReport(
 
     private fun calculateColumnWidth(column: Int, matter: String) {
 
-        val textWidthInPixels=textPaint.measureText(matter).toDouble()
-        val widthInCharacters=ceil(textWidthInPixels/widthOfOneCharacterinPixels).toInt()
-        if (widthInCharacters> columnDetails[column].recommendedWidth) columnDetails[column].recommendedWidth = widthInCharacters
-
+        columnWidths[column].calculateRecommendedWidth(matter)
     }
 
     private fun setColumnWidths(sheet: WritableSheet) {
 
-        for ((index, columnDetail) in columnDetails.withIndex()) {
-            sheet.setColumnView(index, max(columnDetail.minimumWidth, columnDetail.recommendedWidth))
+        for ((index, columnDetail) in columnWidths.withIndex()) {
+            sheet.setColumnView(index,
+                max(columnDetail.minimumWidth, columnDetail.recommendedWidth)
+            )
         }
 
-    }
-
-    private fun createTextPaint():Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        isLinearText=true
-        textSize = 10f
-        color = Color.BLACK
-        typeface = Typeface.create("Arial", Typeface.NORMAL)
     }
 
 

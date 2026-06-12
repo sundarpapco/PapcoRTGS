@@ -3,6 +3,7 @@ package com.papco.sundar.papcortgs.screens.sms
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.content.Context
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LiveData
@@ -70,6 +71,7 @@ class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorke
     private val database = MasterDatabase.getInstance(applicationContext)
 
     override suspend fun doWork(): Result {
+
         if(!applicationContext.weHaveNotificationPermission())
             return Result.failure()
 
@@ -156,7 +158,7 @@ class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorke
                 .apply {
                     setContentTitle(applicationContext.getString(R.string.sending_email_failed))
                     setContentText(reason)
-                    setSmallIcon(R.drawable.app_icon)
+                    setSmallIcon(R.drawable.logo_round)
                     priority = NotificationCompat.PRIORITY_DEFAULT
                     setAutoCancel(true)
                 }.build()
@@ -183,7 +185,7 @@ class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             .apply {
                 setContentTitle(applicationContext.getString(R.string.sending_email_intimation))
                 setProgress(0, 100, true)
-                setSmallIcon(R.drawable.app_icon)
+                setSmallIcon(R.drawable.logo_round)
                 foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
                 priority = NotificationCompat.PRIORITY_DEFAULT
 

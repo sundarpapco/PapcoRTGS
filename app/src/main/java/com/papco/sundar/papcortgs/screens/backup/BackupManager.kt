@@ -1,12 +1,18 @@
 package com.papco.sundar.papcortgs.screens.backup
 
-import com.papco.sundar.papcortgs.dropbox.DropBox
+import android.content.Context
+import android.net.Uri
+import com.dropbox.core.NetworkIOException
+import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.receiver.Receiver
 import com.papco.sundar.papcortgs.database.sender.Sender
 import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
+import com.papco.sundar.papcortgs.dropbox.DropBox
+import com.papco.sundar.papcortgs.extentions.copyToLocalBackupFile
 import com.papco.sundar.papcortgs.settings.AppPreferences
+import com.papco.sundar.papcortgs.ui.components.ToastMessage
 import jxl.Cell
 import jxl.Workbook
 import jxl.WorkbookSettings
@@ -18,20 +24,46 @@ import jxl.write.WritableCellFormat
 import jxl.write.WritableFont
 import jxl.write.WritableWorkbook
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import java.io.File
 import java.util.Locale
 
+sealed class BackupUpdate {
+    data class Progress(val progress: ToastMessage) : BackupUpdate()
+    data object Success : BackupUpdate()
+    data class Failed(val error: Exception) : BackupUpdate()
+}
+
 class BackupManager(
-    private val db:MasterDatabase,
+    private val db: MasterDatabase,
     private val appPreferences: AppPreferences,
     private val dropBox: DropBox
 ) {
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun doBackup()= flow{
+    fun doDropBoxBackup() = flow {
+        try {
+            emitAll(createLocalBackupFile())
+            emitAll(uploadToDropBox())
+            emit(BackupUpdate.Success)
+        } catch (_: NetworkIOException){
+            emit(BackupUpdate.Failed(Exception("Failed. Please Check Internet Connection")))
+        } catch (e: Exception) {
+            emit(BackupUpdate.Failed(e))
+        }
+    }
 
-        //Create the backup file in local drive
+    fun createBackupFile() = flow {
+        try {
+            emitAll(createLocalBackupFile())
+            emit(BackupUpdate.Success)
+        } catch (e: Exception) {
+            emit(BackupUpdate.Failed(e))
+        }
+    }
+
+    private fun createLocalBackupFile() = flow {
+
         val receiversFile = File(appPreferences.getLocalBackupFilePath())
 
         //prepare and create the workbook and writable sheet
@@ -40,63 +72,94 @@ class BackupManager(
         wbSettings.locale = Locale("en", "EN")
         workbook = Workbook.createWorkbook(receiversFile, wbSettings)
 
-        emit("Backing up Receivers...")
+        emit(BackupUpdate.Progress(ToastMessage.Message("Backing up Receivers...")))
         writeReceiverToWorkbook(workbook)
 
-        emit("Backing up Senders...")
+        emit(BackupUpdate.Progress(ToastMessage.Message("Backing up Senders...")))
         writeSendersToWorkbook(workbook)
 
-        emit("Backing up XL Sheets")
+        emit(BackupUpdate.Progress(ToastMessage.Message("Backing up XL Sheets")))
         writeGroupsToWorkBook(workbook)
 
-        emit("Backing up Transactions")
+        emit(BackupUpdate.Progress(ToastMessage.Message("Backing up Transactions")))
         writeTransactionsToWorkBook(workbook)
 
         workbook.write()
         workbook.close()
 
-        emit("Backing up to dropbox...")
-        dropBox.uploadBackupFile()
-
-        emit("Clearing up temp files")
-        deleteTempFiles()
-
-        emit("Backup Successful!")
-
     }
 
-    fun restoreBackup()=flow{
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun uploadToDropBox() = flow {
 
-        emit("Downloading the backup file...")
-        dropBox.downloadBackupFiles()
+        emit(BackupUpdate.Progress(ToastMessage.Message("Backing up to dropbox...")))
+        dropBox.uploadBackupFile()
+
+        emit(BackupUpdate.Progress(ToastMessage.Message("Clearing up temp files")))
+        deleteTempFiles()
+    }
+
+
+    fun restoreDropBoxBackup() = flow {
+
+        try {
+            emit(BackupUpdate.Progress(ToastMessage.Message("Downloading the backup file...")))
+            dropBox.downloadBackupFiles()
+
+            emitAll(restoreLocalBackupFile())
+            emit(BackupUpdate.Success)
+
+        }catch (_: NetworkIOException){
+            emit(BackupUpdate.Failed(Exception("Failed. Please Check Internet Connection")))
+        } catch (e: Exception) {
+            emit(BackupUpdate.Failed(e))
+        }
+    }
+
+    fun restoreFromFile(context: Context, fileUri: Uri) = flow{
+
+        try {
+            emit(BackupUpdate.Progress(ToastMessage.Resource(R.string.copying_file)))
+            fileUri.copyToLocalBackupFile(context,appPreferences.getLocalBackupFilePath())
+
+            emitAll(restoreLocalBackupFile())
+            emit(BackupUpdate.Success)
+
+        }catch (e: Exception){
+            emit(BackupUpdate.Failed(e))
+        }
+    }
+
+    private fun restoreLocalBackupFile() = flow {
+
+        val workbook: Workbook = Workbook.getWorkbook(File(appPreferences.getLocalBackupFilePath()))
+        require(validBackupFile(workbook)){"Invalid backup file"}
 
         clearAllTables()
 
-        val workbook: Workbook = Workbook.getWorkbook(File(appPreferences.getLocalBackupFilePath()))
-
-        emit("Restoring Receivers...")
+        emit(BackupUpdate.Progress(ToastMessage.Message("Restoring Receivers...")))
         restoreReceivers(workbook)
 
-        emit("Restoring Senders...")
+        emit(BackupUpdate.Progress(ToastMessage.Message("Restoring Senders...")))
         restoreSenders(workbook)
 
-        emit("Restoring Groups...")
+        emit(BackupUpdate.Progress(ToastMessage.Message("Restoring Groups...")))
         restoreGroups(workbook)
 
-        emit("Restoring Transactions")
+        emit(BackupUpdate.Progress(ToastMessage.Message("Restoring Transactions")))
         restoreTransactions(workbook)
 
-        emit("Clearing up temp files")
+        emit(BackupUpdate.Progress(ToastMessage.Message("Clearing up temp files")))
         deleteTempFiles()
 
-        emit("Restore Successful!")
+        emit(BackupUpdate.Progress(ToastMessage.Message("Restore Successful!")))
     }
 
 
     @Throws(Exception::class)
     private fun writeReceiverToWorkbook(workbook: WritableWorkbook) {
 
-        //prepare the list of receivers to backup
+        //prepare the list of receivers to back up
         val receivers: List<Receiver> = db.getReceiverDao().getAllReceiversNonLive()
         val sheet = workbook.createSheet("receivers", 0)
 
@@ -110,8 +173,6 @@ class BackupManager(
         //write the receivers to the file
         var row = 0
         for (receiver in receivers) {
-            if (receiver.email == null) //since its added in the later version, older objects may have null value
-                receiver.email = ""
             sheet.addCell(Number(0, row, receiver.id.toDouble(), contentFormat))
             sheet.addCell(Label(1, row, receiver.accountType, contentFormat))
             sheet.addCell(Label(2, row, receiver.accountNumber, contentFormat))
@@ -130,62 +191,62 @@ class BackupManager(
     @Throws(Exception::class)
     private fun writeSendersToWorkbook(workbook: WritableWorkbook) {
 
-        //prepare the list of senders to backup
+        //prepare the list of senders to back up
         val senders: List<Sender> = db.getSenderDao().getAllSendersNonLive()
         val sheet = workbook.createSheet("senders", 1)
 
-        //prepare the cellformat for writing
+        //prepare the cellFormat for writing
         val contentFont = WritableFont(WritableFont.ARIAL, 10, WritableFont.NO_BOLD)
-        val contentformat = WritableCellFormat(contentFont)
-        contentformat.alignment = Alignment.CENTRE
-        contentformat.verticalAlignment = VerticalAlignment.BOTTOM
-        contentformat.wrap = false
+        val contentFormat = WritableCellFormat(contentFont)
+        contentFormat.alignment = Alignment.CENTRE
+        contentFormat.verticalAlignment = VerticalAlignment.BOTTOM
+        contentFormat.wrap = false
 
         //write the senders to the file
         var row = 0
         for (sender in senders) {
             if (sender.email == null) //Since email was added in later version, older senders may have this as null
                 sender.email = ""
-            sheet.addCell(Number(0, row, sender.id.toDouble(), contentformat))
-            sheet.addCell(Label(1, row, sender.accountType, contentformat))
-            sheet.addCell(Label(2, row, sender.accountNumber, contentformat))
-            sheet.addCell(Label(3, row, sender.name, contentformat))
-            sheet.addCell(Label(4, row, sender.mobileNumber, contentformat))
-            sheet.addCell(Label(5, row, sender.ifsc, contentformat))
-            sheet.addCell(Label(6, row, sender.bank, contentformat))
-            sheet.addCell(Label(7, row, sender.email, contentformat))
-            sheet.addCell(Label(8, row, sender.displayName, contentformat))
+            sheet.addCell(Number(0, row, sender.id.toDouble(), contentFormat))
+            sheet.addCell(Label(1, row, sender.accountType, contentFormat))
+            sheet.addCell(Label(2, row, sender.accountNumber, contentFormat))
+            sheet.addCell(Label(3, row, sender.name, contentFormat))
+            sheet.addCell(Label(4, row, sender.mobileNumber, contentFormat))
+            sheet.addCell(Label(5, row, sender.ifsc, contentFormat))
+            sheet.addCell(Label(6, row, sender.bank, contentFormat))
+            sheet.addCell(Label(7, row, sender.email, contentFormat))
+            sheet.addCell(Label(8, row, sender.displayName, contentFormat))
             row++
         }
-        sheet.addCell(Label(0, row, "--end--", contentformat))
+        sheet.addCell(Label(0, row, "--end--", contentFormat))
     }
 
     @Throws(Exception::class)
     private suspend fun writeTransactionsToWorkBook(workbook: WritableWorkbook) {
 
-        //prepare the list of transactions to backup
+        //prepare the list of transactions to back up
         val transactions: List<Transaction> = db.getTransactionDao().getAllTransactions()
         val sheet = workbook.createSheet("transactions", 3)
 
-        //prepare the cellformat for writing
+        //prepare the cellFormat for writing
         val contentFont = WritableFont(WritableFont.ARIAL, 10, WritableFont.NO_BOLD)
-        val contentformat = WritableCellFormat(contentFont)
-        contentformat.alignment = Alignment.CENTRE
-        contentformat.verticalAlignment = VerticalAlignment.BOTTOM
-        contentformat.wrap = false
+        val contentFormat = WritableCellFormat(contentFont)
+        contentFormat.alignment = Alignment.CENTRE
+        contentFormat.verticalAlignment = VerticalAlignment.BOTTOM
+        contentFormat.wrap = false
 
         //write the transactions to the file
         var row = 0
         for (trans in transactions) {
-            sheet.addCell(Number(0, row, trans.id.toDouble(), contentformat))
-            sheet.addCell(Number(1, row, trans.groupId.toDouble(), contentformat))
-            sheet.addCell(Number(2, row, trans.senderId.toDouble(), contentformat))
-            sheet.addCell(Number(3, row, trans.receiverId.toDouble(), contentformat))
-            sheet.addCell(Number(4, row, trans.amount.toDouble(), contentformat))
-            sheet.addCell(Label(5, row, trans.remarks, contentformat))
+            sheet.addCell(Number(0, row, trans.id.toDouble(), contentFormat))
+            sheet.addCell(Number(1, row, trans.groupId.toDouble(), contentFormat))
+            sheet.addCell(Number(2, row, trans.senderId.toDouble(), contentFormat))
+            sheet.addCell(Number(3, row, trans.receiverId.toDouble(), contentFormat))
+            sheet.addCell(Number(4, row, trans.amount.toDouble(), contentFormat))
+            sheet.addCell(Label(5, row, trans.remarks, contentFormat))
             row++
         }
-        sheet.addCell(Label(0, row, "--end--", contentformat))
+        sheet.addCell(Label(0, row, "--end--", contentFormat))
 
         //write the workbook and close it
         //workbook.write();
@@ -195,26 +256,26 @@ class BackupManager(
     @Throws(Exception::class)
     private fun writeGroupsToWorkBook(workbook: WritableWorkbook) {
 
-        //prepare the list of groups to backup
+        //prepare the list of groups to back up
         val groups: List<TransactionGroup> = db.getTransactionGroupDao().getAllGroupsNonLive()
         val sheet = workbook.createSheet("groups", 2)
 
-        //prepare the cellformat for writing
+        //prepare the cellFormat for writing
         val contentFont = WritableFont(WritableFont.ARIAL, 10, WritableFont.NO_BOLD)
-        val contentformat = WritableCellFormat(contentFont)
-        contentformat.alignment = Alignment.CENTRE
-        contentformat.verticalAlignment = VerticalAlignment.BOTTOM
-        contentformat.wrap = false
+        val contentFormat = WritableCellFormat(contentFont)
+        contentFormat.alignment = Alignment.CENTRE
+        contentFormat.verticalAlignment = VerticalAlignment.BOTTOM
+        contentFormat.wrap = false
 
         //write the groups to the file
         var row = 0
         for (group in groups) {
-            sheet.addCell(Number(0, row, group.id.toDouble(), contentformat))
-            sheet.addCell(Label(1, row, group.name, contentformat))
-            sheet.addCell(Number(2, row, group.defaultSenderId.toDouble(), contentformat))
+            sheet.addCell(Number(0, row, group.id.toDouble(), contentFormat))
+            sheet.addCell(Label(1, row, group.name, contentFormat))
+            sheet.addCell(Number(2, row, group.defaultSenderId.toDouble(), contentFormat))
             row++
         }
-        sheet.addCell(Label(0, row, "--end--", contentformat))
+        sheet.addCell(Label(0, row, "--end--", contentFormat))
 
     }
 
@@ -230,16 +291,13 @@ class BackupManager(
     @Throws(java.lang.Exception::class)
     private fun restoreReceivers(workbook: Workbook) {
         val receivers: MutableList<Receiver> = ArrayList()
-        var notReachedEnd: Boolean
         var currentCell: Cell
         var currentReceiver: Receiver
         val sheet = workbook.getSheet(0)
-        notReachedEnd = true
         var row = 0
-        while (notReachedEnd) {
+        while (true) {
             currentCell = sheet.getCell(0, row)
             if (currentCell.contents == "--end--") {
-                notReachedEnd = false
                 break
             }
             currentReceiver = Receiver()
@@ -253,13 +311,14 @@ class BackupManager(
             currentReceiver.email = sheet.getCell(7, row).contents
 
             /*
-            A try block is required because this field wont exist in the backup file
+            A try block is required because this field won't exist in the backup file
             if the backup file is for older database version than the current version. So,
             in case the display name field is not there in the backup file, simply migrate by making
             the display name same as the account name field
-             */try {
+             */
+            try {
                 currentReceiver.displayName = sheet.getCell(8, row).contents
-            } catch (e: java.lang.Exception) {
+            } catch (_: java.lang.Exception) {
                 currentReceiver.displayName = currentReceiver.name
             }
             receivers.add(currentReceiver)
@@ -271,16 +330,13 @@ class BackupManager(
     @Throws(java.lang.Exception::class)
     private fun restoreSenders(workbook: Workbook) {
         val senders: MutableList<Sender> = ArrayList()
-        var notReachedEnd: Boolean
         var currentCell: Cell
         var currentSender: Sender
         val sheet = workbook.getSheet(1)
-        notReachedEnd = true
         var row = 0
-        while (notReachedEnd) {
+        while (true) {
             currentCell = sheet.getCell(0, row)
             if (currentCell.contents == "--end--") {
-                notReachedEnd = false
                 break
             }
             currentSender = Sender()
@@ -294,13 +350,13 @@ class BackupManager(
             currentSender.email = sheet.getCell(7, row).contents
 
             /*
-            A try block is required because this field wont exist in the backup file
+            A try block is required because this field won't exist in the backup file
             if the backup file is for older database version than the current version. So,
             in case the display name field is not there in the backup file, simply migrate by making
             the display name same as the account name field
              */try {
                 currentSender.displayName = sheet.getCell(8, row).contents
-            } catch (e: java.lang.Exception) {
+            } catch (_: java.lang.Exception) {
                 currentSender.displayName = currentSender.name
             }
             senders.add(currentSender)
@@ -312,16 +368,13 @@ class BackupManager(
     @Throws(java.lang.Exception::class)
     private fun restoreGroups(workbook: Workbook) {
         val groups: MutableList<TransactionGroup> = ArrayList()
-        var notReachedEnd: Boolean
         var currentCell: Cell
         var currentGroup: TransactionGroup
         val sheet = workbook.getSheet(2)
-        notReachedEnd = true
         var row = 0
-        while (notReachedEnd) {
+        while (true) {
             currentCell = sheet.getCell(0, row)
             if (currentCell.contents == "--end--") {
-                notReachedEnd = false
                 break
             }
             currentGroup = TransactionGroup()
@@ -330,14 +383,14 @@ class BackupManager(
 
             /*
             Using a special try catch block here. Because the defaultSenderId feature is added later
-            in database migration Version 3. So, if we are restoring a old Version 2 database backup,
-            then the column defaultSenderId wont exist there and thus will cause Index Out of bounds
+            in database migration Version 3. So, if we are restoring an old Version 2 database backup,
+            then the column defaultSenderId won't exist there and thus will cause Index Out of bounds
             exception. We are catching that case manually if an exception occurs, then we are simply
             restoring a default value of 0
              */try {
                 val defaultSender = sheet.getCell(2, row).contents
                 currentGroup.defaultSenderId = defaultSender.toInt()
-            } catch (e: ArrayIndexOutOfBoundsException) {
+            } catch (_: ArrayIndexOutOfBoundsException) {
                 currentGroup.defaultSenderId = 0
             }
             groups.add(currentGroup)
@@ -349,16 +402,13 @@ class BackupManager(
     @Throws(java.lang.Exception::class)
     private suspend fun restoreTransactions(workbook: Workbook) {
         val transactions: MutableList<Transaction> = ArrayList()
-        var notReachedEnd: Boolean
         var currentCell: Cell
         var currentTrans: Transaction
         val sheet = workbook.getSheet(3)
-        notReachedEnd = true
         var row = 0
-        while (notReachedEnd) {
+        while (true) {
             currentCell = sheet.getCell(0, row)
             if (currentCell.contents == "--end--") {
-                notReachedEnd = false
                 break
             }
             currentTrans = Transaction()
@@ -374,9 +424,31 @@ class BackupManager(
         db.getTransactionDao().addAllTransactions(transactions)
     }
 
+    private fun validBackupFile(workbook: Workbook): Boolean{
+
+        if(workbook.numberOfSheets != 4)
+            return false
+
+        val sheetNames = workbook.sheetNames
+
+        if(sheetNames[0]!="receivers")
+            return false
+
+        if(sheetNames[1] != "senders")
+            return false
+
+        if(sheetNames[2] != "groups")
+            return false
+
+        if(sheetNames[3] != "transactions")
+            return false
+
+        return true
+    }
+
     @Throws(java.lang.Exception::class)
     private fun deleteTempFiles() {
-        val file= File(appPreferences.getLocalBackupFilePath())
+        val file = File(appPreferences.getLocalBackupFilePath())
         if (file.exists()) file.delete()
     }
 

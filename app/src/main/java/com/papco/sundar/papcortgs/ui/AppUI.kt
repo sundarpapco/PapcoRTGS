@@ -1,6 +1,5 @@
 package com.papco.sundar.papcortgs.ui
 
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
@@ -57,9 +56,10 @@ fun AppUI() {
 
     NavHost(navController = navController, startDestination = ExcelFileList) {
 
-        composable<ExcelFileList> {
-            val viewModel = remember { ViewModelProvider(it)[GroupActivityVM::class.java] }
-            ExcelFileListScreen(state = viewModel.screenState,
+        composable<ExcelFileList> { entry ->
+            val viewModel = remember { ViewModelProvider(entry)[GroupActivityVM::class.java] }
+            ExcelFileListScreen(
+                state = viewModel.screenState,
                 onExcelFileClicked = {
                     navController.navigate(
                         TransactionList(
@@ -74,7 +74,9 @@ fun AppUI() {
                 navigateToSendersScreen = { navController.navigate(SendersList) },
                 navigateToReceiversScreen = { navController.navigate(ReceiversList) },
                 navigateToMessageFormatScreen = { },
-                navigateToDropBaxBackupScreen = {navController.navigate(DropBox)}
+                navigateToDropBaxBackupScreen = { navController.navigate(DropBox) },
+                onCreateBackup = {viewModel.createBackupFile()},
+                onRestoreBackup = {viewModel.restoreBackupFile(it)}
             )
         }
 
@@ -88,16 +90,17 @@ fun AppUI() {
                 remember { ViewModelProvider(backstackEntry)[ManageTransactionGroupVM::class.java] }
             var isAlreadyLoaded = rememberSaveable { false }
 
-            ManageGroupScreen(title = title,
+            ManageGroupScreen(
+                title = title,
                 state = viewModel.screenState,
                 onSave = { if (args.groupId != -1) viewModel.updateGroup() else viewModel.addGroup() },
                 onCancel = { navController.popBackStack() },
                 onBackPressed = { navController.popBackStack() },
                 onDelete = { viewModel.deleteGroup(args.groupId) })
 
-            if(args.groupId != -1)
+            if (args.groupId != -1)
                 LaunchedEffect(key1 = true) {
-                    if(!isAlreadyLoaded) {
+                    if (!isAlreadyLoaded) {
                         viewModel.loadTransactionGroup(args.groupId)
                         isAlreadyLoaded = true
                     }
@@ -105,9 +108,9 @@ fun AppUI() {
 
 
             LaunchedEffect(key1 = true) {
-                viewModel.event.collect{
-                    it?.let{event ->
-                        if(!event.isAlreadyHandled){
+                viewModel.event.collect {
+                    it?.let { event ->
+                        if (!event.isAlreadyHandled) {
                             event.handleEvent()
                             navController.popBackStack()
                         }
@@ -128,9 +131,10 @@ fun AppUI() {
                     defaultSenderId = args.defaultSenderId
                 }
             }
-            val gmailUtil = remember{GMailUtil(context)}
+            val gmailUtil = remember { GMailUtil(context) }
 
-            TransactionListScreen(title = args.groupName,
+            TransactionListScreen(
+                title = args.groupName,
                 screenState = viewModel.screenState,
                 onBackPressed = { navController.popBackStack() },
                 onClick = {
@@ -149,23 +153,23 @@ fun AppUI() {
                 },
                 onDelete = { viewModel.deleteTransaction(it) },
                 onExportManualRTGSFile = {
-                    viewModel.createManualExportFile(transactionGroup, it)
+                    viewModel.createChequeBasedRTGSReport(transactionGroup, it)
                 },
-                onExportAutoRTGSFile = {
-                    if (viewModel.screenState.transactions.isNotEmpty()) viewModel.createAutoXlFile(
-                        transactionGroup, it
-                    )
-                    else Toast.makeText(
-                        context,
-                        context.getString(R.string.add_at_least_one_transaction_to_export),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                onExportBizzPayReport = {
+                    if (viewModel.screenState.transactions.isNotEmpty())
+                        viewModel.createBizzPay360Report(transactionGroup, it)
+                    else
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.add_at_least_one_transaction_to_export),
+                            Toast.LENGTH_SHORT
+                        ).show()
                 },
                 onDispatchMessages = {
                     navController.navigate(MessageList(transactionGroup.id))
                 },
                 onDispatchMails = {
-                    if(!gmailUtil.isConnected())
+                    if (!gmailUtil.isConnected())
                         navController.navigate(
                             GoogleSignIn(
                                 transactionGroup.id,
@@ -201,7 +205,7 @@ fun AppUI() {
                                 context.getString(R.string.error_in_creating_the_excel_file),
                                 Toast.LENGTH_LONG
                             ).show()
-                        }else {
+                        } else {
                             viewModel.screenState.showReportGeneratedDialog(fileName)
                         }
                     }
@@ -209,42 +213,45 @@ fun AppUI() {
             }
         }
 
-        composable<ManageTransaction> {backStackEntry->
+        composable<ManageTransaction> { backStackEntry ->
             val args = backStackEntry.toRoute<ManageTransaction>()
-            val viewModel = remember {ViewModelProvider(backStackEntry)[CreateTransactionVM::class.java] }
+            val viewModel =
+                remember { ViewModelProvider(backStackEntry)[CreateTransactionVM::class.java] }
             val isEditingMode = remember { args.transactionId != -1 }
             val title = remember {
-                if(isEditingMode) context.getString(R.string.update_transaction) else context.getString(R.string.create_transaction)
+                if (isEditingMode) context.getString(R.string.update_transaction) else context.getString(
+                    R.string.create_transaction
+                )
             }
-            var isAlreadyLoaded = rememberSaveable { false}
+            var isAlreadyLoaded = rememberSaveable { false }
 
             ManageTransactionScreen(
                 screenState = viewModel.screenState,
                 title = title,
                 onSenderClicked = {
-                      if(viewModel.screenState.selectedSender!=null)
-                          navController.navigate(SelectSender)
+                    if (viewModel.screenState.selectedSender != null)
+                        navController.navigate(SelectSender)
                 },
                 onReceiverClicked = {
-                    if(viewModel.screenState.selectedReceiver!=null)
+                    if (viewModel.screenState.selectedReceiver != null)
                         navController.navigate(SelectReceiver(args.groupId))
                 },
                 onSave = {
-                     if(viewModel.screenState.validate(context)){
-                         if(isEditingMode)
-                             viewModel.updateTransaction(args.groupId,args.transactionId)
-                         else
-                             viewModel.saveNewTransaction(args.groupId)
-                     }
+                    if (viewModel.screenState.validate(context)) {
+                        if (isEditingMode)
+                            viewModel.updateTransaction(args.groupId, args.transactionId)
+                        else
+                            viewModel.saveNewTransaction(args.groupId)
+                    }
                 },
-                onDismiss = {navController.popBackStack()}
+                onDismiss = { navController.popBackStack() }
             )
 
             LaunchedEffect(key1 = true) {
 
-                backStackEntry.savedStateHandle.getStateFlow("selectedSender",-1)
-                    .collect{
-                        if(it!=-1){
+                backStackEntry.savedStateHandle.getStateFlow("selectedSender", -1)
+                    .collect {
+                        if (it != -1) {
                             viewModel.selectSender(it)
                             backStackEntry.savedStateHandle["selectedSender"] = -1
                         }
@@ -252,9 +259,9 @@ fun AppUI() {
             }
 
             LaunchedEffect(key1 = true) {
-                backStackEntry.savedStateHandle.getStateFlow("selectedReceiver",-1)
-                    .collect{
-                        if(it!=-1){
+                backStackEntry.savedStateHandle.getStateFlow("selectedReceiver", -1)
+                    .collect {
+                        if (it != -1) {
                             viewModel.selectReceiver(it)
                             backStackEntry.savedStateHandle["selectedReceiver"] = -1
                         }
@@ -262,20 +269,20 @@ fun AppUI() {
             }
 
             LaunchedEffect(key1 = true) {
-                viewModel.navigateBack.collect{needToGoBack->
-                    if(needToGoBack)
+                viewModel.navigateBack.collect { needToGoBack ->
+                    if (needToGoBack)
                         navController.popBackStack()
                 }
             }
 
             LaunchedEffect(key1 = true) {
-                if(!isAlreadyLoaded)
-                    if(isEditingMode)
+                if (!isAlreadyLoaded)
+                    if (isEditingMode)
                         viewModel.loadTransaction(args.transactionId)
                     else
-                        viewModel.createBlankTransaction(args.groupId,args.defaultSenderId)
+                        viewModel.createBlankTransaction(args.groupId, args.defaultSenderId)
 
-                isAlreadyLoaded=true
+                isAlreadyLoaded = true
             }
 
         }
@@ -285,54 +292,55 @@ fun AppUI() {
                 ViewModelProvider(backstackEntry)[SendersListVM::class.java]
             }
 
-            SenderListScreen(state = viewModel.screenState,
-                onSenderClicked ={navController.navigate(ManageSender(it.id))},
+            SenderListScreen(
+                state = viewModel.screenState,
+                onSenderClicked = { navController.navigate(ManageSender(it.id)) },
                 onBackPressed = { navController.popBackStack() },
                 onAddNewSender = { navController.navigate(ManageSender(-1)) },
-                onDeleteSender = {viewModel.deleteSender(it)}
+                onDeleteSender = { viewModel.deleteSender(it) }
             )
         }
 
-        composable<ManageSender> {backStackEntry->
-            val args=backStackEntry.toRoute<ManageSender>()
-            val viewModel = remember{ViewModelProvider(backStackEntry)[CreateSenderVM::class.java]}
-            val isEditingMode = remember{args.senderId != -1}
-            var isAlreadyLoaded = remember{ false }
+        composable<ManageSender> { backStackEntry ->
+            val args = backStackEntry.toRoute<ManageSender>()
+            val viewModel =
+                remember { ViewModelProvider(backStackEntry)[CreateSenderVM::class.java] }
+            val isEditingMode = remember { args.senderId != -1 }
+            var isAlreadyLoaded = remember { false }
 
             AddEditPartyScreen(
-                title = if(isEditingMode)
+                title = if (isEditingMode)
                     context.getString(R.string.update_sender)
                 else
                     context.getString(R.string.create_sender),
                 state = viewModel.screenState,
                 onBackPressed = { navController.popBackStack() },
                 onFormSubmit = {
-                    if(isEditingMode) {
+                    if (isEditingMode) {
                         val sender = viewModel.screenState.asSender(args.senderId)
                         viewModel.updateSender(sender)
-                    }
-                    else {
+                    } else {
                         val sender = viewModel.screenState.asSender()
                         viewModel.addSender(sender)
                     }
                 }
             )
 
-            if(isEditingMode)
+            if (isEditingMode)
                 LaunchedEffect(key1 = true) {
-                    if(!isAlreadyLoaded)
+                    if (!isAlreadyLoaded)
                         viewModel.loadSender(args.senderId)
-                    isAlreadyLoaded=true
+                    isAlreadyLoaded = true
                 }
 
             LaunchedEffect(key1 = true) {
-                viewModel.eventStatus.collect{
-                    it?.let{event->
-                        if(!event.isAlreadyHandled){
-                            val msg=event.handleEvent()
-                            if(msg==CreateSenderVM.EVENT_SUCCESS){
+                viewModel.eventStatus.collect {
+                    it?.let { event ->
+                        if (!event.isAlreadyHandled) {
+                            val msg = event.handleEvent()
+                            if (msg == CreateSenderVM.EVENT_SUCCESS) {
                                 navController.popBackStack()
-                            }else{
+                            } else {
                                 context.toast(msg)
                             }
                         }
@@ -341,16 +349,20 @@ fun AppUI() {
             }
         }
 
-        composable<SelectSender> {backstackEntry->
-            val viewModel = remember{ViewModelProvider(backstackEntry)[SenderSelectionVM::class.java]}
+        composable<SelectSender> { backstackEntry ->
+            val viewModel =
+                remember { ViewModelProvider(backstackEntry)[SenderSelectionVM::class.java] }
 
             SelectSenderScreen(
                 state = viewModel.screenState,
                 onSenderClicked = {
-                    navController.previousBackStackEntry?.savedStateHandle?.set("selectedSender",it.id)
+                    navController.previousBackStackEntry?.savedStateHandle?.set(
+                        "selectedSender",
+                        it.id
+                    )
                     navController.popBackStack()
                 },
-                onBackPressed = {navController.popBackStack()}
+                onBackPressed = { navController.popBackStack() }
             )
         }
 
@@ -359,54 +371,55 @@ fun AppUI() {
                 ViewModelProvider(backstackEntry)[ReceiverListVM::class.java]
             }
 
-            ManageReceiversScreen(state = viewModel.screenState,
-                onReceiverClicked ={navController.navigate(ManageReceiver(it.id))},
+            ManageReceiversScreen(
+                state = viewModel.screenState,
+                onReceiverClicked = { navController.navigate(ManageReceiver(it.id)) },
                 onBackPressed = { navController.popBackStack() },
                 onAddNewReceiver = { navController.navigate(ManageReceiver(-1)) },
-                onDeleteReceiver = {viewModel.deleteReceiver(it)}
+                onDeleteReceiver = { viewModel.deleteReceiver(it) }
             )
         }
 
-        composable<ManageReceiver> {backStackEntry->
-            val args=backStackEntry.toRoute<ManageReceiver>()
-            val viewModel = remember{ViewModelProvider(backStackEntry)[CreateReceiverVM::class.java]}
-            val isEditingMode = remember{args.receiverId != -1}
-            var isAlreadyLoaded = rememberSaveable {false}
+        composable<ManageReceiver> { backStackEntry ->
+            val args = backStackEntry.toRoute<ManageReceiver>()
+            val viewModel =
+                remember { ViewModelProvider(backStackEntry)[CreateReceiverVM::class.java] }
+            val isEditingMode = remember { args.receiverId != -1 }
+            var isAlreadyLoaded = rememberSaveable { false }
 
             AddEditPartyScreen(
-                title = if(isEditingMode)
+                title = if (isEditingMode)
                     context.getString(R.string.update_receiver)
                 else
                     context.getString(R.string.create_receiver),
                 state = viewModel.screenState,
                 onBackPressed = { navController.popBackStack() },
                 onFormSubmit = {
-                    if(isEditingMode) {
+                    if (isEditingMode) {
                         val receiver = viewModel.screenState.asReceiver(args.receiverId)
                         viewModel.updateReceiver(receiver)
-                    }
-                    else {
+                    } else {
                         val receiver = viewModel.screenState.asReceiver()
                         viewModel.addReceiver(receiver)
                     }
                 }
             )
 
-            if(isEditingMode)
+            if (isEditingMode)
                 LaunchedEffect(key1 = true) {
-                    if(!isAlreadyLoaded)
+                    if (!isAlreadyLoaded)
                         viewModel.loadReceiver(args.receiverId)
-                    isAlreadyLoaded=true
+                    isAlreadyLoaded = true
                 }
 
             LaunchedEffect(key1 = true) {
-                viewModel.eventStatus.collect{
-                    it?.let{event->
-                        if(!event.isAlreadyHandled){
-                            val msg=event.handleEvent()
-                            if(msg==CreateReceiverVM.EVENT_SUCCESS){
+                viewModel.eventStatus.collect {
+                    it?.let { event ->
+                        if (!event.isAlreadyHandled) {
+                            val msg = event.handleEvent()
+                            if (msg == CreateReceiverVM.EVENT_SUCCESS) {
                                 navController.popBackStack()
-                            }else{
+                            } else {
                                 context.toast(msg)
                             }
                         }
@@ -415,42 +428,48 @@ fun AppUI() {
             }
         }
 
-        composable<SelectReceiver> {navBackStackEntry ->
+        composable<SelectReceiver> { navBackStackEntry ->
             val args = navBackStackEntry.toRoute<SelectReceiver>()
-            val viewModel = remember{ViewModelProvider(navBackStackEntry)[ReceiverSelectionVM::class.java]}
-            var isAlreadyLoaded = rememberSaveable{false}
+            val viewModel =
+                remember { ViewModelProvider(navBackStackEntry)[ReceiverSelectionVM::class.java] }
+            var isAlreadyLoaded = rememberSaveable { false }
 
-            SelectReceiverScreen(state = viewModel.screenState,
+            SelectReceiverScreen(
+                state = viewModel.screenState,
                 onReceiverClicked = {
-                    if(it.disabled){
+                    if (it.disabled) {
                         context.toast(R.string.this_beneficiary_already_added)
-                    }else{
-                        navController.previousBackStackEntry?.savedStateHandle?.set("selectedReceiver",it.id)
+                    } else {
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            "selectedReceiver",
+                            it.id
+                        )
                         navController.popBackStack()
                     }
                 },
-                onBackPressed = {navController.popBackStack()}
+                onBackPressed = { navController.popBackStack() }
             )
 
             LaunchedEffect(key1 = true) {
-                if(!isAlreadyLoaded)
+                if (!isAlreadyLoaded)
                     viewModel.loadReceivers(args.groupId)
-                isAlreadyLoaded=true
+                isAlreadyLoaded = true
             }
 
         }
 
-        composable<DropBox> {backstackEntry->
-            val viewmodel = remember{ViewModelProvider(backstackEntry)[DropBoxFragmentVM::class.java]}
+        composable<DropBox> { backstackEntry ->
+            val viewmodel =
+                remember { ViewModelProvider(backstackEntry)[DropBoxFragmentVM::class.java] }
 
-           BackupScreen(
-               screenState = viewmodel.screenState,
-               onLink = { viewmodel.linkToDropBox()},
-               onUnlink = { viewmodel.unlinkFromDropBox() },
-               onBackup = { viewmodel.backupFile() },
-               onRestore = { viewmodel.restoreBackup() },
-               onBackPressed = {navController.popBackStack()}
-           )
+            BackupScreen(
+                screenState = viewmodel.screenState,
+                onLink = { viewmodel.linkToDropBox() },
+                onUnlink = { viewmodel.unlinkFromDropBox() },
+                onBackup = { viewmodel.backupFile() },
+                onRestore = { viewmodel.restoreBackup() },
+                onBackPressed = { navController.popBackStack() }
+            )
 
             LifecycleResumeEffect(Unit) {
                 viewmodel.refreshDropBoxConnection()
@@ -458,17 +477,25 @@ fun AppUI() {
             }
         }
 
-        composable<GoogleSignIn> {backstackEntry->
+        composable<GoogleSignIn> { backstackEntry ->
 
             val args = backstackEntry.toRoute<GoogleSignIn>()
             GmailSignInScreen(
-                onConnected = { navController.navigate(EmailList(args.groupId,args.groupName,args.defaultSenderId)) },
-                onBackPressed = {navController.popBackStack()}
+                onConnected = {
+                    navController.navigate(
+                        EmailList(
+                            args.groupId,
+                            args.groupName,
+                            args.defaultSenderId
+                        )
+                    )
+                },
+                onBackPressed = { navController.popBackStack() }
             )
         }
 
-        composable<EmailList> {backstackEntry->
-            val args=backstackEntry.toRoute<EmailList>()
+        composable<EmailList> { backstackEntry ->
+            val args = backstackEntry.toRoute<EmailList>()
             val viewModel = remember {
                 ViewModelProvider(backstackEntry)[FragmentEmailVM::class.java]
             }
@@ -478,24 +505,32 @@ fun AppUI() {
 
             MailScreen(
                 screenState = viewModel.screenState,
-                onSendMails = { MailWorker.startWith(context,args.groupId) },
-                onBackPressed = { navController.popBackStack(TransactionList(args.groupId,args.groupName,args.defaultSenderId),false) },
+                onSendMails = { MailWorker.startWith(context, args.groupId) },
+                onBackPressed = {
+                    navController.popBackStack(
+                        TransactionList(
+                            args.groupId,
+                            args.groupName,
+                            args.defaultSenderId
+                        ), false
+                    )
+                },
                 onSignOut = {
-                    coroutineScope.launch{
-                        if(gmail.signOut())
+                    coroutineScope.launch {
+                        if (gmail.signOut())
                             navController.popBackStack(
                                 TransactionList(
                                     args.groupId,
                                     args.groupName,
                                     args.defaultSenderId
-                                ),false
+                                ), false
                             )
                     }
                 }
             )
 
             LaunchedEffect(key1 = true) {
-                if(!isAlreadyLoaded)
+                if (!isAlreadyLoaded)
                     viewModel.loadEmailList(args.groupId)
 
                 isAlreadyLoaded = true
@@ -507,25 +542,26 @@ fun AppUI() {
                         args.groupId,
                         args.groupName,
                         args.defaultSenderId
-                    ),false
+                    ), false
                 )
             }
 
         }
 
-        composable<MessageList> {backstackEntry->
-            val args=backstackEntry.toRoute<MessageList>()
-            val viewModel = remember{ViewModelProvider(backstackEntry)[FragmentSMSVM::class.java]}
+        composable<MessageList> { backstackEntry ->
+            val args = backstackEntry.toRoute<MessageList>()
+            val viewModel =
+                remember { ViewModelProvider(backstackEntry)[FragmentSMSVM::class.java] }
             var isAlreadyLoaded = rememberSaveable { false }
 
             MessageScreen(
                 screenState = viewModel.screenState,
-                onSendMessages = { MessageWorker.startWith(context,args.groupId) },
-                onBackPressed = {navController.popBackStack()}
+                onSendMessages = { MessageWorker.startWith(context, args.groupId) },
+                onBackPressed = { navController.popBackStack() }
             )
 
-            LaunchedEffect(true){
-                if(!isAlreadyLoaded)
+            LaunchedEffect(true) {
+                if (!isAlreadyLoaded)
                     viewModel.loadMessagingList(args.groupId)
 
                 isAlreadyLoaded = true

@@ -3,6 +3,7 @@ package com.papco.sundar.papcortgs.screens.mail
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.content.Context
+import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.core.app.NotificationCompat
@@ -51,9 +52,10 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 .addTag(groupId.toString())
                 .build()
 
+            Log.d("SAAT","Enqueing Mail Work")
             WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME,
-                ExistingWorkPolicy.APPEND,
+                ExistingWorkPolicy.REPLACE,
                 request
             )
         }
@@ -74,6 +76,8 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
     override suspend fun doWork(): Result {
 
+        Log.d("SAAT","Sending mails...")
+
         if(!applicationContext.weHaveNotificationPermission())
             return Result.failure()
 
@@ -86,6 +90,8 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             addTransactionsToQueue()
             sendMails()
         } catch (e: Exception) {
+            e.printStackTrace()
+            Log.d("SAAT","Detected FailuerE")
             postFailureNotification(
                 e.message ?: applicationContext.getString(R.string.unknown_error)
             )
@@ -167,7 +173,7 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 .apply {
                     setContentTitle(applicationContext.getString(R.string.sending_email_failed))
                     setContentText(reason)
-                    setSmallIcon(R.drawable.app_icon)
+                    setSmallIcon(R.drawable.logo_round)
                     priority = NotificationCompat.PRIORITY_DEFAULT
                     setAutoCancel(true)
                 }.build()
@@ -188,7 +194,7 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             .apply {
                 setContentTitle(applicationContext.getString(R.string.sending_email_intimation))
                 setProgress(0, 100, true)
-                setSmallIcon(R.drawable.app_icon)
+                setSmallIcon(R.drawable.logo_round)
                 foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
                 priority = NotificationCompat.PRIORITY_DEFAULT
 

@@ -1,9 +1,8 @@
 @file:Suppress("INACCESSIBLE_TYPE")
 
-package com.papco.sundar.papcortgs.common
+package com.papco.sundar.papcortgs.reports
 
 import android.content.Context
-import android.text.TextUtils
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
@@ -16,6 +15,8 @@ import jxl.format.BorderLineStyle
 import jxl.format.Colour
 import jxl.format.VerticalAlignment
 import jxl.write.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -29,7 +30,7 @@ class AutoRTGSReport(
         time: Long
 ) {
 
-    private val columnDetails = ArrayList<ColumnDetail>(21)
+    private val columnWidths = ArrayList<ColumnWidth>(21)
     private var transactionGroup:TransactionGroup?=null
 
     private val filename by lazy{
@@ -45,9 +46,10 @@ class AutoRTGSReport(
     private var rowSize:Int=0
 
 
-    suspend fun createReport(transactionGroup: TransactionGroup): String {
+    suspend fun createReport(transactionGroup: TransactionGroup): String
+        = withContext(Dispatchers.IO){
 
-        this.transactionGroup=transactionGroup
+        this@AutoRTGSReport.transactionGroup=transactionGroup
         val transactions = loadTransactions(transactionGroup.id)
         setDefaultColumnWidths()
         val workbook = createWorkBook()
@@ -60,7 +62,7 @@ class AutoRTGSReport(
         workbook.write()
         workbook.close()
 
-        return filename
+        filename
 
     }
 
@@ -79,27 +81,27 @@ class AutoRTGSReport(
 
     private fun setDefaultColumnWidths() {
 
-        columnDetails.add(0, ColumnDetail(15))
-        columnDetails.add(1, ColumnDetail(18))
-        columnDetails.add(2, ColumnDetail(20))
-        columnDetails.add(3, ColumnDetail(9))
-        columnDetails.add(4, ColumnDetail(10))
-        columnDetails.add(5, ColumnDetail(11))
-        columnDetails.add(6, ColumnDetail(11))
-        columnDetails.add(7, ColumnDetail(15))
-        columnDetails.add(8, ColumnDetail(15))
-        columnDetails.add(9, ColumnDetail(15))
-        columnDetails.add(10, ColumnDetail(15))
-        columnDetails.add(11, ColumnDetail(15))
-        columnDetails.add(12, ColumnDetail(15))
-        columnDetails.add(13, ColumnDetail(15))
-        columnDetails.add(14, ColumnDetail(15))
-        columnDetails.add(15, ColumnDetail(15))
-        columnDetails.add(16, ColumnDetail(15))
-        columnDetails.add(17, ColumnDetail(15))
-        columnDetails.add(18, ColumnDetail(15))
-        columnDetails.add(19, ColumnDetail(15))
-        columnDetails.add(20, ColumnDetail(15))
+        columnWidths.add(0, ColumnWidth(15)) //Debit Ac No
+        columnWidths.add(1, ColumnWidth(18)) //Bene Ac No
+        columnWidths.add(2, ColumnWidth(20)) //Bene Name
+        columnWidths.add(3, ColumnWidth(9)) //Amt
+        columnWidths.add(4, ColumnWidth(10)) //Pay Mod
+        columnWidths.add(5, ColumnWidth(11)) //Date
+        columnWidths.add(6, ColumnWidth(11)) //IFSC
+        columnWidths.add(7, ColumnWidth(15)) //Payable Location
+        columnWidths.add(8, ColumnWidth(15)) //Print Location
+        columnWidths.add(9, ColumnWidth(15)) //Bene Mob No
+        columnWidths.add(10, ColumnWidth(15)) //Bene Email ID
+        columnWidths.add(11, ColumnWidth(15)) //Bene add1
+        columnWidths.add(12, ColumnWidth(15)) //Bene add2
+        columnWidths.add(13, ColumnWidth(15)) //Bene add3
+        columnWidths.add(14, ColumnWidth(15)) //Bene add4
+        columnWidths.add(15, ColumnWidth(15)) //Add det 1
+        columnWidths.add(16, ColumnWidth(15)) //Add det 2
+        columnWidths.add(17, ColumnWidth(15)) //Add det 3
+        columnWidths.add(18, ColumnWidth(15)) //Add det 4
+        columnWidths.add(19, ColumnWidth(15)) //Add det 5
+        columnWidths.add(20, ColumnWidth(15)) //Remarks
 
 
     }
@@ -298,17 +300,13 @@ class AutoRTGSReport(
 
     private fun calculateColumnWidth(column: Int, matter: String) {
 
-        val length = if (TextUtils.isDigitsOnly(matter))
-            matter.length + 2
-        else
-            matter.length + 4
+        columnWidths[column].calculateRecommendedWidth(matter)
 
-        if (length > columnDetails[column].recommendedWidth) columnDetails[column].recommendedWidth = length
     }
 
     private fun setColumnWidths(sheet: WritableSheet) {
 
-        for ((index, columnDetail) in columnDetails.withIndex()) {
+        for ((index, columnDetail) in columnWidths.withIndex()) {
             sheet.setColumnView(index, max(columnDetail.minimumWidth, columnDetail.recommendedWidth))
         }
 

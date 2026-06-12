@@ -1,6 +1,9 @@
 package com.papco.sundar.papcortgs.ui.screens.group
 
 import android.content.Context
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -38,10 +41,16 @@ import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.sender.Sender
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroupListItem
+import com.papco.sundar.papcortgs.extentions.shareFile
+import com.papco.sundar.papcortgs.ui.backup.BackupProgressDialog
 import com.papco.sundar.papcortgs.ui.components.MenuAction
 import com.papco.sundar.papcortgs.ui.components.OptionsMenu
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
+import com.papco.sundar.papcortgs.ui.components.ToastMessage
+import com.papco.sundar.papcortgs.ui.components.Toaster
+import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.dialogs.PasswordDialog
+import com.papco.sundar.papcortgs.ui.dialogs.WaitDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 
 @Composable
@@ -53,11 +62,19 @@ fun ExcelFileListScreen(
     navigateToSendersScreen: () -> Unit,
     navigateToReceiversScreen: () -> Unit,
     navigateToMessageFormatScreen: () -> Unit,
-    navigateToDropBaxBackupScreen: () -> Unit
+    navigateToDropBaxBackupScreen: () -> Unit,
+    onCreateBackup: () -> Unit,
+    onRestoreBackup:(file: Uri)->Unit
 ) {
     val context = LocalContext.current
     val optionsMenu = remember {
         prepareOptionsMenu(context)
+    }
+
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
+        it?.let { uri ->
+            onRestoreBackup(uri)
+        }
     }
 
     Scaffold(topBar = {
@@ -73,6 +90,14 @@ fun ExcelFileListScreen(
 
                     context.getString(R.string.receivers) -> {
                         state.dialogState = ExcelFileListScreenState.Dialog.ReceiversPasswordDialog
+                    }
+
+                    context.getString(R.string.export_backup) -> {
+                        onCreateBackup()
+                    }
+
+                    context.getString(R.string.import_backup) -> {
+                        filePicker.launch("application/vnd.ms-excel")
                     }
 
                     context.getString(R.string.dropbox_backup) -> {
@@ -109,14 +134,50 @@ fun ExcelFileListScreen(
             }
 
             is ExcelFileListScreenState.Dialog.ReceiversPasswordDialog -> {
-                PasswordDialog(onCorrectPassword = {
-                    state.dialogState = null
-                    navigateToReceiversScreen()
-                },
+                PasswordDialog(
+                    onCorrectPassword = {
+                        state.dialogState = null
+                        navigateToReceiversScreen()
+                    },
                     onDismiss = { state.dialogState = null })
+            }
+
+            is ExcelFileListScreenState.Dialog.BackUpSharingDialog -> {
+                //Show the dialog to ask the user to share the backup file
+                ConfirmationDialog(
+                    title = stringResource(R.string.backup_complete),
+                    positiveButtonText = stringResource(R.string.share),
+                    negativeButtonText = stringResource(R.string.cancel),
+                    message = stringResource(R.string.backup_sharing_dialog_text),
+                    onPositiveClick = {
+                        context.shareFile(it.filePath)
+                        state.dialogState = null
+                    },
+                    onNegativeClick = { state.dialogState = null }
+                )
+            }
+
+            is ExcelFileListScreenState.Dialog.WaitDialog -> {
+                WaitDialog()
+            }
+
+            is ExcelFileListScreenState.Dialog.BackupProgress -> {
+                val msg = when (it.progress) {
+                    is ToastMessage.Message -> {
+                        it.progress.message
+                    }
+
+                    is ToastMessage.Resource -> {
+                        stringResource(it.progress.resourceId)
+                    }
+                }
+
+                BackupProgressDialog(msg)
             }
         }
     }
+
+    Toaster(context, state.toaster)
 }
 
 
@@ -130,10 +191,11 @@ private fun ExcelFileList(
     LazyColumn(
         modifier = modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(list, key = { it.transactionGroup.id }) {
-            ExcelFileListItem(group = it,
-                onClick = { onClick(it) },
-                onLongClick = { onLongClick(it) })
+        items(list, key = { it.transactionGroup.id }) { group ->
+            ExcelFileListItem(
+                group = group,
+                onClick = { onClick(group) },
+                onLongClick = { onLongClick(group) })
         }
     }
 }
@@ -151,9 +213,10 @@ private fun ExcelFileListItem(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .combinedClickable(onClick = {
-                onClick(group)
-            },
+            .combinedClickable(
+                onClick = {
+                    onClick(group)
+                },
 
                 onLongClick = {
                     onLongClick(group)
@@ -186,6 +249,10 @@ private fun prepareOptionsMenu(context: Context): List<MenuAction> {
             label = context.getString(R.string.senders)
         ), MenuAction(
             label = context.getString(R.string.receivers)
+        ), MenuAction(
+            label = context.getString(R.string.export_backup)
+        ), MenuAction(
+            label = context.getString(R.string.import_backup)
         ), MenuAction(
             label = context.getString(R.string.dropbox_backup)
         )
@@ -230,18 +297,19 @@ private fun PreviewExcelList() {
 
     val items = remember {
 
-        listOf(TransactionGroupListItem().apply {
-            transactionGroup = TransactionGroup().apply {
-                name = "Excel File"
-                id = 1
-                defaultSenderId = 1
-            }
+        listOf(
+            TransactionGroupListItem().apply {
+                transactionGroup = TransactionGroup().apply {
+                    name = "Excel File"
+                    id = 1
+                    defaultSenderId = 1
+                }
 
-            sender = Sender().apply {
-                id = 1
-                displayName = "POPL"
-            }
-        },
+                sender = Sender().apply {
+                    id = 1
+                    displayName = "POPL"
+                }
+            },
 
             TransactionGroupListItem().apply {
                 transactionGroup = TransactionGroup().apply {

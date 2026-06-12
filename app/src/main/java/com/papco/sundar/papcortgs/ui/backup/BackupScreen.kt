@@ -42,6 +42,8 @@ import com.papco.sundar.papcortgs.ui.backup.BackupScreenState.Dialog
 import com.papco.sundar.papcortgs.ui.components.MenuAction
 import com.papco.sundar.papcortgs.ui.components.OptionsMenu
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
+import com.papco.sundar.papcortgs.ui.components.ToastMessage
+import com.papco.sundar.papcortgs.ui.components.Toaster
 import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 
@@ -104,11 +106,25 @@ fun BackupScreen(
         }
 
         is Dialog.BackupStatus->{
-            BackupProgressDialog(
-                progress = (screenState.dialog as Dialog.BackupStatus).progress
-            )
+
+            when(val toastMessage = (screenState.dialog as Dialog.BackupStatus).progress){
+
+                is ToastMessage.Message ->{
+                    BackupProgressDialog(
+                        progress = toastMessage.message
+                    )
+                }
+
+                is ToastMessage.Resource ->{
+                    BackupProgressDialog(
+                        progress = stringResource(toastMessage.resourceId)
+                    )
+                }
+            }
         }
     }
+
+    Toaster(context,screenState.toaster)
 
 }
 
@@ -267,7 +283,7 @@ private fun RestoreFromDropBoxButton(
 }
 
 @Composable
-private fun BackupProgressDialog(
+fun BackupProgressDialog(
     progress: String
 ) {
     Dialog(

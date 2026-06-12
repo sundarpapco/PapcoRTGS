@@ -1,20 +1,20 @@
 package com.papco.sundar.papcortgs.screens.backup
 
 import android.app.Application
-import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.papco.sundar.papcortgs.dropbox.DropBox
 import com.example.payroll.dropbox.DropBoxAppConfig
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
+import com.papco.sundar.papcortgs.dropbox.DropBox
 import com.papco.sundar.papcortgs.settings.AppPreferences
 import com.papco.sundar.papcortgs.ui.backup.BackupScreenState
+import com.papco.sundar.papcortgs.ui.components.ToastMessage
+import com.papco.sundar.papcortgs.ui.components.toastMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
-class DropBoxFragmentVM(application: Application): AndroidViewModel(application) {
+class DropBoxFragmentVM(application: Application) : AndroidViewModel(application) {
 
     private val appPreferences = AppPreferences(application)
     private val dropBox = DropBox(application, appPreferences, DropBoxAppConfig())
@@ -29,84 +29,96 @@ class DropBoxFragmentVM(application: Application): AndroidViewModel(application)
         initialize()
     }
 
-    private fun initialize(){
+    private fun initialize() {
 
         viewModelScope.launch(Dispatchers.IO) {
             dropBox.connectionStatus()
-                .collect{connected->
-                    Log.d("SUNDAR","DropBox Connected: $connected")
-                    screenState.isDropBoxConnected=connected
+                .collect { connected ->
+                    screenState.isDropBoxConnected = connected
                 }
         }
 
         viewModelScope.launch(Dispatchers.IO) {
             dropBox.loggedInAccount()
-                .collect{
-                    screenState.account=it
+                .collect {
+                    screenState.account = it
                 }
         }
     }
 
-    fun refreshDropBoxConnection(){
-        viewModelScope.launch{
+    fun refreshDropBoxConnection() {
+        viewModelScope.launch {
             dropBox.refreshConnection()
         }
     }
 
-    fun linkToDropBox(){
+    fun linkToDropBox() {
         viewModelScope.launch {
             dropBox.tryToConnect()
         }
     }
 
-    fun unlinkFromDropBox(){
+    fun unlinkFromDropBox() {
         viewModelScope.launch {
             dropBox.disConnect()
         }
     }
 
-    fun backupFile(){
+    fun backupFile() {
         viewModelScope.launch {
-            try{
-                screenState.showProgressDialog("")
+            try {
+                screenState.showProgressDialog(BackupUpdate.Progress(ToastMessage.Message("")))
                 backupManager
-                    .doBackup()
+                    .doDropBoxBackup()
                     .flowOn(Dispatchers.IO)
-                    .collect{
-                        screenState.showProgressDialog(it)
+                    .collect {
+                        when (it) {
+                            is BackupUpdate.Progress -> {
+                                screenState.showProgressDialog(it)
+                            }
+
+                            is BackupUpdate.Success -> {
+                                screenState.hideDialog()
+                            }
+
+                            is BackupUpdate.Failed -> {
+                                screenState.hideDialog()
+                                screenState.toast(it.error.toastMessage())
+                            }
+                        }
                     }
-            }catch (e:Exception){
-                Toast.makeText(
-                    getApplication(),
-                    e.message ?: "Unknown Error",
-                    Toast.LENGTH_LONG
-                ).show()
-            }finally {
-                screenState.hideDialog()
+            } catch (e: Exception) {
+                screenState.toast(e.toastMessage())
             }
         }
 
     }
 
-    fun restoreBackup(){
+    fun restoreBackup() {
         viewModelScope.launch {
-            try{
-                screenState.showProgressDialog("")
-                backupManager
-                    .restoreBackup()
-                    .flowOn(Dispatchers.IO)
-                    .collect{
-                        screenState.showProgressDialog(it)
+
+            screenState.showProgressDialog(BackupUpdate.Progress(ToastMessage.Message("")))
+            backupManager
+                .restoreDropBoxBackup()
+                .flowOn(Dispatchers.IO)
+                .collect {
+
+                    when (it) {
+                        is BackupUpdate.Progress -> {
+                            screenState.showProgressDialog(it)
+                        }
+
+                        is BackupUpdate.Success -> {
+                            screenState.hideDialog()
+                        }
+
+                        is BackupUpdate.Failed -> {
+                            screenState.hideDialog()
+                            screenState.toast(it.error.toastMessage())
+                        }
                     }
-            }catch (e:Exception){
-                Toast.makeText(
-                    getApplication(),
-                    e.message ?: "Unknown Error",
-                    Toast.LENGTH_LONG
-                ).show()
-            }finally {
-                screenState.hideDialog()
-            }
+                }
+
         }
     }
 }

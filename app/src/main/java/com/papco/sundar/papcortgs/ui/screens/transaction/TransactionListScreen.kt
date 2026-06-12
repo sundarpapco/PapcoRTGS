@@ -48,7 +48,7 @@ fun TransactionListScreen(
     onAddTransaction: () -> Unit,
     onDelete: (Int) -> Unit,
     onExportManualRTGSFile: (String) -> Unit,
-    onExportAutoRTGSFile: (Long) -> Unit,
+    onExportBizzPayReport: (Long) -> Unit,
     onDispatchMessages: () -> Unit,
     onDispatchMails: () -> Unit,
     onShareFile: (String) -> Unit
@@ -131,7 +131,7 @@ fun TransactionListScreen(
                 RTGSDatePickerDialog(
                     onDateSelected = {date->
                         screenState.dialog=null
-                        onExportAutoRTGSFile(date)
+                        onExportBizzPayReport(date)
                                      } ,
                     onDismiss = {screenState.dialog=null}
                 )
@@ -304,7 +304,7 @@ private fun PreviewTransactionListScreen() {
             onAddTransaction = { },
             onDelete = {},
             onExportManualRTGSFile = { },
-            onExportAutoRTGSFile = { },
+            onExportBizzPayReport = { },
             onDispatchMessages = { },
             onDispatchMails = {},
             onShareFile = {})
