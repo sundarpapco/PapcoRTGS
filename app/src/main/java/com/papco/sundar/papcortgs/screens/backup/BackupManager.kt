@@ -257,7 +257,7 @@ class BackupManager(
     private fun writeGroupsToWorkBook(workbook: WritableWorkbook) {
 
         //prepare the list of groups to back up
-        val groups: List<TransactionGroup> = db.getTransactionGroupDao().getAllGroupsNonLive()
+        val groups: List<TransactionGroup> = db.getTransactionGroupDao().allGroupsNonLive()
         val sheet = workbook.createSheet("groups", 2)
 
         //prepare the cellFormat for writing

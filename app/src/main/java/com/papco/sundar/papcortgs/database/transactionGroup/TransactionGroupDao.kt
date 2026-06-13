@@ -1,54 +1,46 @@
-package com.papco.sundar.papcortgs.database.transactionGroup;
+package com.papco.sundar.papcortgs.database.transactionGroup
 
-import androidx.lifecycle.LiveData;
-import androidx.room.Dao;
-import androidx.room.Delete;
-import androidx.room.Insert;
-import androidx.room.Query;
-import androidx.room.Transaction;
-import androidx.room.Update;
-
-import java.util.List;
-
-import static androidx.room.OnConflictStrategy.REPLACE;
-
-import kotlinx.coroutines.flow.Flow;
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
-public interface TransactionGroupDao {
-
-    @Query("select * from TransactionGroup order by id DESC")
-    LiveData<List<TransactionGroup>> getAllTransactionGroups();
+interface TransactionGroupDao {
 
     @Transaction
     @Query("select * from TransactionGroup order by id DESC")
-    Flow<List<TransactionGroupListItem>> getAllTransactionGroupsForList();
+    fun allTransactionGroupsForList(): Flow<List<TransactionGroupListItem>>
 
     @Transaction
     @Query("select * from TransactionGroup where id=:groupId")
-    TransactionGroupListItem getTransactionGroupListItem(int groupId);
+    fun getTransactionGroupListItem(groupId: Int): TransactionGroupListItem
 
     @Query("select * from TransactionGroup")
-    List<TransactionGroup> getAllGroupsNonLive();
+    fun allGroupsNonLive(): List<TransactionGroup>
 
     @Query("select * from TransactionGroup where id=:id")
-    TransactionGroup getTransactionGroup(int id);
+    fun getTransactionGroup(id: Int): TransactionGroup
 
     @Query("delete from TransactionGroup where id=:id")
-    int deleteTransactionGroup(int id);
+    fun deleteTransactionGroup(id: Int): Int
 
     @Update
-    int updateTransactionGroup(TransactionGroup updatedGroup);
+    fun updateTransactionGroup(updatedGroup: TransactionGroup): Int
 
     @Delete
-    int deleteTransactionGroup(TransactionGroup TransactionToDelete);
+    fun deleteTransactionGroup(transactionToDelete: TransactionGroup): Int
 
-    @Insert(onConflict = REPLACE)
-    long addTransactionGroup(TransactionGroup newGroup);
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun addTransactionGroup(newGroup: TransactionGroup): Long
 
-    @Insert(onConflict = REPLACE)
-    void addAllTransactionGroups(List<TransactionGroup> groups);
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun addAllTransactionGroups(groups: List<TransactionGroup>)
 
     @Query("delete from TransactionGroup")
-    void deleteAllTransactionGroups();
+    suspend fun deleteAllTransactionGroups()
 }

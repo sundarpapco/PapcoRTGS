@@ -11,6 +11,36 @@ class ExcelFileListScreenState: ToasterState(){
 
     var list:List<TransactionGroupListItem> by mutableStateOf(emptyList())
     var dialogState:Dialog? by mutableStateOf(null)
+    private set
+
+    fun showWaitDialog(){
+        dialogState= Dialog.WaitDialog
+    }
+
+    fun hideDialog(){
+        dialogState=null
+    }
+
+    fun showSendersPasswordDialog(){
+        dialogState= Dialog.SendersPasswordDialog
+    }
+
+    fun showReceiversPasswordDialog(){
+        dialogState= Dialog.ReceiversPasswordDialog
+    }
+
+    fun showBackupSharingDialog(filePath:String){
+        dialogState= Dialog.BackUpSharingDialog(filePath)
+    }
+
+    fun updateBackupProgress(progress:ToastMessage) {
+        dialogState=Dialog.BackupProgress(progress)
+    }
+
+    fun showDeletePaymentsConfirmation(){
+        dialogState=Dialog.DeleteAllPaymentsConfirmation
+    }
+
 
     sealed class Dialog{
         data object SendersPasswordDialog:Dialog()
@@ -21,6 +51,7 @@ class ExcelFileListScreenState: ToasterState(){
         data object WaitDialog:Dialog()
 
         data class BackupProgress(val progress: ToastMessage):Dialog()
+        data object DeleteAllPaymentsConfirmation:Dialog()
     }
 
 }

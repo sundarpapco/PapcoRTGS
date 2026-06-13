@@ -169,4 +169,7 @@
     <string name="import_backup">Import Backup</string>
     <string name="restore_success">Database Restored Successfully!</string>
     <string name="copying_file">Opening file…</string>
+    <string name="delete_all_payments">Delete all payments</string>
+    <string name="delete_payments_confirmation">This will delete all the payments made till date.
+    This action cannot be undone. Are you sure want to delete all the payments from the database?</string>
 </resources>

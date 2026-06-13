@@ -76,7 +76,8 @@ fun AppUI() {
                 navigateToMessageFormatScreen = { },
                 navigateToDropBaxBackupScreen = { navController.navigate(DropBox) },
                 onCreateBackup = {viewModel.createBackupFile()},
-                onRestoreBackup = {viewModel.restoreBackupFile(it)}
+                onRestoreBackup = {viewModel.restoreBackupFile(it)},
+                onClearPayments = {viewModel.clearAllPayments()}
             )
         }
 

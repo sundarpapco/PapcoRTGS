@@ -33,7 +33,7 @@ class GroupActivityVM(application: Application) : AndroidViewModel(application) 
 
     private fun loadExcelFiles() {
         viewModelScope.launch {
-            db.transactionGroupDao.allTransactionGroupsForList
+            db.transactionGroupDao.allTransactionGroupsForList()
                 .flowOn(Dispatchers.IO)
                 .collect {
                     screenState.list = it
@@ -48,17 +48,15 @@ class GroupActivityVM(application: Application) : AndroidViewModel(application) 
                 .collect {
                     when (it) {
                         is BackupUpdate.Progress -> {
-                            screenState.dialogState =
-                                ExcelFileListScreenState.Dialog.BackupProgress(it.progress)
+                            screenState.updateBackupProgress(it.progress)
                         }
 
                         is BackupUpdate.Success -> {
-                            screenState.dialogState =
-                                ExcelFileListScreenState.Dialog.BackUpSharingDialog(appPreferences.getLocalBackupFilePath())
+                            screenState.showBackupSharingDialog(appPreferences.getLocalBackupFilePath())
                         }
 
                         is BackupUpdate.Failed -> {
-                            screenState.dialogState=null
+                            screenState.hideDialog()
                             screenState.toast(it.error.toastMessage())
                         }
                     }
@@ -74,21 +72,33 @@ class GroupActivityVM(application: Application) : AndroidViewModel(application) 
                 .collect {
                     when (it) {
                         is BackupUpdate.Progress -> {
-                            screenState.dialogState =
-                                ExcelFileListScreenState.Dialog.BackupProgress(it.progress)
+                            screenState.updateBackupProgress(it.progress)
                         }
 
                         is BackupUpdate.Success -> {
-                            screenState.dialogState=null
+                            screenState.hideDialog()
                             screenState.toast(ToastMessage.Resource(R.string.restore_success))
                         }
 
                         is BackupUpdate.Failed -> {
-                            screenState.dialogState=null
+                            screenState.hideDialog()
                             screenState.toast(it.error.toastMessage())
                         }
                     }
                 }
+        }
+    }
+
+    fun clearAllPayments(){
+        viewModelScope.launch {
+            try {
+                screenState.showWaitDialog()
+                db.transactionGroupDao.deleteAllTransactionGroups()
+            } catch (e: Exception) {
+                screenState.toast(e.toastMessage())
+            } finally {
+                screenState.hideDialog()
+            }
         }
     }
 

@@ -65,7 +65,8 @@ fun ExcelFileListScreen(
     navigateToMessageFormatScreen: () -> Unit,
     navigateToDropBaxBackupScreen: () -> Unit,
     onCreateBackup: () -> Unit,
-    onRestoreBackup:(file: Uri)->Unit
+    onRestoreBackup:(file: Uri)->Unit,
+    onClearPayments:()->Unit
 ) {
     val context = LocalContext.current
     val optionsMenu = remember {
@@ -86,11 +87,11 @@ fun ExcelFileListScreen(
             OptionsMenu(menuItems = optionsMenu) {
                 when (it) {
                     context.getString(R.string.senders) -> {
-                        state.dialogState = ExcelFileListScreenState.Dialog.SendersPasswordDialog
+                        state.showSendersPasswordDialog()
                     }
 
                     context.getString(R.string.receivers) -> {
-                        state.dialogState = ExcelFileListScreenState.Dialog.ReceiversPasswordDialog
+                        state.showReceiversPasswordDialog()
                     }
 
                     context.getString(R.string.export_backup) -> {
@@ -107,6 +108,10 @@ fun ExcelFileListScreen(
 
                     context.getString(R.string.message_format) -> {
                         navigateToMessageFormatScreen()
+                    }
+
+                    context.getString(R.string.delete_all_payments) -> {
+                        state.showDeletePaymentsConfirmation()
                     }
                 }
             }
@@ -129,18 +134,18 @@ fun ExcelFileListScreen(
 
             is ExcelFileListScreenState.Dialog.SendersPasswordDialog -> {
                 PasswordDialog(onCorrectPassword = {
-                    state.dialogState = null
+                    state.hideDialog()
                     navigateToSendersScreen()
-                }, onDismiss = { state.dialogState = null })
+                }, onDismiss = { state.hideDialog() })
             }
 
             is ExcelFileListScreenState.Dialog.ReceiversPasswordDialog -> {
                 PasswordDialog(
                     onCorrectPassword = {
-                        state.dialogState = null
+                        state.hideDialog()
                         navigateToReceiversScreen()
                     },
-                    onDismiss = { state.dialogState = null })
+                    onDismiss = { state.hideDialog()})
             }
 
             is ExcelFileListScreenState.Dialog.BackUpSharingDialog -> {
@@ -152,9 +157,9 @@ fun ExcelFileListScreen(
                     message = stringResource(R.string.backup_sharing_dialog_text),
                     onPositiveClick = {
                         context.shareFile(it.filePath)
-                        state.dialogState = null
+                        state.hideDialog()
                     },
-                    onNegativeClick = { state.dialogState = null }
+                    onNegativeClick = { state.hideDialog()}
                 )
             }
 
@@ -174,6 +179,17 @@ fun ExcelFileListScreen(
                 }
 
                 BackupProgressDialog(msg)
+            }
+
+            is ExcelFileListScreenState.Dialog.DeleteAllPaymentsConfirmation->{
+                ConfirmationDialog(
+                    title = stringResource(R.string.delete_all_payments),
+                    message = stringResource(R.string.delete_payments_confirmation),
+                    positiveButtonText = stringResource(R.string.delete),
+                    negativeButtonText = stringResource(R.string.cancel),
+                    onPositiveClick = onClearPayments,
+                    onNegativeClick = {state.hideDialog()}
+                )
             }
         }
     }
@@ -257,6 +273,8 @@ private fun prepareOptionsMenu(context: Context): List<MenuAction> {
             label = context.getString(R.string.import_backup)
         ), MenuAction(
             label = context.getString(R.string.dropbox_backup)
+        ), MenuAction(
+            label = context.getString(R.string.delete_all_payments)
         )
     )
 
