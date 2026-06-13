@@ -48,14 +48,17 @@ fun ManageReceiversScreen(
         }
     }) { paddingValues ->
 
-        if (state.data == null) LoadingScreen()
-        else SearchablePartyList(modifier = Modifier.padding(paddingValues),
-            state = state.listState,
-            onPartyClicked = onReceiverClicked,
-            searchHint = stringResource(id = R.string.search_receivers),
-            onPartyLongClicked = {
-                state.showDeleteConfirmationDialog(it)
-            })
+        if (state.data == null)
+            LoadingScreen()
+        else
+            SearchablePartyList(
+                modifier = Modifier.padding(paddingValues),
+                state = state.listState,
+                onPartyClicked = onReceiverClicked,
+                searchHint = stringResource(id = R.string.search_receivers),
+                onPartyLongClicked = {
+                    state.showDeleteConfirmationDialog(it)
+                })
     }
 
     state.dialogState?.let {
@@ -130,7 +133,8 @@ private fun PreviewManageReceiversScreen() {
     }
 
     RTGSTheme {
-        ManageReceiversScreen(state = state,
+        ManageReceiversScreen(
+            state = state,
             onReceiverClicked = {},
             onBackPressed = {},
             onAddNewReceiver = {},

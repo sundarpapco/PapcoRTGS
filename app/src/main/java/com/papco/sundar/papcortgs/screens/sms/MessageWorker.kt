@@ -3,6 +3,8 @@ package com.papco.sundar.papcortgs.screens.sms
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.content.Context
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -22,6 +24,7 @@ import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.extentions.weHaveNotificationPermission
+import com.papco.sundar.papcortgs.screens.mail.MailWorker
 import com.papco.sundar.papcortgs.screens.sms.MessageDispatcher.Companion.TIMEOUT
 import com.papco.sundar.papcortgs.settings.AppPreferences
 import kotlinx.coroutines.flow.Flow
@@ -49,7 +52,7 @@ class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorke
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME,
-                ExistingWorkPolicy.APPEND,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
                 request
             )
         }
@@ -97,7 +100,15 @@ class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             setContentText(contentText)
         }.build()
 
-        return ForegroundInfo(NOTIFICATION_ID_PROGRESS,notification)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ForegroundInfo(
+                NOTIFICATION_ID_PROGRESS,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            )
+        } else {
+            ForegroundInfo(NOTIFICATION_ID_PROGRESS, notification)
+        }
     }
 
     private suspend fun sendMessages() {
@@ -158,7 +169,7 @@ class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorke
                 .apply {
                     setContentTitle(applicationContext.getString(R.string.sending_email_failed))
                     setContentText(reason)
-                    setSmallIcon(R.drawable.logo_round)
+                    setSmallIcon(R.drawable.ic_notification)
                     priority = NotificationCompat.PRIORITY_DEFAULT
                     setAutoCancel(true)
                 }.build()
@@ -185,7 +196,7 @@ class MessageWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             .apply {
                 setContentTitle(applicationContext.getString(R.string.sending_email_intimation))
                 setProgress(0, 100, true)
-                setSmallIcon(R.drawable.logo_round)
+                setSmallIcon(R.drawable.ic_notification)
                 foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
                 priority = NotificationCompat.PRIORITY_DEFAULT
 

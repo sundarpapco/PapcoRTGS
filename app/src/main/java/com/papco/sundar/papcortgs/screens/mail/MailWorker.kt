@@ -3,7 +3,8 @@ package com.papco.sundar.papcortgs.screens.mail
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.content.Context
-import android.util.Log
+import android.content.pm.ServiceInfo
+import android.os.Build
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.core.app.NotificationCompat
@@ -39,7 +40,7 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         private const val NOTIFICATION_ID_FAILURE = 2
 
         fun startWith(context: Context, groupId: Int = -1) {
-            val constraints = Constraints
+           val constraints = Constraints
                 .Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
@@ -52,10 +53,9 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 .addTag(groupId.toString())
                 .build()
 
-            Log.d("SAAT","Enqueing Mail Work")
             WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME,
-                ExistingWorkPolicy.REPLACE,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
                 request
             )
         }
@@ -76,12 +76,10 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
     override suspend fun doWork(): Result {
 
-        Log.d("SAAT","Sending mails...")
-
-        if(!applicationContext.weHaveNotificationPermission())
+        if (!applicationContext.weHaveNotificationPermission())
             return Result.failure()
 
-        if(!applicationContext.isInternetConnected()){
+        if (!applicationContext.isInternetConnected()) {
             postFailureNotification(applicationContext.getString(R.string.check_internet_connection))
             return Result.failure()
         }
@@ -91,7 +89,6 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             sendMails()
         } catch (e: Exception) {
             e.printStackTrace()
-            Log.d("SAAT","Detected FailuerE")
             postFailureNotification(
                 e.message ?: applicationContext.getString(R.string.unknown_error)
             )
@@ -108,40 +105,47 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             setContentText(contentText)
         }.build()
 
-        return ForegroundInfo(NOTIFICATION_ID_PROGRESS,notification)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ForegroundInfo(NOTIFICATION_ID_PROGRESS, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        } else {
+            ForegroundInfo(NOTIFICATION_ID_PROGRESS, notification)
+        }
     }
 
-    private suspend fun sendMails():Result {
+    private suspend fun sendMails(): Result {
 
         val mailingList = fetchTransactionsToMail()
 
         return run mailSendingBlock@{
             mailingList.forEachIndexed { index, recipient ->
-
                 if (isStopped) return@mailSendingBlock Result.retry()
-                if(recipient.transaction.mailSent==MailDispatcher.SENT) return@forEachIndexed
-
+                if (recipient.transaction.mailSent == MailDispatcher.SENT) return@forEachIndexed
                 updateProgressNotification(index + 1, mailingList.size)
                 try {
                     if (recipient.receiver.email.isNotEmpty()) {
                         val sendingSuccess = mailDispatcher.dispatchEmail(recipient)
-                        if (sendingSuccess) database.transactionDao.updateMailSentStatus(
-                            recipient.transaction.id, MailDispatcher.SENT
-                        )
+                        if (sendingSuccess) {
+                            database.transactionDao.updateMailSentStatus(
+                                recipient.transaction.id, MailDispatcher.SENT
+                            )
+                        }
                     } else {
                         database.transactionDao.updateMailSentStatus(
-                            recipient.transaction.id, MailDispatcher.ERROR)
+                            recipient.transaction.id, MailDispatcher.ERROR
+                        )
                     }
                 } catch (e: Exception) {
+                    e.printStackTrace()
                     database.transactionDao.updateMailSentStatus(
-                        recipient.transaction.id, MailDispatcher.ERROR)
+                        recipient.transaction.id, MailDispatcher.ERROR
+                    )
                 }
             }
             Result.success()
         }
     }
 
-    private suspend fun addTransactionsToQueue(){
+    private suspend fun addTransactionsToQueue() {
         database.transactionDao.queueUpTransactionsForMail(getGroupId())
     }
 
@@ -173,7 +177,7 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 .apply {
                     setContentTitle(applicationContext.getString(R.string.sending_email_failed))
                     setContentText(reason)
-                    setSmallIcon(R.drawable.logo_round)
+                    setSmallIcon(R.drawable.ic_notification)
                     priority = NotificationCompat.PRIORITY_DEFAULT
                     setAutoCancel(true)
                 }.build()
@@ -194,7 +198,7 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             .apply {
                 setContentTitle(applicationContext.getString(R.string.sending_email_intimation))
                 setProgress(0, 100, true)
-                setSmallIcon(R.drawable.logo_round)
+                setSmallIcon(R.drawable.ic_notification)
                 foregroundServiceBehavior = NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
                 priority = NotificationCompat.PRIORITY_DEFAULT
 

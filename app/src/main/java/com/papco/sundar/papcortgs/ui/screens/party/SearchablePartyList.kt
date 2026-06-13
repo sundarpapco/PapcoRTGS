@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,7 +43,7 @@ fun SearchablePartyList(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 16.dp)
+            .padding(start = 16.dp, top = 0.dp, end = 16.dp)
     ) {
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -68,7 +69,8 @@ private fun PartyList(
     onLongClick:(Party)->Unit={}
 ) {
     LazyColumn(
-        modifier = modifier
+        modifier = modifier,
+        contentPadding = PaddingValues(bottom = 58.dp)
     ) {
         items(list, key = {
             it.id
