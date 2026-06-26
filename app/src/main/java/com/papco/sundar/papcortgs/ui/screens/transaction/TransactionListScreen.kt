@@ -48,7 +48,7 @@ fun TransactionListScreen(
     onClick: (TransactionForList) -> Unit,
     onAddTransaction: () -> Unit,
     onDelete: (Int) -> Unit,
-    onExportManualRTGSFile: (String) -> Unit,
+    onExportCMSFile: (Long) -> Unit,
     onExportBizzPayReport: (Long) -> Unit,
     onDispatchMessages: () -> Unit,
     onDispatchMails: () -> Unit,
@@ -67,10 +67,10 @@ fun TransactionListScreen(
             onBackPressed = onBackPressed,
             optionsMenu = {
                 TransactionListOptionsMenu(options = optionsMenuItems,
-                    onAutoExcelFileExport = { screenState.dialog=Dialog.DatePicker },
+                    onBizzPayReport = { screenState.dialog=Dialog.BizzPayDatePicker },
                     onSendMessages = onDispatchMessages,
                     onSendEmail = onDispatchMails,
-                    onExcelFileExport = { screenState.dialog = Dialog.ChequeNumberDialog })
+                    onCMSReport = { screenState.dialog= Dialog.CMSDatePicker })
             })
     }, floatingActionButton = {
         FloatingActionButton(onClick = onAddTransaction) {
@@ -121,19 +121,22 @@ fun TransactionListScreen(
                 }, onDismiss = { screenState.dialog = null })
             }
 
-            is Dialog.ChequeNumberDialog -> {
-                ChequeNumberDialog(onOk = { chequeNumber ->
-                    screenState.dialog = null
-                    onExportManualRTGSFile(chequeNumber)
-                }, onDismiss = { screenState.dialog = null })
-            }
-
-            is Dialog.DatePicker->{
+            is Dialog.BizzPayDatePicker->{
                 RTGSDatePickerDialog(
                     onDateSelected = {date->
                         screenState.dialog=null
                         onExportBizzPayReport(date)
                                      } ,
+                    onDismiss = {screenState.dialog=null}
+                )
+            }
+
+            is Dialog.CMSDatePicker->{
+                RTGSDatePickerDialog(
+                    onDateSelected = {date->
+                        screenState.dialog=null
+                        onExportCMSFile(date)
+                    } ,
                     onDismiss = {screenState.dialog=null}
                 )
             }
@@ -145,17 +148,17 @@ fun TransactionListScreen(
 @Composable
 private fun TransactionListOptionsMenu(
     options: List<MenuAction>,
-    onAutoExcelFileExport: () -> Unit,
+    onBizzPayReport: () -> Unit,
     onSendMessages: () -> Unit,
     onSendEmail: () -> Unit,
-    onExcelFileExport: () -> Unit
+    onCMSReport: () -> Unit
 ) {
     val context = LocalContext.current
 
     OptionsMenu(menuItems = options) {
         when (it) {
-            context.getString(R.string.export_auto_excel_file) -> {
-                onAutoExcelFileExport()
+            context.getString(R.string.export_bizz_pay_report) -> {
+                onBizzPayReport()
             }
 
             context.getString(R.string.send_messages) -> {
@@ -166,8 +169,8 @@ private fun TransactionListOptionsMenu(
                 onSendEmail()
             }
 
-            context.getString(R.string.export_excel_file) -> {
-                onExcelFileExport()
+            context.getString(R.string.export_cms_file) -> {
+                onCMSReport()
             }
         }
     }
@@ -218,7 +221,7 @@ private fun prepareOptionsMenu(context: Context): List<MenuAction> {
     return listOf(
         MenuAction(
             iconId = R.drawable.ic_export_file,
-            label = context.getString(R.string.export_auto_excel_file)
+            label = context.getString(R.string.export_bizz_pay_report)
         ),
 
         MenuAction(
@@ -230,7 +233,7 @@ private fun prepareOptionsMenu(context: Context): List<MenuAction> {
         ),
 
         MenuAction(
-            label = context.getString(R.string.export_excel_file)
+            label = context.getString(R.string.export_cms_file)
         )
     )
 
@@ -305,7 +308,7 @@ private fun PreviewTransactionListScreen() {
             onClick = {},
             onAddTransaction = { },
             onDelete = {},
-            onExportManualRTGSFile = { },
+            onExportCMSFile = { },
             onExportBizzPayReport = { },
             onDispatchMessages = { },
             onDispatchMails = {},

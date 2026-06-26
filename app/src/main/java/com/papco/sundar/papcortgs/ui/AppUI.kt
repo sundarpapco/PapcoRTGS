@@ -153,8 +153,15 @@ fun AppUI() {
                     )
                 },
                 onDelete = { viewModel.deleteTransaction(it) },
-                onExportManualRTGSFile = {
-                    viewModel.createChequeBasedRTGSReport(transactionGroup, it)
+                onExportCMSFile = {
+                    if (viewModel.screenState.transactions.isNotEmpty())
+                        viewModel.createCMSReport(transactionGroup, it)
+                    else
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.add_at_least_one_transaction_to_export),
+                            Toast.LENGTH_SHORT
+                        ).show()
                 },
                 onExportBizzPayReport = {
                     if (viewModel.screenState.transactions.isNotEmpty())

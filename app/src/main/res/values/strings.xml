@@ -111,8 +111,8 @@
     <string name="receivers">Receivers</string>
     <string name="dropbox_backup">DropBox Backup</string>
     <string name="message_format">Message Format</string>
-    <string name="export_excel_file">Export excel file</string>
-    <string name="export_auto_excel_file">Export auto RTGS file</string>
+    <string name="export_cms_file">Export CMS file</string>
+    <string name="export_bizz_pay_report">Export BizzPay360 file</string>
     <string name="delete_transaction">Delete Transaction?</string>
     <string name="delete_transaction_msg">Are you sure you want to delete this transaction?</string>
     <string name="enter_cheque_number">Enter Cheque Number</string>

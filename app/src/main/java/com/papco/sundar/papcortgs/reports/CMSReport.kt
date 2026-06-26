@@ -24,7 +24,7 @@ import kotlin.collections.ArrayList
 import kotlin.math.max
 
 @Suppress("BlockingMethodInNonBlockingContext")
-class AutoRTGSReport(
+class CMSReport(
     private val context:Context,
     private val db: MasterDatabase,
         time: Long
@@ -49,7 +49,7 @@ class AutoRTGSReport(
     suspend fun createReport(transactionGroup: TransactionGroup): String
         = withContext(Dispatchers.IO){
 
-        this@AutoRTGSReport.transactionGroup=transactionGroup
+        this@CMSReport.transactionGroup=transactionGroup
         val transactions = loadTransactions(transactionGroup.id)
         setDefaultColumnWidths()
         val workbook = createWorkBook()

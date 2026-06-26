@@ -10,8 +10,8 @@ import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.common.Event
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
+import com.papco.sundar.papcortgs.reports.CMSReport
 import com.papco.sundar.papcortgs.reports.BizzPay360Report
-import com.papco.sundar.papcortgs.reports.ChequeRTGSReport
 import com.papco.sundar.papcortgs.ui.screens.transaction.TransactionListScreenState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -45,17 +45,16 @@ class TransactionListVM(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun createChequeBasedRTGSReport(transactionGroup: TransactionGroup, chequeNumber:String){
+    fun createCMSReport(transactionGroup: TransactionGroup, time:Long){
         viewModelScope.launch {
             try {
-                val report = ChequeRTGSReport(getApplication(),db,chequeNumber)
+                val report = CMSReport(getApplication(),db,time)
                 val fileName=report.createReport(transactionGroup)
                 _reportGenerated.value=Event(fileName)
             } catch (_: Exception) {
                 //Setting empty string for filename will toast error in UI
-                _reportGenerated.value= Event("")
+                _reportGenerated.value=Event("")
             }
-
         }
     }
 

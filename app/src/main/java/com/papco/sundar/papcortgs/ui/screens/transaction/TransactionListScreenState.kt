@@ -18,7 +18,9 @@ class TransactionListScreenState {
         class DeleteConfirmation(val id:Int):Dialog()
         class ReportGenerated(val fileName:String):Dialog()
 
-        data object DatePicker:Dialog()
-        data object ChequeNumberDialog:Dialog()
+        data object BizzPayDatePicker:Dialog()
+
+        data object CMSDatePicker:Dialog()
+        //data object ChequeNumberDialog:Dialog()
     }
 }
