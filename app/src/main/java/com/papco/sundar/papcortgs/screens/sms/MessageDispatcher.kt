@@ -7,12 +7,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.telephony.SmsManager
-import android.util.Log
 import com.papco.sundar.papcortgs.common.TextFunctions
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.settings.AppPreferences
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
@@ -24,7 +22,6 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -41,7 +38,13 @@ class MessageDispatcher(
         const val TIMEOUT=4
     }
 
-    private val smsManager = context.getSystemService(SmsManager::class.java)
+    private val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        context.getSystemService(SmsManager::class.java)
+    } else {
+        @Suppress("DEPRECATION")
+        SmsManager.getDefault()
+    }
+    //private val smsManager = context.getSystemService(SmsManager::class.java)
     private val messageList = prepareList()
 
     private var iterator = messageList.listIterator()
@@ -81,16 +84,25 @@ class MessageDispatcher(
 
         // SmsManager requires MUTABLE intents on older/intermediate Android versions
             // so the framework can populate the SMS status results inside the intent.
+        val piFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12+ (API 31+) requires explicit mutability flags.
+            // FLAG_IMMUTABLE works perfectly here as you've observed.
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            // Android 11 (API 30) and below: Omit FLAG_IMMUTABLE.
+            // The framework requires a mutable intent to append SMS status results.
+            PendingIntent.FLAG_ONE_SHOT
+        }
+
         val sentPI = PendingIntent.getBroadcast(
             context,
             requestCode,
             sentIntent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            piFlags
         )
 
         return try {
             // Send our message.
-            Log.d("SAAT","Dispatching the message")
             if (message.length > 160) {
                 val parts = smsManager.divideMessage(message)
                 val sentIntents = ArrayList<PendingIntent>()
@@ -131,14 +143,12 @@ class MessageDispatcher(
 
                 receiverFlow().timeout(3000.milliseconds).catch { e ->
                         if (e is TimeoutCancellationException) {
-                            Log.d("SAAT","Timeout detected")
                             emit(MessageDispatchResult(lastDispatchedId, TIMEOUT))
                         }else
                             throw e
                     }.collect {
                         trySend(it)
                         if (hasNext) {
-                            Log.d("SAAT","Sending Next Message")
                             sendNextMessage()
                         } else cancel()
                     }
@@ -148,7 +158,6 @@ class MessageDispatcher(
             kotlinx.coroutines.delay(500)
 
             if (hasNext){
-                Log.d("SAAT","Sending first Message")
                 sendNextMessage()
             }
 
@@ -159,12 +168,10 @@ class MessageDispatcher(
     private fun receiverFlow() = callbackFlow {
 
         val receiver = SmsBroadcastReceiver {
-            Log.d("SAAT","Sending the broadcast result to worker")
             trySend(it)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            Log.d("SAAT","Registering the receiver 1")
             context.registerReceiver(
                 receiver,
                 IntentFilter(SmsBroadcastReceiver.SMS_SENT_ACTION),
@@ -172,7 +179,6 @@ class MessageDispatcher(
             )
         }
         else{
-            Log.d("SAAT","Registering the receiver 2")
             context.registerReceiver(receiver, IntentFilter(SmsBroadcastReceiver.SMS_SENT_ACTION))
         }
 
