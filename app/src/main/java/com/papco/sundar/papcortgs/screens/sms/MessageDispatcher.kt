@@ -7,10 +7,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.telephony.SmsManager
+import android.util.Log
 import com.papco.sundar.papcortgs.common.TextFunctions
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.settings.AppPreferences
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -74,6 +77,10 @@ class MessageDispatcher(
         // Construct the PendingIntents for the results.
         // FLAG_ONE_SHOT cancels the PendingIntent after use so we
         // can safely reuse the request codes in subsequent runs.
+
+
+        // SmsManager requires MUTABLE intents on older/intermediate Android versions
+            // so the framework can populate the SMS status results inside the intent.
         val sentPI = PendingIntent.getBroadcast(
             context,
             requestCode,
@@ -83,6 +90,7 @@ class MessageDispatcher(
 
         return try {
             // Send our message.
+            Log.d("SAAT","Dispatching the message")
             if (message.length > 160) {
                 val parts = smsManager.divideMessage(message)
                 val sentIntents = ArrayList<PendingIntent>()
@@ -95,7 +103,7 @@ class MessageDispatcher(
             }
         } catch (e: Exception) {
             e.printStackTrace()
-           ERROR
+            ERROR
         }
     }
 
@@ -117,18 +125,20 @@ class MessageDispatcher(
 
 
     @OptIn(FlowPreview::class)
-    suspend fun dispatchMessages() = channelFlow {
+    fun dispatchMessages() = channelFlow {
         coroutineScope {
             launch {
 
                 receiverFlow().timeout(3000.milliseconds).catch { e ->
                         if (e is TimeoutCancellationException) {
+                            Log.d("SAAT","Timeout detected")
                             emit(MessageDispatchResult(lastDispatchedId, TIMEOUT))
                         }else
                             throw e
                     }.collect {
                         trySend(it)
                         if (hasNext) {
+                            Log.d("SAAT","Sending Next Message")
                             sendNextMessage()
                         } else cancel()
                     }
@@ -136,7 +146,12 @@ class MessageDispatcher(
             }
 
             kotlinx.coroutines.delay(500)
-            if (hasNext) sendNextMessage()
+
+            if (hasNext){
+                Log.d("SAAT","Sending first Message")
+                sendNextMessage()
+            }
+
         }
     }
 
@@ -144,17 +159,20 @@ class MessageDispatcher(
     private fun receiverFlow() = callbackFlow {
 
         val receiver = SmsBroadcastReceiver {
+            Log.d("SAAT","Sending the broadcast result to worker")
             trySend(it)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            Log.d("SAAT","Registering the receiver 1")
             context.registerReceiver(
                 receiver,
                 IntentFilter(SmsBroadcastReceiver.SMS_SENT_ACTION),
-                Context.RECEIVER_NOT_EXPORTED
+                Context.RECEIVER_EXPORTED
             )
         }
         else{
+            Log.d("SAAT","Registering the receiver 2")
             context.registerReceiver(receiver, IntentFilter(SmsBroadcastReceiver.SMS_SENT_ACTION))
         }
 

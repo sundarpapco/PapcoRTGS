@@ -7,9 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -85,11 +83,11 @@ fun SendersSpinner(
                 enabled = false,
                 trailingIcon = {
                     if (menuExpanded) Icon(
-                        imageVector = Icons.Filled.KeyboardArrowUp,
+                        painter = painterResource(R.drawable.ic_drop_up),
                         contentDescription = "Close drop down menu"
                     )
                     else Icon(
-                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        painter = painterResource(R.drawable.ic_drop_down),
                         contentDescription = "Open drop down menu"
                     )
                 })

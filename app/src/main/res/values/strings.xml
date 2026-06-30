@@ -164,7 +164,7 @@
     <string name="gmail">GMail</string>
     <string name="backup_sharing_dialog_text">The backup has been created successfully.
         Do you want to share the backup file?</string>
-    <string name="backup_complete">Backup Complete</string>
+    <string name="backup_complete">Backup Completed Successfully!</string>
     <string name="export_backup">Export Backup</string>
     <string name="import_backup">Import Backup</string>
     <string name="restore_success">Database Restored Successfully!</string>

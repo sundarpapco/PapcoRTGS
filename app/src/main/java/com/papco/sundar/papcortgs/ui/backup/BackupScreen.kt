@@ -1,5 +1,6 @@
 package com.papco.sundar.papcortgs.ui.backup
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,8 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +46,7 @@ import com.papco.sundar.papcortgs.ui.components.Toaster
 import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun BackupScreen(
     screenState: BackupScreenState,
@@ -69,6 +69,7 @@ fun BackupScreen(
             onBackPressed = onBackPressed,
             optionsMenu = {
                 OptionsMenu(menuItems = menu) {
+
                     if(it== context.getString(R.string.sign_out))
                         onUnlink()
                 }
@@ -356,7 +357,7 @@ private fun DropBoxLoginInfo(
                 modifier = Modifier
                     .fillMaxHeight()
                     .aspectRatio(1f),
-                imageVector = Icons.Outlined.AccountCircle ,
+                painter = painterResource(R.drawable.account_circle) ,
                 contentDescription ="Account Icon"
             )
             Spacer(modifier = Modifier.width(14.dp))

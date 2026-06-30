@@ -5,8 +5,6 @@ import android.app.Notification
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.Constraints
@@ -207,8 +205,6 @@ class MailWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 addAction(
                     R.drawable.ic_close, applicationContext.getString(R.string.cancel), cancelIntent
                 )
-
-                Icons.Filled.Close
             }
 
     }

@@ -1,5 +1,6 @@
 package com.papco.sundar.papcortgs.ui.screens.transaction
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,8 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -26,14 +25,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.papco.sundar.papcortgs.R
@@ -44,7 +47,10 @@ import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.components.TextInputField
 import com.papco.sundar.papcortgs.ui.screens.LoadingScreen
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun ManageTransactionScreen(
  screenState: ManageTransactionScreenState,
@@ -123,16 +129,18 @@ private fun ScreenContent(
     }
 }
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 private fun TransactionOptionsMenu(
     onMenuSelected:(String)->Unit
 ){
 
     val context = LocalContext.current
+    val painter = painterResource(R.drawable.ic_done)
     val menu = remember {
         listOf(
             MenuAction(
-                imageVector = Icons.Filled.Done,
+                painter = painter,
                 label = context.getString(R.string.save)
             )
         )
@@ -147,9 +155,11 @@ private fun TransactionOptionsMenu(
 
 @Composable
 private fun AmountField(
-    amount:String,
-    onValueChange:(String)->Unit
+    amount: TextFieldValue,
+    onValueChange:(TextFieldValue)->Unit
 ){
+
+    val scope = rememberCoroutineScope()
 
     Surface(
         modifier = Modifier
@@ -181,7 +191,20 @@ private fun AmountField(
                 )
 
                 TextField(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .onFocusChanged { focusState ->
+                            if (focusState.isFocused) {
+                                // Select everything from index 0 to the end of the text
+                                scope.launch {
+                                    delay(80)
+                                    onValueChange(amount.copy(
+                                        selection = TextRange(amount.text.length,0)
+                                    ))
+                                }
+
+                            }
+                        },
                     value = amount,
                     onValueChange = onValueChange,
                     textStyle = MaterialTheme.typography.headlineLarge.copy(fontWeight= FontWeight.SemiBold),
@@ -231,7 +254,7 @@ private fun PreviewScreen(){
 private fun PreviewAmountField(){
 
 
-    var amount by remember{mutableStateOf("")}
+    var amount by remember{mutableStateOf(TextFieldValue(""))}
 
     RTGSTheme {
         Box(

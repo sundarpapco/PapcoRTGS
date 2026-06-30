@@ -11,34 +11,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.work.WorkInfo
 import com.papco.sundar.papcortgs.R
-import com.papco.sundar.papcortgs.common.GMailUtil
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.database.receiver.Receiver
 import com.papco.sundar.papcortgs.database.sender.Sender
 import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.screens.mail.MailDispatcher
-import com.papco.sundar.papcortgs.screens.mail.MailWorker
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.screens.mail.MailScreenState.Dialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
-import kotlinx.coroutines.launch
 
 
 @Composable
@@ -75,7 +70,7 @@ fun MailScreen(
                             permissionLauncher.launch(Manifest.permission.GET_ACCOUNTS)
                     }) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            painter = painterResource(R.drawable.ic_send),
                             contentDescription = "Send mails"
                         )
                     }

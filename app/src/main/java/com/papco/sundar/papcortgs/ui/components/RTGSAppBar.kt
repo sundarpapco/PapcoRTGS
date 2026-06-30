@@ -1,9 +1,6 @@
 package com.papco.sundar.papcortgs.ui.components
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -13,10 +10,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,7 +53,7 @@ fun RTGSAppBar(
             if(isBackEnabled)
                 IconButton(onClick = onBackPressed) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        painter = painterResource(R.drawable.ic_arrow_back),
                         contentDescription ="Back"
                     )
                 }
@@ -71,7 +70,7 @@ private fun TopAppBarPreview(){
 
     val menuActions=listOf(
         MenuAction(
-            imageVector = Icons.Filled.Done,
+            painter = painterResource(R.drawable.ic_done),
             label = "Done"
         ),
         MenuAction(

@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.payroll.dropbox.DropBoxAppConfig
+import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.dropbox.DropBox
 import com.papco.sundar.papcortgs.settings.AppPreferences
@@ -79,6 +80,7 @@ class DropBoxFragmentVM(application: Application) : AndroidViewModel(application
 
                             is BackupUpdate.Success -> {
                                 screenState.hideDialog()
+                                screenState.toast(ToastMessage.Resource(R.string.backup_complete))
                             }
 
                             is BackupUpdate.Failed -> {

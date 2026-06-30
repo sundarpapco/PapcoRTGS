@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 
 class SmsBroadcastReceiver(
     private val onSmsReceived:(MessageDispatchResult)->Unit
@@ -16,6 +17,7 @@ class SmsBroadcastReceiver(
     override fun onReceive(context: Context, intent: Intent) {
 
         // This is the result for a send.
+        Log.d("SAAT","This is broadcast receiver detecting message sent")
         if (SMS_SENT_ACTION == intent.action) {
             val transId = intent.getIntExtra(EXTRA_TRANS_ID, -1)
             val result=if(resultCode==Activity.RESULT_OK)

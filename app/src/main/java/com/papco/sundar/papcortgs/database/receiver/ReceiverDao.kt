@@ -1,57 +1,42 @@
-package com.papco.sundar.papcortgs.database.receiver;
+package com.papco.sundar.papcortgs.database.receiver
 
-import androidx.lifecycle.LiveData;
-import androidx.room.Dao;
-import androidx.room.Delete;
-import androidx.room.Insert;
-import androidx.room.Query;
-import androidx.room.Update;
-
-import java.util.List;
-
-import static androidx.room.OnConflictStrategy.REPLACE;
-
-import com.papco.sundar.papcortgs.database.pojo.Party;
-
-import kotlinx.coroutines.flow.Flow;
-
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
-public interface ReceiverDao {
+interface ReceiverDao {
+    @get:Query("select * from Receiver order by name")
+    val allReceivers: Flow<List<Receiver>>
 
-    @Query("select * from Receiver order by name")
-    Flow<List<Receiver>> getAllReceivers();
 
+    @get:Query("select * from Receiver order by name")
+    val allReceiversNonLive: List<Receiver>
 
-    @Query("select * from Receiver order by name")
-    List<Receiver> getAllReceiversNonLive();
-
-    @Query(("select displayName from Receiver"))
-    List<String> getAllReceiverDisplayNames();
+    @get:Query(("select displayName from Receiver"))
+    val allReceiverDisplayNames: List<String>
 
     @Query("select * from Receiver where id not in (select receiverId from `Transaction` where groupId=:groupId) order by name limit 1")
-    List<Receiver> getFirstReceiverForSelection(int groupId);
+    fun getFirstReceiverForSelection(groupId: Int): List<Receiver>
 
     @Query("select * from Receiver where id=:id")
-    Receiver getReceiver(int id);
+    fun getReceiver(id: Int): Receiver
 
     @Update
-    int updateReceiver(Receiver updatedReceiver);
-
-    @Delete
-    int deleteReceiver(Receiver ReceiverToDelete);
+    fun updateReceiver(updatedReceiver: Receiver): Int
 
     @Query("delete from Receiver where id =:id")
-    void deleteReceiverById(int id);
+    fun deleteReceiverById(id: Int)
 
     @Query("delete from Receiver")
-    void deleteAllReceivers();
+    fun deleteAllReceivers()
 
-    @Insert(onConflict = REPLACE)
-    long addReceiver(Receiver newReceiver);
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun addReceiver(newReceiver: Receiver): Long
 
-    @Insert(onConflict = REPLACE)
-    void addAllReceivers(List<Receiver> receivers);
-
-
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun addAllReceivers(receivers: List<Receiver>)
 }

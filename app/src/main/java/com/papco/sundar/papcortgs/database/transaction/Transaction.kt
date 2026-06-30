@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.ForeignKey.Companion.CASCADE
 import androidx.room.Ignore
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.papco.sundar.papcortgs.database.receiver.Receiver
 import com.papco.sundar.papcortgs.database.sender.Sender
@@ -26,7 +27,8 @@ import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
         parentColumns = ["id"],
         childColumns = ["groupId"],
         onDelete = CASCADE
-    )]
+    )],
+    indices = [Index(value = ["senderId"]), Index(value = ["receiverId"]), Index(value = ["groupId"])]
 )
 data class Transaction(
     @PrimaryKey(autoGenerate = true)

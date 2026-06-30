@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.TextFieldValue
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.database.receiver.Receiver
 import com.papco.sundar.papcortgs.database.sender.Sender
@@ -24,7 +25,7 @@ class ManageTransactionScreenState {
     var selectedReceiver:Receiver? by mutableStateOf(null)
         private set
 
-    var amount:String by mutableStateOf("")
+    var amount by mutableStateOf(TextFieldValue(""))
     private set
 
     var remarks:String? by mutableStateOf(null)
@@ -38,8 +39,8 @@ class ManageTransactionScreenState {
         selectedReceiver=receiver
     }
 
-    fun setAmountAs(amount:String){
-        this.amount=amount
+    fun setAmountAs(amount: TextFieldValue){
+        this.amount= amount
     }
 
     fun loadRemarks(remarks:String){
@@ -49,7 +50,7 @@ class ManageTransactionScreenState {
     fun loadTransaction(transaction:CohesiveTransaction){
         selectedSender=transaction.sender
         selectedReceiver=transaction.receiver
-        amount=transaction.transaction.amount.toString()
+        amount=TextFieldValue(transaction.transaction.amount.toString())
         remarks=transaction.transaction.remarks
 
         isLoading=false
@@ -63,7 +64,7 @@ class ManageTransactionScreenState {
     ){
         selectedSender=sender
         selectedReceiver=receiver
-        this.amount=amount.toString()
+        this.amount=TextFieldValue(amount.toString())
         this.remarks=remarks
 
         isLoading=false
@@ -76,7 +77,7 @@ class ManageTransactionScreenState {
             this.groupId = groupId
             senderId = selectedSender?.id ?: error("No Sender Selected")
             receiverId = selectedReceiver?.id ?: error("No Receiver Selected")
-            this.amount = this@ManageTransactionScreenState.amount.toInt()
+            this.amount = this@ManageTransactionScreenState.amount.text.toInt()
             remarks = this@ManageTransactionScreenState.remarks ?: ""
         }
 
@@ -102,7 +103,7 @@ class ManageTransactionScreenState {
             return false
         }
 
-        if(amount.isBlank() || amount.toInt()==0){
+        if(amount.text.isBlank() || amount.text.toInt()==0){
             Toast.makeText(
                 context,
                 context.getString(R.string.enter_valid_amount),

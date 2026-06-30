@@ -48,7 +48,7 @@ class CreateTransactionVM(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch(Dispatchers.IO) {
 
             val defaultSender = db.getSenderDao().getSender(defaultSenderId)
-            val firstSender = db.getSenderDao().getFirstSender()
+            val firstSender = db.getSenderDao().firstSender
             val firstReceiver = db.getReceiverDao().getFirstReceiverForSelection(groupId)
 
             withContext(Dispatchers.Main) {

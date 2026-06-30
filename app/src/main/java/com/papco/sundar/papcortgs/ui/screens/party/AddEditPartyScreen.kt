@@ -8,8 +8,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -19,6 +17,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -27,12 +26,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.papco.sundar.papcortgs.R
+import com.papco.sundar.papcortgs.ui.components.MenuAction
+import com.papco.sundar.papcortgs.ui.components.OptionsMenu
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.components.TextInputField
 import com.papco.sundar.papcortgs.ui.dialogs.WaitDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
-import com.papco.sundar.papcortgs.ui.components.MenuAction
-import com.papco.sundar.papcortgs.ui.components.OptionsMenu
 
 @Composable
 fun AddEditPartyScreen(
@@ -49,7 +48,7 @@ fun AddEditPartyScreen(
             OptionsMenu(
                 menuItems = listOf(
                     MenuAction(
-                        imageVector = Icons.Filled.Done, label = stringResource(id = R.string.done)
+                        painter = painterResource(R.drawable.ic_done), label = stringResource(id = R.string.done)
                     )
                 )
             ) {

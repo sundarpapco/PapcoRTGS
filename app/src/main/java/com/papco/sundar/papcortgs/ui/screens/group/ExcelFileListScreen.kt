@@ -1,5 +1,6 @@
 package com.papco.sundar.papcortgs.ui.screens.group
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -20,8 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -54,6 +53,7 @@ import com.papco.sundar.papcortgs.ui.dialogs.PasswordDialog
 import com.papco.sundar.papcortgs.ui.dialogs.WaitDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun ExcelFileListScreen(
     state: ExcelFileListScreenState,
@@ -118,7 +118,7 @@ fun ExcelFileListScreen(
         }
     }, floatingActionButton = {
         FloatingActionButton(onClick = onAddExcelFileClicked) {
-            Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Excel File")
+            Icon(painter = painterResource(R.drawable.ic_add), contentDescription = "Add Excel File")
         }
     }) {
         ExcelFileList(

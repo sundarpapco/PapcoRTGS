@@ -251,8 +251,8 @@ class BizzPay360Report(
         val sender = transaction.sender!!
         val receiver = transaction.receiver!!
 
-        sheet.addCell(Label(0, row, "PAB VENDOR", format))
-        columnWidths[0].calculateRecommendedWidth("PAB VENDOR")
+        sheet.addCell(Label(0, row, "PAB_VENDOR", format))
+        columnWidths[0].calculateRecommendedWidth("PAB_VENDOR")
 
         sheet.addCell(Label(1, row, paymentMode(receiver.ifsc), format))
         columnWidths[1].calculateRecommendedWidth(paymentMode(receiver.ifsc))

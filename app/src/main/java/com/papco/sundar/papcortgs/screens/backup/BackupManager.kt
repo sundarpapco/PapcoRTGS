@@ -161,7 +161,7 @@ class BackupManager(
     private fun writeReceiverToWorkbook(workbook: WritableWorkbook) {
 
         //prepare the list of receivers to back up
-        val receivers: List<Receiver> = db.getReceiverDao().getAllReceiversNonLive()
+        val receivers: List<Receiver> = db.getReceiverDao().allReceiversNonLive
         val sheet = workbook.createSheet("receivers", 0)
 
         //prepare the cell format for writing
@@ -193,7 +193,7 @@ class BackupManager(
     private fun writeSendersToWorkbook(workbook: WritableWorkbook) {
 
         //prepare the list of senders to back up
-        val senders: List<Sender> = db.getSenderDao().getAllSendersNonLive()
+        val senders: List<Sender> = db.getSenderDao().allSendersNonLive
         val sheet = workbook.createSheet("senders", 1)
 
         //prepare the cellFormat for writing

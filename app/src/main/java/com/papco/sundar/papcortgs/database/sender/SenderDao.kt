@@ -1,52 +1,46 @@
-package com.papco.sundar.papcortgs.database.sender;
+package com.papco.sundar.papcortgs.database.sender
 
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
-import androidx.lifecycle.LiveData;
-import androidx.room.Dao;
-import androidx.room.Delete;
-import androidx.room.Insert;
-import androidx.room.Query;
-import androidx.room.Update;
-
-import java.util.List;
-
-import static androidx.room.OnConflictStrategy.REPLACE;
-
-import kotlinx.coroutines.flow.Flow;
 
 @Dao
-public interface SenderDao {
+interface SenderDao {
+    @get:Query("select * from Sender order by name")
+    val allSenders: Flow<List<Sender>>
 
-    @Query("select * from Sender order by name")
-    Flow<List<Sender>> getAllSenders();
+    @get:Query("select * from Sender")
+    val allSendersNonLive: List<Sender>
 
-    @Query("select * from Sender")
-    List<Sender> getAllSendersNonLive();
-
-    @Query(("select displayName from Sender"))
-    List<String> getAllSenderNames();
+    @get:Query(("select displayName from Sender"))
+    val allSenderNames: List<String>
 
     @Query("select * from Sender where id=:id")
-    Sender getSender(int id);
+    fun getSender(id: Int): Sender
 
-    @Query("select * from Sender order by name limit 1")
-    List<Sender> getFirstSender();
+    @get:Query("select * from Sender order by name limit 1")
+    val firstSender: List<Sender>
 
     @Update
-    int updateSender(Sender updatedSender);
+    fun updateSender(updatedSender: Sender): Int
 
     @Delete
-    int deleteSender(Sender senderToDelete);
+    fun deleteSender(senderToDelete: Sender): Int
 
     @Query("delete from Sender where id=:id")
-    void deleteSenderById(int id);
+    fun deleteSenderById(id: Int)
 
-    @Insert(onConflict = REPLACE)
-    long addSender(Sender newSender);
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun addSender(newSender: Sender): Long
 
-    @Insert(onConflict = REPLACE)
-    void addAllSenders(List<Sender> senders);
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun addAllSenders(senders: List<Sender>)
 
     @Query("delete from Sender")
-    void deleteAllSenders();
+    fun deleteAllSenders()
 }

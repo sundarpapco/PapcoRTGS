@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,14 +20,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.papco.sundar.papcortgs.R
 
 
 data class MenuAction(
     var iconId:Int?=null,
-    var imageVector: ImageVector?=null,
+    var painter: Painter?=null,
     var label:String=""
 ){
     override fun equals(other: Any?): Boolean {
@@ -38,7 +37,7 @@ data class MenuAction(
 
     override fun hashCode(): Int {
         var result = iconId ?: 0
-        result = 31 * result + (imageVector?.hashCode() ?: 0)
+        result = 31 * result + (painter?.hashCode() ?: 0)
         result = 31 * result + label.hashCode()
         return result
     }
@@ -50,9 +49,9 @@ fun OptionsMenu(
     onItemClick: (String) -> Unit
 ) {
 
-    val actions = remember(menuItems) { menuItems.filter { it.iconId != null || it.imageVector != null } }
+    val actions = remember(menuItems) { menuItems.filter { it.iconId != null || it.painter != null } }
     val overFlowItems =
-        remember(menuItems) { menuItems.filter { it.iconId == null && it.imageVector == null } }
+        remember(menuItems) { menuItems.filter { it.iconId == null && it.painter == null } }
 
     var expanded by rememberSaveable(Unit) { mutableStateOf(false) }
 
@@ -61,9 +60,9 @@ fun OptionsMenu(
             onItemClick(it.label)
             expanded = false
         }) {
-            if (it.imageVector != null)
+            if (it.painter != null)
                 Icon(
-                    imageVector = it.imageVector!!,
+                    painter = it.painter!!,
                     contentDescription = it.label,
                     tint = MaterialTheme.colorScheme.onSurface
                 )
@@ -82,7 +81,7 @@ fun OptionsMenu(
         ) {
             IconButton(onClick = { expanded = true }) {
                 Icon(
-                    imageVector = Icons.Filled.MoreVert,
+                    painter = painterResource(R.drawable.more_vert),
                     contentDescription = "Overflow menu",
                     tint = MaterialTheme.colorScheme.onSurface
                 )
@@ -112,9 +111,9 @@ fun<T> ContextMenu(
     onItemClick: (String,T) -> Unit
 ) {
 
-    val actions = remember { menuItems.filter { it.iconId != null || it.imageVector != null } }
+    val actions = remember { menuItems.filter { it.iconId != null || it.painter != null } }
     val overFlowItems =
-        remember { menuItems.filter { it.iconId == null && it.imageVector == null } }
+        remember { menuItems.filter { it.iconId == null && it.painter == null } }
 
     var expanded by rememberSaveable(Unit) { mutableStateOf(false) }
 
@@ -123,9 +122,9 @@ fun<T> ContextMenu(
             onItemClick(it.label,identifier)
             expanded = false
         }) {
-            if (it.imageVector != null)
+            if (it.painter != null)
                 Icon(
-                    imageVector = it.imageVector!!,
+                    painter = it.painter!!,
                     contentDescription = it.label,
                     tint = MaterialTheme.colorScheme.onSurface
                 )
@@ -144,7 +143,7 @@ fun<T> ContextMenu(
         ) {
             IconButton(onClick = { expanded = true }) {
                 Icon(
-                    imageVector = Icons.Filled.MoreVert,
+                    painter = painterResource(R.drawable.more_vert),
                     contentDescription = "Overflow menu",
                     tint = MaterialTheme.colorScheme.onSurface
                 )

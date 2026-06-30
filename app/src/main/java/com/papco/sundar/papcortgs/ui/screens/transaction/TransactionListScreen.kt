@@ -1,5 +1,6 @@
 package com.papco.sundar.papcortgs.ui.screens.transaction
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,8 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -26,19 +25,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.database.transaction.TransactionForList
 import com.papco.sundar.papcortgs.ui.components.MenuAction
-import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
-import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
-import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.ui.components.OptionsMenu
+import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.dialogs.DeleteConfirmationDialog
 import com.papco.sundar.papcortgs.ui.screens.transaction.TransactionListScreenState.Dialog
+import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 
 @Composable
 fun TransactionListScreen(
@@ -74,7 +74,7 @@ fun TransactionListScreen(
             })
     }, floatingActionButton = {
         FloatingActionButton(onClick = onAddTransaction) {
-            Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Transaction")
+            Icon(painter = painterResource(R.drawable.ic_add), contentDescription = "Add Transaction")
         }
     }) { padding ->
         Column(
@@ -145,6 +145,7 @@ fun TransactionListScreen(
 
 }
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 private fun TransactionListOptionsMenu(
     options: List<MenuAction>,

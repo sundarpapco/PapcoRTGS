@@ -18,7 +18,7 @@ import com.papco.sundar.papcortgs.database.sender.SenderDao;
 import com.papco.sundar.papcortgs.database.transaction.Transaction;
 import com.papco.sundar.papcortgs.database.transaction.TransactionDao;
 
-@Database(entities = {Sender.class, Receiver.class, Transaction.class, TransactionGroup.class},version = 5)
+@Database(entities = {Sender.class, Receiver.class, Transaction.class, TransactionGroup.class},version = 6,exportSchema = false)
 public abstract class MasterDatabase extends RoomDatabase {
 
     static MasterDatabase db;
@@ -48,6 +48,16 @@ public abstract class MasterDatabase extends RoomDatabase {
         }
     };
 
+    private static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Adjust the table name and column names to match your exact entities
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_MessageEntity_receiverId` ON `transaction` (`receiverId`)");
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_MessageEntity_groupId` ON `transaction` (`groupId`)");
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_MessageEntity_senderId` ON `transaction` (`senderId`)");
+        }
+    };
+
     private static final Migration MIGRATION_4_5=new Migration(4,5){
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
@@ -65,7 +75,8 @@ public abstract class MasterDatabase extends RoomDatabase {
                             MIGRATION_2_3,
                             MIGRATION_3_4,
                             MIGRATION_3_4,
-                            MIGRATION_4_5)
+                            MIGRATION_4_5,
+                            MIGRATION_5_6)
                     .build();
 
         return db;
