@@ -163,61 +163,61 @@ class BizzPay360Report(
         val optionalHeadingFormat = headingCellFormat(false)
 
         sheet.setColumnView(0, 12) //setting the column width
-        sheet.addCell(Label(0, 0, "CODE", compulsoryHeadingFormat))
+        sheet.addCell(Label(0, 0, "PYMT_PROD_TYPE_CODE", compulsoryHeadingFormat))
 
         sheet.setColumnView(1, 12) //setting the column width
-        sheet.addCell(Label(1, 0, "Mode", compulsoryHeadingFormat))
+        sheet.addCell(Label(1, 0, "PYMT_MODE", compulsoryHeadingFormat))
 
         sheet.setColumnView(2, 10) //setting the column width
-        sheet.addCell(Label(2, 0, "Debit Ac No", compulsoryHeadingFormat))
+        sheet.addCell(Label(2, 0, "DEBIT_ACC_NO", compulsoryHeadingFormat))
 
         sheet.setColumnView(3, 9) //setting the column width
-        sheet.addCell(Label(3, 0, "Beneficiary Name", compulsoryHeadingFormat))
+        sheet.addCell(Label(3, 0, "BNF_NAME", compulsoryHeadingFormat))
 
         sheet.setColumnView(4, 7) //setting the column width
-        sheet.addCell(Label(4, 0, "Beneficiary Ac No", compulsoryHeadingFormat))
+        sheet.addCell(Label(4, 0, "BENE_ACC_NO", compulsoryHeadingFormat))
 
         sheet.setColumnView(5, 11) //setting the column width
-        sheet.addCell(Label(5, 0, "IFSC", compulsoryHeadingFormat))
+        sheet.addCell(Label(5, 0, "BENE_IFSC", compulsoryHeadingFormat))
 
         sheet.setColumnView(6, 11) //setting the column width
-        sheet.addCell(Label(6, 0, "Amt", compulsoryHeadingFormat))
+        sheet.addCell(Label(6, 0, "AMOUNT", compulsoryHeadingFormat))
 
         sheet.setColumnView(7, 20) //setting the column width
-        sheet.addCell(Label(7, 0, "Debit Narr", optionalHeadingFormat))
+        sheet.addCell(Label(7, 0, "DEBIT_NARR", optionalHeadingFormat))
 
         sheet.setColumnView(8, 20) //setting the column width
-        sheet.addCell(Label(8, 0, "Credit Narr", optionalHeadingFormat))
+        sheet.addCell(Label(8, 0, "CREDIT_NARR", optionalHeadingFormat))
 
         sheet.setColumnView(9, 20) //setting the column width
-        sheet.addCell(Label(9, 0, "Bene Mobile No.", optionalHeadingFormat))
+        sheet.addCell(Label(9, 0, "MOBILE_NUM", optionalHeadingFormat))
 
         sheet.setColumnView(10, 20) //setting the column width
-        sheet.addCell(Label(10, 0, "Bene Email ID", optionalHeadingFormat))
+        sheet.addCell(Label(10, 0, "EMAIL_ID", optionalHeadingFormat))
 
         sheet.setColumnView(11, 20) //setting the column width
-        sheet.addCell(Label(11, 0, "Remark", optionalHeadingFormat))
+        sheet.addCell(Label(11, 0, "REMARK", optionalHeadingFormat))
 
         sheet.setColumnView(12, 20) //setting the column width
-        sheet.addCell(Label(12, 0, "Date", compulsoryHeadingFormat))
+        sheet.addCell(Label(12, 0, "PYMT_DATE", compulsoryHeadingFormat))
 
         sheet.setColumnView(13, 20) //setting the column width
-        sheet.addCell(Label(13, 0, "Ref No", optionalHeadingFormat))
+        sheet.addCell(Label(13, 0, "REF_NO", optionalHeadingFormat))
 
         sheet.setColumnView(14, 20) //setting the column width
-        sheet.addCell(Label(14, 0, "Add Info 1", optionalHeadingFormat))
+        sheet.addCell(Label(14, 0, "ADDL_INFO1", optionalHeadingFormat))
 
         sheet.setColumnView(15, 20) //setting the column width
-        sheet.addCell(Label(15, 0, "Add Info 2", optionalHeadingFormat))
+        sheet.addCell(Label(15, 0, "ADDL_INFO2", optionalHeadingFormat))
 
         sheet.setColumnView(16, 20) //setting the column width
-        sheet.addCell(Label(16, 0, "Add Info 3", optionalHeadingFormat))
+        sheet.addCell(Label(16, 0, "ADDL_INFO3", optionalHeadingFormat))
 
         sheet.setColumnView(17, 20) //setting the column width
-        sheet.addCell(Label(17, 0, "Add Info 4", optionalHeadingFormat))
+        sheet.addCell(Label(17, 0, "ADDL_INFO4", optionalHeadingFormat))
 
         sheet.setColumnView(18, 20) //setting the column width
-        sheet.addCell(Label(18, 0, "Add Info 5", optionalHeadingFormat))
+        sheet.addCell(Label(18, 0, "ADDL_INFO5", optionalHeadingFormat))
 
     }
 

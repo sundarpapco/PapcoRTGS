@@ -1,5 +1,4 @@
 [versions]
-
 #Plugins Versions
 agp="9.0.1"
 kotlin="2.4.0"
@@ -24,6 +23,12 @@ googleApiServiceGmail="v1-rev96-1.25.0"
 googleApiClientAndroid="1.20.0"
 guava="27.0.1-android"
 
+#Testing Libraries
+junit="4.13.2"
+junitAndroid ="1.3.0"
+espressoCore="3.7.0"
+
+
 [plugins]
 android-application = {id="com.android.application", version.ref="agp"}
 kotlin-compose={id="org.jetbrains.kotlin.plugin.compose", version.ref="kotlin"}
@@ -33,6 +38,7 @@ kotlin-ksp = {id="com.google.devtools.ksp", version.ref="ksp"}
 
 [libraries]
 #Core Libraries
+
 kotlin-extentions={module="androidx.core:core-ktx", version.ref= "kotlinExtensions" }
 activity-compose={module="androidx.activity:activity-compose", version.ref="activityCompose"}
 viewmodel-compose={module="androidx.lifecycle:lifecycle-viewmodel-compose", version.ref="lifecycleComposeViewModel"}
@@ -79,3 +85,8 @@ google-play-services-auth={module="com.google.android.gms:play-services-auth", v
 api-client-android={module="com.google.api-client:google-api-client-android", version.ref="googleApiClientAndroid"}
 google-api-services-gmail={module="com.google.apis:google-api-services-gmail", version.ref="googleApiServiceGmail"}
 guava-android={module="com.google.guava:guava", version.ref="guava"} #needed for conflict resolution of ListenableFuture
+
+#Testing
+junit = { module = "junit:junit", version.ref = "junit" }
+junit-android = { module = "androidx.test.ext:junit", version.ref = "junitAndroid" }
+espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCore" }

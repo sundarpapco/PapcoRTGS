@@ -112,6 +112,7 @@ class DropBoxFragmentVM(application: Application) : AndroidViewModel(application
 
                         is BackupUpdate.Success -> {
                             screenState.hideDialog()
+                            screenState.toast(ToastMessage.Resource(R.string.restore_success))
                         }
 
                         is BackupUpdate.Failed -> {

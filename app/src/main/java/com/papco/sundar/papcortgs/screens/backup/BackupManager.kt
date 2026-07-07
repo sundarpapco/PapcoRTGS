@@ -2,7 +2,6 @@ package com.papco.sundar.papcortgs.screens.backup
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import com.dropbox.core.NetworkIOException
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
@@ -70,7 +69,8 @@ class BackupManager(
         //prepare and create the workbook and writable sheet
         val workbook: WritableWorkbook
         val wbSettings = WorkbookSettings()
-        wbSettings.locale = Locale("en", "EN")
+        wbSettings.locale= Locale.US
+
         workbook = Workbook.createWorkbook(receiversFile, wbSettings)
 
         emit(BackupUpdate.Progress(ToastMessage.Message("Backing up Receivers...")))
