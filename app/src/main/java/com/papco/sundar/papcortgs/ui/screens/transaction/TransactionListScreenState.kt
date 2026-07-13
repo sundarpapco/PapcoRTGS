@@ -4,8 +4,9 @@ import com.papco.sundar.papcortgs.database.transaction.TransactionForList
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.papco.sundar.papcortgs.ui.util.ToasterState
 
-class TransactionListScreenState {
+class TransactionListScreenState : ToasterState() {
 
     var transactions:List<TransactionForList> by mutableStateOf(emptyList())
     var dialog:Dialog? by mutableStateOf(null)

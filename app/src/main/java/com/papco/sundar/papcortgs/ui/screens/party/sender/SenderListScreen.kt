@@ -10,8 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.pojo.Party
+import com.papco.sundar.papcortgs.screens.sender.SendersListVM
+import com.papco.sundar.papcortgs.ui.ManageSender
+import com.papco.sundar.papcortgs.ui.SendersList
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.dialogs.DeleteConfirmationDialog
 import com.papco.sundar.papcortgs.ui.dialogs.WaitDialog
@@ -20,6 +28,22 @@ import com.papco.sundar.papcortgs.ui.screens.party.ManagePartyScreenDialogs
 import com.papco.sundar.papcortgs.ui.screens.party.ManagePartyScreenState
 import com.papco.sundar.papcortgs.ui.screens.party.SearchablePartyList
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+
+fun EntryProviderScope<NavKey>.sendersListScreenEntry(
+    backStack: NavBackStack<NavKey>
+){
+    entry<SendersList>{
+        val viewModel: SendersListVM = viewModel()
+
+        SenderListScreen(
+            state = viewModel.screenState,
+            onSenderClicked = { backStack.add(ManageSender(it.id)) },
+            onBackPressed = { backStack.removeLastOrNull()},
+            onAddNewSender = { backStack.add(ManageSender(-1)) },
+            onDeleteSender = { viewModel.deleteSender(it) }
+        )
+    }
+}
 
 @Composable
 fun SenderListScreen(

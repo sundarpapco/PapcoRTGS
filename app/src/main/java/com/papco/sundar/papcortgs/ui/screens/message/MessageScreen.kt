@@ -9,9 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,7 +17,9 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -27,17 +27,50 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import androidx.work.WorkInfo
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.database.receiver.Receiver
 import com.papco.sundar.papcortgs.database.sender.Sender
 import com.papco.sundar.papcortgs.database.transaction.Transaction
+import com.papco.sundar.papcortgs.screens.sms.FragmentSMSVM
 import com.papco.sundar.papcortgs.screens.sms.MessageDispatcher
+import com.papco.sundar.papcortgs.screens.sms.MessageWorker
+import com.papco.sundar.papcortgs.ui.MessageList
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.screens.message.MessageScreenState.Dialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+
+fun EntryProviderScope<NavKey>.messageListEntry(
+    backStack: NavBackStack<NavKey>
+){
+    entry<MessageList> {key->
+
+        val viewModel: FragmentSMSVM = viewModel()
+        var isAlreadyLoaded = rememberSaveable { false }
+        val context = LocalContext.current
+
+        MessageScreen(
+            screenState = viewModel.screenState,
+            onSendMessages = { MessageWorker.startWith(context, key.groupId) },
+            onBackPressed = { backStack.removeLastOrNull() }
+        )
+
+        LaunchedEffect(true) {
+            if (!isAlreadyLoaded)
+                viewModel.loadMessagingList(key.groupId)
+
+            isAlreadyLoaded = true
+        }
+
+    }
+
+}
 
 
 @Composable

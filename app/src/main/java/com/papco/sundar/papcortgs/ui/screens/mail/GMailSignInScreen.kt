@@ -28,13 +28,36 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.common.GMailUtil
+import com.papco.sundar.papcortgs.ui.EmailList
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 
+fun EntryProviderScope<NavKey>.googleSignInEntry(
+    backStack: NavBackStack<NavKey>
+){
+    entry<com.papco.sundar.papcortgs.ui.GoogleSignIn> { key->
+
+        GmailSignInScreen(
+            onConnected = {
+                backStack.add(
+                    EmailList(
+                        key.groupId,
+                        key.groupName,
+                        key.defaultSenderId
+                    )
+                )
+            },
+            onBackPressed = { backStack.removeLastOrNull() }
+        )
+    }
+}
 
 @Composable
 fun GmailSignInScreen(

@@ -14,8 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.pojo.Party
+import com.papco.sundar.papcortgs.screens.receiver.ReceiverListVM
+import com.papco.sundar.papcortgs.ui.ManageReceiver
+import com.papco.sundar.papcortgs.ui.ReceiversList
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.dialogs.WaitDialog
 import com.papco.sundar.papcortgs.ui.screens.LoadingScreen
@@ -23,6 +30,23 @@ import com.papco.sundar.papcortgs.ui.screens.party.ManagePartyScreenDialogs
 import com.papco.sundar.papcortgs.ui.screens.party.ManagePartyScreenState
 import com.papco.sundar.papcortgs.ui.screens.party.SearchablePartyList
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+
+fun EntryProviderScope<NavKey>.receiversListScreenEntry(
+    backStack: NavBackStack<NavKey>
+){
+    entry<ReceiversList> {
+        val viewModel: ReceiverListVM = viewModel()
+
+        ManageReceiversScreen(
+            state = viewModel.screenState,
+            onReceiverClicked = { backStack.add(ManageReceiver(it.id)) },
+            onBackPressed = {backStack.removeLastOrNull()},
+            onAddNewReceiver = { backStack.add(ManageReceiver(-1)) },
+            onDeleteReceiver = { viewModel.deleteReceiver(it) }
+        )
+    }
+}
+
 
 @Composable
 fun ManageReceiversScreen(

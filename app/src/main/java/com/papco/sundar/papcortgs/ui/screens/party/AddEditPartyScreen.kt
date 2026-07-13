@@ -10,7 +10,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
@@ -25,13 +27,124 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.papco.sundar.papcortgs.R
+import com.papco.sundar.papcortgs.extentions.toast
+import com.papco.sundar.papcortgs.screens.receiver.CreateReceiverVM
+import com.papco.sundar.papcortgs.screens.sender.CreateSenderVM
+import com.papco.sundar.papcortgs.ui.ManageReceiver
+import com.papco.sundar.papcortgs.ui.ManageSender
 import com.papco.sundar.papcortgs.ui.components.MenuAction
 import com.papco.sundar.papcortgs.ui.components.OptionsMenu
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.components.TextInputField
 import com.papco.sundar.papcortgs.ui.dialogs.WaitDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+
+fun EntryProviderScope<NavKey>.manageSenderEntry(backStack: NavBackStack<NavKey>) {
+
+    entry<ManageSender> { key ->
+
+        val viewModel: CreateSenderVM = viewModel()
+        val isEditingMode = remember { key.senderId != -1 }
+        var isAlreadyLoaded = remember { false }
+        val context = LocalContext.current
+
+        AddEditPartyScreen(
+            title = if (isEditingMode)
+                stringResource(R.string.update_sender)
+            else
+                stringResource(R.string.create_sender),
+            state = viewModel.screenState,
+            onBackPressed = { backStack.removeLastOrNull() },
+            onFormSubmit = {
+                if (isEditingMode) {
+                    val sender = viewModel.screenState.asSender(key.senderId)
+                    viewModel.updateSender(sender)
+                } else {
+                    val sender = viewModel.screenState.asSender()
+                    viewModel.addSender(sender)
+                }
+            }
+        )
+
+        if (isEditingMode)
+            LaunchedEffect(key1 = true) {
+                if (!isAlreadyLoaded)
+                    viewModel.loadSender(key.senderId)
+                isAlreadyLoaded = true
+            }
+
+        LaunchedEffect(key1 = true) {
+            viewModel.eventStatus.collect {
+                it?.let { event ->
+                    if (!event.isAlreadyHandled) {
+                        val msg = event.handleEvent()
+                        if (msg == CreateSenderVM.EVENT_SUCCESS) {
+                            backStack.removeLastOrNull()
+                        } else {
+                            context.toast(msg)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun EntryProviderScope<NavKey>.manageReceiverEntry(backStack: NavBackStack<NavKey>) {
+
+    entry<ManageReceiver> { key ->
+
+        val viewModel: CreateReceiverVM = viewModel()
+        val isEditingMode = remember { key.receiverId != -1 }
+        var isAlreadyLoaded = rememberSaveable { false }
+        val context = LocalContext.current
+
+        AddEditPartyScreen(
+            title = if (isEditingMode)
+                stringResource(R.string.update_receiver)
+            else
+                stringResource(R.string.create_receiver),
+            state = viewModel.screenState,
+            onBackPressed = { backStack.removeLastOrNull() },
+            onFormSubmit = {
+                if (isEditingMode) {
+                    val receiver = viewModel.screenState.asReceiver(key.receiverId)
+                    viewModel.updateReceiver(receiver)
+                } else {
+                    val receiver = viewModel.screenState.asReceiver()
+                    viewModel.addReceiver(receiver)
+                }
+            }
+        )
+
+        if (isEditingMode)
+            LaunchedEffect(key1 = true) {
+                if (!isAlreadyLoaded)
+                    viewModel.loadReceiver(key.receiverId)
+                isAlreadyLoaded = true
+            }
+
+        LaunchedEffect(key1 = true) {
+            viewModel.eventStatus.collect {
+                it?.let { event ->
+                    if (!event.isAlreadyHandled) {
+                        val msg = event.handleEvent()
+                        if (msg == CreateReceiverVM.EVENT_SUCCESS) {
+                            backStack.removeLastOrNull()
+                        } else {
+                            context.toast(msg)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun AddEditPartyScreen(
@@ -48,7 +161,8 @@ fun AddEditPartyScreen(
             OptionsMenu(
                 menuItems = listOf(
                     MenuAction(
-                        painter = painterResource(R.drawable.ic_done), label = stringResource(id = R.string.done)
+                        painter = painterResource(R.drawable.ic_done),
+                        label = stringResource(id = R.string.done)
                     )
                 )
             ) {
@@ -57,16 +171,17 @@ fun AddEditPartyScreen(
         }
     }) { paddingValues ->
 
-        PartyDetailsForm(modifier = Modifier.padding(paddingValues),
+        PartyDetailsForm(
+            modifier = Modifier.padding(paddingValues),
             state = state,
             onFormSubmit = {
-                if(state.validateState())
+                if (state.validateState())
                     onFormSubmit()
             })
 
     }
 
-    if(state.isWaiting)
+    if (state.isWaiting)
         WaitDialog()
 }
 

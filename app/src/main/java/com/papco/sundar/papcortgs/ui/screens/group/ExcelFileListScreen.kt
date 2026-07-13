@@ -37,11 +37,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.sender.Sender
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroupListItem
 import com.papco.sundar.papcortgs.extentions.shareFile
+import com.papco.sundar.papcortgs.screens.transactionGroup.GroupActivityVM
+import com.papco.sundar.papcortgs.ui.DropBox
+import com.papco.sundar.papcortgs.ui.ExcelFileList
+import com.papco.sundar.papcortgs.ui.ManageGroup
+import com.papco.sundar.papcortgs.ui.ReceiversList
+import com.papco.sundar.papcortgs.ui.SendersList
+import com.papco.sundar.papcortgs.ui.TransactionList
 import com.papco.sundar.papcortgs.ui.backup.BackupProgressDialog
 import com.papco.sundar.papcortgs.ui.components.MenuAction
 import com.papco.sundar.papcortgs.ui.components.OptionsMenu
@@ -52,6 +64,35 @@ import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.dialogs.PasswordDialog
 import com.papco.sundar.papcortgs.ui.dialogs.WaitDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+
+fun EntryProviderScope<NavKey>.excelFileListEntry(
+    backStack: NavBackStack<NavKey>
+){
+
+    entry<ExcelFileList> {
+
+        val viewModel: GroupActivityVM = viewModel()
+
+        ExcelFileListScreen(
+            state = viewModel.screenState,
+            onExcelFileClicked = {
+                backStack.add(TransactionList(
+                    it.transactionGroup.id,
+                    it.transactionGroup.name,
+                    it.transactionGroup.defaultSenderId))
+            },
+            onExcelFileLongClicked = { backStack.add(ManageGroup(it.transactionGroup.id)) },
+            onAddExcelFileClicked = { backStack.add(ManageGroup(-1))},
+            navigateToSendersScreen = { backStack.add(SendersList) },
+            navigateToReceiversScreen = { backStack.add(ReceiversList) },
+            navigateToMessageFormatScreen = { },
+            navigateToDropBaxBackupScreen = { backStack.add(DropBox) },
+            onCreateBackup = {viewModel.createBackupFile()},
+            onRestoreBackup = {viewModel.restoreBackupFile(it)},
+            onClearPayments = {viewModel.clearAllPayments()}
+        )
+    }
+}
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable

@@ -1,6 +1,6 @@
 [versions]
 #Plugins Versions
-agp="9.0.1"
+agp= "9.2.1"
 kotlin="2.4.0"
 ksp="2.3.9"
 
@@ -9,7 +9,7 @@ composeBom = "2026.06.00"
 activityCompose="1.13.0"
 lifecycleComposeViewModel="2.8.6"
 kotlinExtensions ="1.15.0"
-navigationCompose="2.9.8"
+navigation3 = "1.0.1"
 kotlinxSerialization ="1.11.0"
 workManager ="2.11.2"
 dataStore ="1.2.1"
@@ -22,6 +22,7 @@ googlePlayServices="20.2.0"
 googleApiServiceGmail="v1-rev96-1.25.0"
 googleApiClientAndroid="1.20.0"
 guava="27.0.1-android"
+lifecycleViewmodelNavigation3 = "2.11.0"
 
 #Testing Libraries
 junit="4.13.2"
@@ -50,8 +51,9 @@ compose-ui = { group = "androidx.compose.ui", name = "ui" }
 compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 
-#Navigation
-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+#Navigation 3
+androidx-navigation3 = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
+androidx-navigation3-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelNavigation3" }
 kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 
 #Work Manager

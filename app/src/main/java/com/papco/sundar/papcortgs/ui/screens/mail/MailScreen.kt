@@ -3,6 +3,7 @@ package com.papco.sundar.papcortgs.ui.screens.mail
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +17,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -24,18 +28,72 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import androidx.work.WorkInfo
 import com.papco.sundar.papcortgs.R
+import com.papco.sundar.papcortgs.common.GMailUtil
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.database.receiver.Receiver
 import com.papco.sundar.papcortgs.database.sender.Sender
 import com.papco.sundar.papcortgs.database.transaction.Transaction
+import com.papco.sundar.papcortgs.screens.mail.FragmentEmailVM
 import com.papco.sundar.papcortgs.screens.mail.MailDispatcher
+import com.papco.sundar.papcortgs.screens.mail.MailWorker
+import com.papco.sundar.papcortgs.ui.EmailList
+import com.papco.sundar.papcortgs.ui.TransactionList
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
+import com.papco.sundar.papcortgs.ui.popUntil
 import com.papco.sundar.papcortgs.ui.screens.mail.MailScreenState.Dialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+import kotlinx.coroutines.launch
 
+fun EntryProviderScope<NavKey>.emailListEntry(
+    backStack: NavBackStack<NavKey>
+){
+    entry<EmailList> {key->
+
+        val viewModel: FragmentEmailVM = viewModel()
+        val coroutineScope = rememberCoroutineScope()
+        val context = LocalContext.current
+        val gmail = remember { GMailUtil(context) }
+        var isAlreadyLoaded = rememberSaveable { false }
+
+        MailScreen(
+            screenState = viewModel.screenState,
+            onSendMails = { MailWorker.startWith(context, key.groupId) },
+            onBackPressed = {
+                backStack.popUntil {
+                    it is TransactionList
+                }
+            },
+            onSignOut = {
+                coroutineScope.launch {
+                    if (gmail.signOut())
+                        backStack.popUntil {
+                            it is TransactionList
+                        }
+                }
+            }
+        )
+
+        LaunchedEffect(key1 = true) {
+            if (!isAlreadyLoaded)
+                viewModel.loadEmailList(key.groupId)
+
+            isAlreadyLoaded = true
+        }
+
+        BackHandler {
+            backStack.popUntil {
+                it is TransactionList
+            }
+        }
+    }
+}
 
 @Composable
 fun MailScreen(

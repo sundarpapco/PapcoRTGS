@@ -2,6 +2,7 @@ package com.papco.sundar.papcortgs.ui.screens.transaction
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +21,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,15 +33,128 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.papco.sundar.papcortgs.R
+import com.papco.sundar.papcortgs.common.GMailUtil
 import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.database.transaction.TransactionForList
+import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
+import com.papco.sundar.papcortgs.screens.transaction.listTransaction.TransactionListVM
+import com.papco.sundar.papcortgs.ui.EmailList
+import com.papco.sundar.papcortgs.ui.GoogleSignIn
+import com.papco.sundar.papcortgs.ui.ManageTransaction
+import com.papco.sundar.papcortgs.ui.MessageList
+import com.papco.sundar.papcortgs.ui.TransactionList
 import com.papco.sundar.papcortgs.ui.components.MenuAction
 import com.papco.sundar.papcortgs.ui.components.OptionsMenu
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.dialogs.DeleteConfirmationDialog
 import com.papco.sundar.papcortgs.ui.screens.transaction.TransactionListScreenState.Dialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+
+
+@SuppressLint("LocalContextGetResourceValueCall")
+fun EntryProviderScope<NavKey>.transactionListEntry(
+    backStack: NavBackStack<NavKey>
+){
+    entry<TransactionList>{key->
+
+        val viewModel: TransactionListVM = viewModel()
+        val context = LocalContext.current
+
+        var dataLoaded = rememberSaveable { false }
+        val transactionGroup = remember {
+            TransactionGroup().apply {
+                id = key.groupId
+                name = key.groupName
+                defaultSenderId = key.defaultSenderId
+            }
+        }
+        val gmailUtil = remember { GMailUtil(context) }
+
+        TransactionListScreen(
+            title = key.groupName,
+            screenState = viewModel.screenState,
+            onBackPressed = { backStack.removeLastOrNull() },
+            onClick = {
+                backStack.add(ManageTransaction(key.groupId,it.id,key.defaultSenderId))
+            },
+            onAddTransaction = {
+                backStack.add(ManageTransaction(key.groupId, -1, key.defaultSenderId))
+            },
+            onDelete = { viewModel.deleteTransaction(it) },
+            onExportCMSFile = {
+                if (viewModel.screenState.transactions.isNotEmpty())
+                    viewModel.createCMSReport(transactionGroup, it)
+                else
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.add_at_least_one_transaction_to_export),
+                        Toast.LENGTH_SHORT
+                    ).show()
+            },
+            onExportBizzPayReport = {
+                if (viewModel.screenState.transactions.isNotEmpty())
+                    viewModel.createBizzPay360Report(transactionGroup, it)
+                else
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.add_at_least_one_transaction_to_export),
+                        Toast.LENGTH_SHORT
+                    ).show()
+            },
+            onDispatchMessages = {
+                backStack.add(MessageList(transactionGroup.id))
+            },
+            onDispatchMails = {
+                if (!gmailUtil.isConnected())
+                    backStack.add(
+                        GoogleSignIn(
+                            transactionGroup.id,
+                            transactionGroup.name,
+                            transactionGroup.defaultSenderId
+                        )
+                    )
+                else
+                    backStack.add(
+                        EmailList(
+                            transactionGroup.id,
+                            transactionGroup.name,
+                            transactionGroup.defaultSenderId
+                        )
+                    )
+            },
+            onShareFile = { viewModel.shareFile(context, it) })
+
+        LaunchedEffect(true) {
+            if (!dataLoaded)
+                viewModel.loadTransactions(key.groupId)
+            dataLoaded = true
+        }
+
+        LaunchedEffect(key1 = true) {
+            viewModel.reportGenerated.collect {
+                it?.let { event ->
+                    if (event.isAlreadyHandled) return@collect
+                    val fileName = event.handleEvent()
+                    if (fileName.isEmpty()) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.error_in_creating_the_excel_file),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        viewModel.screenState.showReportGeneratedDialog(fileName)
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun TransactionListScreen(

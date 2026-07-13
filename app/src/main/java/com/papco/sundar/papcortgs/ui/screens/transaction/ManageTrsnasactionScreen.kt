@@ -22,10 +22,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -39,7 +41,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.papco.sundar.papcortgs.R
+import com.papco.sundar.papcortgs.screens.transaction.createTransaction.CreateTransactionVM
+import com.papco.sundar.papcortgs.ui.ManageTransaction
+import com.papco.sundar.papcortgs.ui.SelectReceiver
+import com.papco.sundar.papcortgs.ui.SelectSender
 import com.papco.sundar.papcortgs.ui.components.ClickableTextField
 import com.papco.sundar.papcortgs.ui.components.MenuAction
 import com.papco.sundar.papcortgs.ui.components.OptionsMenu
@@ -47,8 +57,79 @@ import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.components.TextInputField
 import com.papco.sundar.papcortgs.ui.screens.LoadingScreen
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+import com.papco.sundar.papcortgs.ui.util.ResultEffect
+import com.papco.sundar.papcortgs.ui.util.ResultEventBus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+fun EntryProviderScope<NavKey>.manageTransactionScreenEntry(
+    backStack: NavBackStack<NavKey>,
+    resultBus: ResultEventBus
+){
+    entry<ManageTransaction> {key->
+
+        val context = LocalContext.current
+        val viewModel: CreateTransactionVM = viewModel()
+        val isEditingMode = remember { key.transactionId != -1 }
+        val title = if (isEditingMode)
+            stringResource(R.string.update_transaction)
+        else
+            stringResource(R.string.create_transaction)
+
+        var isAlreadyLoaded = rememberSaveable { false }
+
+        ManageTransactionScreen(
+            screenState = viewModel.screenState,
+            title = title,
+            onSenderClicked = {
+                if (viewModel.screenState.selectedSender != null)
+                    backStack.add(SelectSender)
+            },
+            onReceiverClicked = {
+                if (viewModel.screenState.selectedReceiver != null)
+                    backStack.add(SelectReceiver(key.groupId))
+            },
+            onSave = {
+                if (viewModel.screenState.validate(context)) {
+                    if (isEditingMode)
+                        viewModel.updateTransaction(key.groupId, key.transactionId)
+                    else
+                        viewModel.saveNewTransaction(key.groupId)
+                }
+            },
+            onDismiss = { backStack.removeLastOrNull() }
+        )
+
+        ResultEffect<Int>(bus=resultBus,key="selectedSender") {
+            if (it != -1) {
+                viewModel.selectSender(it)
+            }
+        }
+
+        ResultEffect<Int>(bus=resultBus,key="selectedReceiver") {
+            if (it != -1) {
+                viewModel.selectReceiver(it)
+            }
+        }
+
+        LaunchedEffect(key1 = true) {
+            viewModel.navigateBack.collect { needToGoBack ->
+                if (needToGoBack)
+                    backStack.removeLastOrNull()
+            }
+        }
+
+        LaunchedEffect(key1 = true) {
+            if (!isAlreadyLoaded)
+                if (isEditingMode)
+                    viewModel.loadTransaction(key.transactionId)
+                else
+                    viewModel.createBlankTransaction(key.groupId, key.defaultSenderId)
+
+            isAlreadyLoaded = true
+        }
+    }
+}
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable

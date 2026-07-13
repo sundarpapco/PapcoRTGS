@@ -55,7 +55,6 @@ class CreateTransactionVM(application: Application) : AndroidViewModel(applicati
 
                 val sender = when {
                     firstSender.isEmpty() -> { null }
-                    defaultSender == null -> { firstSender[0] }
                     else -> { defaultSender }
                 }
 

@@ -15,21 +15,71 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.pojo.Party
+import com.papco.sundar.papcortgs.screens.transactionGroup.manage.ManageTransactionGroupVM
+import com.papco.sundar.papcortgs.ui.ManageGroup
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.components.TextInputField
-import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.dialogs.DeleteConfirmationDialog
 import com.papco.sundar.papcortgs.ui.dialogs.WaitDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+
+fun EntryProviderScope<NavKey>.manageGroupEntry(
+    backstack: NavBackStack<NavKey>
+) {
+
+    entry<ManageGroup> { key ->
+        val title = if (key.groupId != -1)
+            stringResource(R.string.update_xl_file)
+        else
+            stringResource(R.string.create_xl_file)
+
+        val viewModel: ManageTransactionGroupVM = viewModel()
+        var isAlreadyLoaded = rememberSaveable { false }
+
+        ManageGroupScreen(
+            title = title,
+            state = viewModel.screenState,
+            onSave = { if (key.groupId != -1) viewModel.updateGroup() else viewModel.addGroup() },
+            onCancel = { backstack.removeLastOrNull()},
+            onBackPressed = { backstack.removeLastOrNull() },
+            onDelete = { viewModel.deleteGroup(key.groupId) })
+
+        if (key.groupId != -1)
+            LaunchedEffect(key1 = true) {
+                if (!isAlreadyLoaded) {
+                    viewModel.loadTransactionGroup(key.groupId)
+                    isAlreadyLoaded = true
+                }
+            }
+
+
+        LaunchedEffect(key1 = true) {
+            viewModel.event.collect {
+                it?.let { event ->
+                    if (!event.isAlreadyHandled) {
+                        event.handleEvent()
+                        backstack.removeLastOrNull()
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun ManageGroupScreen(
@@ -43,7 +93,7 @@ fun ManageGroupScreen(
     Scaffold(
         topBar = {
             RTGSAppBar(
-                title ="",
+                title = "",
                 isBackEnabled = true,
                 onBackPressed = onBackPressed
             )
@@ -59,33 +109,33 @@ fun ManageGroupScreen(
         )
     }
 
-    state.dialog?.let{
+    state.dialog?.let {
         RenderDialog(
             dialogsState = it,
             onPositiveClick = onDelete,
-            onNegativeClick = {state.dialog=null}
+            onNegativeClick = { state.dialog = null }
         )
     }
 }
 
 @Composable
 private fun RenderDialog(
-    dialogsState:ManageGroupScreenState.Dialog,
+    dialogsState: ManageGroupScreenState.Dialog,
     onPositiveClick: () -> Unit,
-    onNegativeClick:()->Unit
-){
-    when(dialogsState){
+    onNegativeClick: () -> Unit
+) {
+    when (dialogsState) {
 
-        is ManageGroupScreenState.Dialog.WaitDialog ->{
+        is ManageGroupScreenState.Dialog.WaitDialog -> {
             WaitDialog()
         }
 
-        is ManageGroupScreenState.Dialog.DeleteConfirmation->{
+        is ManageGroupScreenState.Dialog.DeleteConfirmation -> {
             DeleteConfirmationDialog(
                 title = stringResource(id = R.string.delete_xl_file),
                 message = stringResource(id = R.string.delete_xl_file_message),
                 onDelete = onPositiveClick,
-                onDismiss =onNegativeClick
+                onDismiss = onNegativeClick
             )
         }
 
@@ -125,7 +175,8 @@ private fun ScreenContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        SendersSpinner(selectedSender = state.selectedSender,
+        SendersSpinner(
+            selectedSender = state.selectedSender,
             senders = state.sendersList,
             onSenderClicked = { state.selectedSender = it })
 
@@ -155,15 +206,15 @@ private fun Buttons(
 
         if (deletable)
             Box(
-            modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
             ) {
                 TextButton(
-                modifier = Modifier.fillMaxWidth(), onClick = onDelete
+                    modifier = Modifier.fillMaxWidth(), onClick = onDelete
                 ) {
                     Text(text = stringResource(id = R.string.delete))
                 }
-        }
+            }
 
         Spacer(Modifier.weight(2f))
         Box(
@@ -207,7 +258,8 @@ private fun PreviewManageGroupScreen() {
     }
 
     RTGSTheme {
-        ManageGroupScreen(title = stringResource(id = R.string.create_xl_file),
+        ManageGroupScreen(
+            title = stringResource(id = R.string.create_xl_file),
             state = state,
             onSave = {},
             onCancel = {},

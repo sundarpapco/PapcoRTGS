@@ -35,8 +35,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.dropbox.DropBoxAccount
+import com.papco.sundar.papcortgs.screens.backup.DropBoxFragmentVM
+import com.papco.sundar.papcortgs.ui.DropBox
 import com.papco.sundar.papcortgs.ui.backup.BackupScreenState.Dialog
 import com.papco.sundar.papcortgs.ui.components.MenuAction
 import com.papco.sundar.papcortgs.ui.components.OptionsMenu
@@ -45,6 +52,29 @@ import com.papco.sundar.papcortgs.ui.components.ToastMessage
 import com.papco.sundar.papcortgs.ui.components.Toaster
 import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+
+fun EntryProviderScope<NavKey>.dropBoxScreenEntry(
+    backStack: NavBackStack<NavKey>
+) {
+    entry<DropBox> {
+
+        val viewmodel: DropBoxFragmentVM = viewModel()
+
+        BackupScreen(
+            screenState = viewmodel.screenState,
+            onLink = { viewmodel.linkToDropBox() },
+            onUnlink = { viewmodel.unlinkFromDropBox() },
+            onBackup = { viewmodel.backupFile() },
+            onRestore = { viewmodel.restoreBackup() },
+            onBackPressed = { backStack.removeLastOrNull() }
+        )
+
+        LifecycleResumeEffect(Unit) {
+            viewmodel.refreshDropBoxConnection()
+            onPauseOrDispose {}
+        }
+    }
+}
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
