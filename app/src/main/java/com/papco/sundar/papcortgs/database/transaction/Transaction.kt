@@ -1,6 +1,5 @@
 package com.papco.sundar.papcortgs.database.transaction
 
-import android.text.TextUtils
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.ForeignKey.Companion.CASCADE

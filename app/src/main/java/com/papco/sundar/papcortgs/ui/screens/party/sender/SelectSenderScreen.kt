@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.ViewModelProvider
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
@@ -19,6 +19,7 @@ import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.screens.LoadingScreen
 import com.papco.sundar.papcortgs.ui.screens.party.SearchablePartyList
 import com.papco.sundar.papcortgs.ui.screens.party.SearchablePartyListState
+import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 import com.papco.sundar.papcortgs.ui.util.ResultEventBus
 
 fun EntryProviderScope<NavKey>.selectSenderEntry(
@@ -32,7 +33,7 @@ fun EntryProviderScope<NavKey>.selectSenderEntry(
         SelectSenderScreen(
             state = viewModel.screenState,
             onSenderClicked = {
-                resultEventBus.send("selectedSender",it.id)
+                resultEventBus.send("selectedSender", it.id)
                 backStack.removeLastOrNull()
             },
             onBackPressed = { backStack.removeLastOrNull() }
@@ -57,12 +58,35 @@ fun SelectSenderScreen(
             })
     }) { paddingValues ->
 
-        if (state.data == null) LoadingScreen()
-        else SearchablePartyList(modifier = Modifier.padding(paddingValues),
-            state = state,
-            onPartyClicked = onSenderClicked,
-            searchHint = stringResource(id = R.string.search_senders),
-            onPartyLongClicked = {}
+        if (state.data == null)
+            LoadingScreen()
+        else
+            SearchablePartyList(
+                modifier = Modifier.padding(paddingValues),
+                state = state,
+                onPartyClicked = onSenderClicked,
+                searchHint = stringResource(id = R.string.search_senders),
+                onPartyLongClicked = {}
+            )
+    }
+
+}
+
+@Preview
+@Composable
+private fun PreviewScreen(){
+
+    val screenState = remember { SearchablePartyListState().apply {
+        data = listOf(
+            Party(1,"Sundaravel","Sundar")
+        )
+    } }
+
+    RTGSTheme {
+        SelectSenderScreen(
+            state = screenState,
+            onSenderClicked = {},
+            onBackPressed = {}
         )
     }
 

@@ -38,19 +38,27 @@ fun MainScreen() {
     NavDisplay(
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
+        transitionSpec = {
+            slideInHorizontally { it/5 } + fadeIn() togetherWith
+                    slideOutHorizontally { -it/5 } + fadeOut()
+        },
+        popTransitionSpec = {
+            slideInHorizontally { -it/5 } + fadeIn() togetherWith
+                    slideOutHorizontally { it/5 } + fadeOut()
+        },
         predictivePopTransitionSpec = {
-            slideInHorizontally { -it } + fadeIn() togetherWith
-                    slideOutHorizontally { it } + fadeOut()
+            slideInHorizontally { -it/5 } + fadeIn() togetherWith
+                    slideOutHorizontally { it/5 } + fadeOut()
         },
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator()
         ),
         entryProvider = entryProvider {
-            excelFileListEntry(backStack)
-            manageGroupEntry(backStack)
-            transactionListEntry(backStack)
-            manageTransactionScreenEntry(backStack,resultBus)
+            excelFileListEntry(backStack) //Completed
+            manageGroupEntry(backStack) //Completed
+            transactionListEntry(backStack)//Completed
+            manageTransactionScreenEntry(backStack,resultBus) //Completed
             sendersListScreenEntry(backStack)
             receiversListScreenEntry(backStack)
             manageSenderEntry(backStack)

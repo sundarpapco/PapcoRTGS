@@ -1,6 +1,7 @@
 package com.papco.sundar.papcortgs.ui.screens.transaction
 
 import android.annotation.SuppressLint
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -59,74 +59,65 @@ import com.papco.sundar.papcortgs.ui.screens.LoadingScreen
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 import com.papco.sundar.papcortgs.ui.util.ResultEffect
 import com.papco.sundar.papcortgs.ui.util.ResultEventBus
+import com.papco.sundar.papcortgs.ui.util.Toaster
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 fun EntryProviderScope<NavKey>.manageTransactionScreenEntry(
     backStack: NavBackStack<NavKey>,
     resultBus: ResultEventBus
-){
-    entry<ManageTransaction> {key->
+) {
+    entry<ManageTransaction> { key ->
 
         val context = LocalContext.current
-        val viewModel: CreateTransactionVM = viewModel()
-        val isEditingMode = remember { key.transactionId != -1 }
-        val title = if (isEditingMode)
-            stringResource(R.string.update_transaction)
-        else
-            stringResource(R.string.create_transaction)
-
-        var isAlreadyLoaded = rememberSaveable { false }
+        val viewModel: CreateTransactionVM = viewModel(
+            factory = CreateTransactionVM.factory(
+                application = context.applicationContext as Application,
+                transactionId = key.transactionId,
+                groupId = key.groupId,
+                defaultSenderId = key.defaultSenderId
+            )
+        )
+        val screenState = viewModel.screen
+        //val isEditingMode = remember { key.transactionId != -1 }
 
         ManageTransactionScreen(
-            screenState = viewModel.screenState,
-            title = title,
+            screenState = screenState,
+            title = stringResource(screenState.titleResource),
             onSenderClicked = {
-                if (viewModel.screenState.selectedSender != null)
+                if (screenState.selectedSender != null)
                     backStack.add(SelectSender)
             },
             onReceiverClicked = {
-                if (viewModel.screenState.selectedReceiver != null)
+                if (screenState.selectedReceiver != null)
                     backStack.add(SelectReceiver(key.groupId))
             },
             onSave = {
-                if (viewModel.screenState.validate(context)) {
-                    if (isEditingMode)
-                        viewModel.updateTransaction(key.groupId, key.transactionId)
-                    else
-                        viewModel.saveNewTransaction(key.groupId)
-                }
+                if (screenState.validate())
+                    viewModel.onSaveTransaction()
+
             },
             onDismiss = { backStack.removeLastOrNull() }
         )
 
-        ResultEffect<Int>(bus=resultBus,key="selectedSender") {
+        ResultEffect<Int>(bus = resultBus, key = "selectedSender") {
             if (it != -1) {
                 viewModel.selectSender(it)
             }
         }
 
-        ResultEffect<Int>(bus=resultBus,key="selectedReceiver") {
+        ResultEffect<Int>(bus = resultBus, key = "selectedReceiver") {
             if (it != -1) {
                 viewModel.selectReceiver(it)
             }
         }
 
         LaunchedEffect(key1 = true) {
-            viewModel.navigateBack.collect { needToGoBack ->
+            screenState.popUpBackStack.collect { needToGoBack ->
                 if (needToGoBack)
                     backStack.removeLastOrNull()
             }
-        }
-
-        LaunchedEffect(key1 = true) {
-            if (!isAlreadyLoaded)
-                if (isEditingMode)
-                    viewModel.loadTransaction(key.transactionId)
-                else
-                    viewModel.createBlankTransaction(key.groupId, key.defaultSenderId)
-
-            isAlreadyLoaded = true
         }
     }
 }
@@ -134,13 +125,13 @@ fun EntryProviderScope<NavKey>.manageTransactionScreenEntry(
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun ManageTransactionScreen(
- screenState: ManageTransactionScreenState,
- title:String,
- onSenderClicked:()->Unit,
- onReceiverClicked:()->Unit,
- onSave:()->Unit,
- onDismiss:()->Unit
-){
+    screenState: ManageTransactionScreenState,
+    title: String,
+    onSenderClicked: () -> Unit,
+    onReceiverClicked: () -> Unit,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit
+) {
     val context = LocalContext.current
 
     Scaffold(
@@ -151,22 +142,25 @@ fun ManageTransactionScreen(
                 onBackPressed = onDismiss,
                 optionsMenu = {
                     TransactionOptionsMenu {
-                        if(it== context.getString(R.string.save))
+                        if (it == context.getString(R.string.save))
                             onSave()
                     }
                 }
             )
         }
     ) {
-        if(screenState.isLoading)
+        if (screenState.isLoading)
             LoadingScreen()
         else
             ScreenContent(
                 modifier = Modifier.padding(it),
                 screenState = screenState,
                 onSenderClicked = onSenderClicked,
-                onReceiverClicked =onReceiverClicked)
+                onReceiverClicked = onReceiverClicked
+            )
     }
+
+    Toaster(context,screenState)
 }
 
 @Composable
@@ -174,10 +168,10 @@ private fun ScreenContent(
     screenState: ManageTransactionScreenState,
     onSenderClicked: () -> Unit,
     onReceiverClicked: () -> Unit,
-    modifier:Modifier = Modifier
-){
+    modifier: Modifier = Modifier
+) {
     Column(
-        modifier= modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -198,14 +192,14 @@ private fun ScreenContent(
 
         AmountField(
             amount = screenState.amount,
-            onValueChange = {screenState.setAmountAs(it)}
+            onValueChange = { screenState.setAmountAs(it) }
         )
 
         TextInputField(
-            modifier=Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = screenState.remarks ?: stringResource(id = R.string.on_account),
             label = stringResource(id = R.string.remarks),
-            onChange = {screenState.loadRemarks(it)}
+            onChange = { screenState.loadRemarks(it) }
         )
     }
 }
@@ -213,8 +207,8 @@ private fun ScreenContent(
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 private fun TransactionOptionsMenu(
-    onMenuSelected:(String)->Unit
-){
+    onMenuSelected: (String) -> Unit
+) {
 
     val context = LocalContext.current
     val painter = painterResource(R.drawable.ic_done)
@@ -237,8 +231,8 @@ private fun TransactionOptionsMenu(
 @Composable
 private fun AmountField(
     amount: TextFieldValue,
-    onValueChange:(TextFieldValue)->Unit
-){
+    onValueChange: (TextFieldValue) -> Unit
+) {
 
     val scope = rememberCoroutineScope()
 
@@ -257,7 +251,7 @@ private fun AmountField(
                 style = MaterialTheme.typography.labelMedium
             )
             Row(
-                modifier= Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .height(IntrinsicSize.Max)
             ) {
@@ -278,17 +272,19 @@ private fun AmountField(
                             if (focusState.isFocused) {
                                 // Select everything from index 0 to the end of the text
                                 scope.launch {
-                                    delay(80)
-                                    onValueChange(amount.copy(
-                                        selection = TextRange(amount.text.length,0)
-                                    ))
+                                    delay(100.milliseconds)
+                                    onValueChange(
+                                        amount.copy(
+                                            selection = TextRange(amount.text.length, 0)
+                                        )
+                                    )
                                 }
 
                             }
                         },
                     value = amount,
                     onValueChange = onValueChange,
-                    textStyle = MaterialTheme.typography.headlineLarge.copy(fontWeight= FontWeight.SemiBold),
+                    textStyle = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.SemiBold),
                     colors = TextFieldDefaults.colors().copy(
                         focusedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
                         unfocusedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -311,10 +307,10 @@ private fun AmountField(
 
 @Preview
 @Composable
-private fun PreviewScreen(){
+private fun PreviewScreen() {
 
     val screenState = remember {
-        ManageTransactionScreenState()
+        ManageTransactionScreenState(R.string.update_transaction)
     }
 
     RTGSTheme {
@@ -332,20 +328,20 @@ private fun PreviewScreen(){
 
 @Preview
 @Composable
-private fun PreviewAmountField(){
+private fun PreviewAmountField() {
 
 
-    var amount by remember{mutableStateOf(TextFieldValue(""))}
+    var amount by remember { mutableStateOf(TextFieldValue("")) }
 
     RTGSTheme {
         Box(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(16.dp)
-        ){
+        ) {
             AmountField(
                 amount = amount,
-                onValueChange = {amount=it}
+                onValueChange = { amount = it }
             )
         }
     }

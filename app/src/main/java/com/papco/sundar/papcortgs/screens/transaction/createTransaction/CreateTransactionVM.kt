@@ -1,50 +1,79 @@
 package com.papco.sundar.papcortgs.screens.transaction.createTransaction
 
 import android.app.Application
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.ui.screens.transaction.ManageTransactionScreenState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class CreateTransactionVM(application: Application) : AndroidViewModel(application) {
+class CreateTransactionVM(
+    application: Application,
+    val transactionId: Int,
+    val groupId: Int,
+    val defaultSenderId: Int,
+) : AndroidViewModel(application) {
 
-    private val db: MasterDatabase = MasterDatabase.getInstance(application)
-    val screenState = ManageTransactionScreenState()
-    private var isAlreadyLoaded = false
-
-    private val _navigateBack:MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val navigateBack: Flow<Boolean> = _navigateBack
-
-
-    // utility methods ---------------------------------------------------
-    fun loadTransaction(transactionId: Int) {
-
-        isAlreadyLoaded = if (isAlreadyLoaded) return else true
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val transaction = db.getTransactionDao().getCohesiveTransaction(transactionId)
-
-            withContext(Dispatchers.Main) {
-                screenState.loadTransaction(transaction)
+    companion object {
+        fun factory(
+            application: Application,
+            transactionId: Int,
+            groupId: Int,
+            defaultSenderId: Int
+        ): ViewModelProvider.Factory {
+            return object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return if (modelClass.isAssignableFrom(CreateTransactionVM::class.java))
+                        CreateTransactionVM(application, transactionId, groupId, defaultSenderId) as T
+                    else
+                        error("Unknown ViewModel class")
+                }
             }
         }
     }
 
-    fun createBlankTransaction(groupId: Int, defaultSenderId: Int) {
+    private val db: MasterDatabase = MasterDatabase.getInstance(application)
+    private val isEditingMode = transactionId != -1
+    val screen = ManageTransactionScreenState(
+        titleResource = if(isEditingMode)
+            R.string.update_transaction
+        else
+        R.string.create_transaction
+    )
+
+    init {
+        if(transactionId==-1)
+            createBlankTransaction(groupId,defaultSenderId)
+        else
+            loadTransaction(transactionId)
+    }
+
+    // utility methods ---------------------------------------------------
+    private fun loadTransaction(transactionId: Int) {
+
+        //isAlreadyLoaded = if (isAlreadyLoaded) return else true
+        viewModelScope.launch(Dispatchers.IO) {
+            val transaction = db.getTransactionDao().getCohesiveTransaction(transactionId)
+
+            withContext(Dispatchers.Main) {
+                screen.loadTransaction(transaction)
+            }
+        }
+    }
+
+    private fun createBlankTransaction(groupId:Int,defaultSenderId:Int ){
 
         // This function will create a blank transaction.
         // This function has to select the first available sender and receiver for the initial screen to select
         // This function will set sender and receiver to null if no sender or receiver found in database
         // Also set Amount and remarks to initial values
-        isAlreadyLoaded = if (isAlreadyLoaded) return else true
-
+        //isAlreadyLoaded = if (isAlreadyLoaded) return else true
         viewModelScope.launch(Dispatchers.IO) {
 
             val defaultSender = db.getSenderDao().getSender(defaultSenderId)
@@ -60,7 +89,7 @@ class CreateTransactionVM(application: Application) : AndroidViewModel(applicati
 
                 val receiver = if (firstReceiver.isEmpty()) null else firstReceiver.first()
 
-                screenState.createBlankTransaction(
+                screen.createBlankTransaction(
                     sender = sender,
                     receiver = receiver,
                     amount = 0,
@@ -75,7 +104,7 @@ class CreateTransactionVM(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch(Dispatchers.IO) {
             val receiver = db.getReceiverDao().getReceiver(receiverId)
             withContext(Dispatchers.Main) {
-                screenState.selectReceiver(receiver)
+                screen.selectReceiver(receiver)
             }
         }
     }
@@ -84,46 +113,40 @@ class CreateTransactionVM(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch(Dispatchers.IO) {
             val sender = db.getSenderDao().getSender(senderId)
             withContext(Dispatchers.Main) {
-                screenState.selectSender(sender)
+                screen.selectSender(sender)
             }
         }
     }
 
-    fun saveNewTransaction(groupId: Int) {
+    fun saveNewTransaction() {
 
         try {
-            screenState.isWaiting=true
-            val transaction = screenState.createTransaction(groupId)
+            val transaction = screen.createTransaction(groupId)
             viewModelScope.launch(Dispatchers.IO) {
                 db.getTransactionDao().addTransaction(transaction)
-                _navigateBack.value=true
+                screen.popupBackStack()
             }
         } catch (e: Exception) {
-            screenState.isWaiting=false
-            toastError(e)
+            screen.toastError(e)
         }
     }
 
-    fun updateTransaction(groupId: Int, transactionId: Int) {
+    fun updateTransaction() {
         try {
-            screenState.isWaiting=true
-            val transaction = screenState.createTransaction(groupId, transactionId)
+            val transaction = screen.createTransaction(groupId, transactionId)
             viewModelScope.launch(Dispatchers.IO) {
                 db.getTransactionDao().updateTransaction(transaction)
-                _navigateBack.value=true
+                screen.popupBackStack()
             }
         } catch (e: Exception) {
-            screenState.isWaiting=false
-            toastError(e)
+            screen.toastError(e)
         }
     }
 
-    private fun toastError(e:Exception){
-        val error= e.message ?: getApplication<Application>().getString(R.string.unknown_error)
-        Toast.makeText(
-            getApplication(),
-            error,
-            Toast.LENGTH_LONG
-        ).show()
+    fun onSaveTransaction(){
+        if(isEditingMode)
+            updateTransaction()
+        else
+            saveNewTransaction()
     }
 }

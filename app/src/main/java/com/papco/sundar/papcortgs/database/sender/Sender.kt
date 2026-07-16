@@ -1,29 +1,29 @@
-package com.papco.sundar.papcortgs.database.sender;
+package com.papco.sundar.papcortgs.database.sender
 
-import android.text.SpannableString;
-
-import androidx.annotation.NonNull;
-import androidx.room.Entity;
-import androidx.room.Ignore;
-import androidx.room.PrimaryKey;
+import androidx.room.Entity
+import androidx.room.Ignore
+import androidx.room.PrimaryKey
+import com.papco.sundar.papcortgs.database.pojo.PartyListItem
 
 @Entity
-public class Sender {
-
+class Sender : PartyListItem {
     @PrimaryKey(autoGenerate = true)
-    public int id;
-    public String accountType;
-    public String accountNumber;
-    public String name;
-    public String displayName;
-    public String mobileNumber;
-    public String ifsc;
-    public String bank;
-    public String email;
+    override var id: Int = 0
+    var accountType: String = ""
+    var accountNumber: String = ""
+    override var name: String = ""
+    var mobileNumber: String = ""
+    var ifsc: String = ""
+    var bank: String = ""
+    var email: String = ""
 
-    @NonNull
-    @Override
-    public String toString() {
-        return displayName;
+    @Ignore
+    override var searchText: String = ""
+
+    @Ignore
+    override var disabled: Boolean = false
+
+    override fun toString(): String {
+        return displayName!!
     }
 }

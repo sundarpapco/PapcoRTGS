@@ -1,79 +1,84 @@
 package com.papco.sundar.papcortgs.ui.screens.transaction
 
-import android.content.Context
-import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.TextFieldValue
+import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.pojo.CohesiveTransaction
 import com.papco.sundar.papcortgs.database.receiver.Receiver
 import com.papco.sundar.papcortgs.database.sender.Sender
 import com.papco.sundar.papcortgs.database.transaction.Transaction
-import com.papco.sundar.papcortgs.R
+import com.papco.sundar.papcortgs.ui.util.ToasterState
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 
-class ManageTransactionScreenState {
+class ManageTransactionScreenState(
+    val titleResource: Int
+) : ToasterState() {
+
+    private val _popupBackstack = Channel<Boolean>(capacity = Channel.BUFFERED)
+    val popUpBackStack = _popupBackstack.receiveAsFlow()
 
     var isLoading by mutableStateOf(true)
         private set
-
-    var isWaiting by mutableStateOf(false)
-
-    var selectedSender:Sender? by mutableStateOf(null)
+    var selectedSender: Sender? by mutableStateOf(null)
         private set
-
-    var selectedReceiver:Receiver? by mutableStateOf(null)
+    var selectedReceiver: Receiver? by mutableStateOf(null)
         private set
-
     var amount by mutableStateOf(TextFieldValue(""))
-    private set
-
-    var remarks:String? by mutableStateOf(null)
+        private set
+    var remarks: String? by mutableStateOf(null)
         private set
 
-    fun selectSender(sender:Sender?){
-        selectedSender=sender
+
+    suspend fun popupBackStack() {
+        _popupBackstack.send(true)
     }
 
-    fun selectReceiver(receiver:Receiver?){
-        selectedReceiver=receiver
+    fun selectSender(sender: Sender?) {
+        selectedSender = sender
     }
 
-    fun setAmountAs(amount: TextFieldValue){
-        this.amount= amount
+    fun selectReceiver(receiver: Receiver?) {
+        selectedReceiver = receiver
     }
 
-    fun loadRemarks(remarks:String){
-        this.remarks=remarks
+    fun setAmountAs(amount: TextFieldValue) {
+        this.amount = amount
     }
 
-    fun loadTransaction(transaction:CohesiveTransaction){
-        selectedSender=transaction.sender
-        selectedReceiver=transaction.receiver
-        amount=TextFieldValue(transaction.transaction.amount.toString())
-        remarks=transaction.transaction.remarks
+    fun loadRemarks(remarks: String) {
+        this.remarks = remarks
+    }
 
-        isLoading=false
+    fun loadTransaction(transaction: CohesiveTransaction) {
+        selectedSender = transaction.sender
+        selectedReceiver = transaction.receiver
+        amount = TextFieldValue(transaction.transaction.amount.toString())
+        remarks = transaction.transaction.remarks
+
+        isLoading = false
     }
 
     fun createBlankTransaction(
-        sender:Sender?,
-        receiver:Receiver?,
-        amount:Int,
+        sender: Sender?,
+        receiver: Receiver?,
+        amount: Int,
         remarks: String?
-    ){
-        selectedSender=sender
-        selectedReceiver=receiver
-        this.amount=TextFieldValue(amount.toString())
-        this.remarks=remarks
+    ) {
+        selectedSender = sender
+        selectedReceiver = receiver
+        this.amount = TextFieldValue(amount.toString())
+        this.remarks = remarks
 
-        isLoading=false
+        isLoading = false
     }
 
-    fun createTransaction(groupId:Int,transactionId:Int=0):Transaction{
+    fun createTransaction(groupId: Int, transactionId: Int = 0): Transaction {
 
         return Transaction().apply {
-            id=transactionId
+            id = transactionId
             this.groupId = groupId
             senderId = selectedSender?.id ?: error("No Sender Selected")
             receiverId = selectedReceiver?.id ?: error("No Receiver Selected")
@@ -83,32 +88,20 @@ class ManageTransactionScreenState {
 
     }
 
-    fun validate(context:Context):Boolean{
+    fun validate(): Boolean {
 
-        if(selectedSender==null){
-            Toast.makeText(
-                context,
-                context.getString(R.string.no_sender_selected),
-                Toast.LENGTH_SHORT
-            ).show()
+        if (selectedSender == null) {
+            toastResource(R.string.no_sender_selected)
             return false
         }
 
-        if(selectedReceiver==null){
-            Toast.makeText(
-                context,
-                context.getString(R.string.no_receiver_selected),
-                Toast.LENGTH_SHORT
-            ).show()
+        if (selectedReceiver == null) {
+            toastResource(R.string.no_receiver_selected)
             return false
         }
 
-        if(amount.text.isBlank() || amount.text.toInt()==0){
-            Toast.makeText(
-                context,
-                context.getString(R.string.enter_valid_amount),
-                Toast.LENGTH_SHORT
-            ).show()
+        if (amount.text.isBlank() || amount.text.toInt() == 0) {
+            toastResource(R.string.enter_valid_amount)
             return false
         }
 

@@ -4,75 +4,80 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.papco.sundar.papcortgs.R
-import com.papco.sundar.papcortgs.common.Event
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
-import com.papco.sundar.papcortgs.reports.CMSReport
 import com.papco.sundar.papcortgs.reports.BizzPay360Report
+import com.papco.sundar.papcortgs.reports.CMSReport
+import com.papco.sundar.papcortgs.reports.RTGSReport
 import com.papco.sundar.papcortgs.ui.screens.transaction.TransactionListScreenState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 
-class TransactionListVM(application: Application) : AndroidViewModel(application) {
+class TransactionListVM(val application: Application, groupId: Int) : ViewModel() {
 
-    private val db: MasterDatabase = MasterDatabase.getInstance(application)
-
-    private var isAlreadyLoaded=false
-    private val _reportGenerated:MutableStateFlow<Event<String>?> = MutableStateFlow(null)
-    val reportGenerated: Flow<Event<String>?> = _reportGenerated
-    val screenState = TransactionListScreenState()
-
-    fun loadTransactions(groupId: Int) {
-
-        if(isAlreadyLoaded) return else isAlreadyLoaded=true
-        viewModelScope.launch {
-            db.transactionDao.getAllTransactionListItems(groupId)
-                .collect{
-                    screenState.transactions=it
+    companion object {
+        fun factory(application: Application, groupId: Int): ViewModelProvider.Factory {
+            return object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return if (modelClass.isAssignableFrom(TransactionListVM::class.java))
+                        TransactionListVM(application, groupId) as T
+                    else
+                        error("Unknown ViewModelClass")
                 }
+            }
         }
     }
 
+    private val db: MasterDatabase = MasterDatabase.getInstance(application)
+    private val transactions = db.transactionDao.getAllTransactionListItems(groupId)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val screen = TransactionListScreenState(transactions)
+
+    private val currentTransactions
+        get() = transactions.value
+
+
     fun deleteTransaction(transactionId: Int) {
-        viewModelScope.launch(Dispatchers.IO){
+        viewModelScope.launch(Dispatchers.IO) {
             db.getTransactionDao().deleteTransactionById(transactionId)
         }
     }
 
-    fun createCMSReport(transactionGroup: TransactionGroup, time:Long){
+    private fun createReport(report: RTGSReport,transactionGroup: TransactionGroup){
+
         viewModelScope.launch {
-            try {
-                val report = CMSReport(getApplication(),db,time)
-                val fileName=report.createReport(transactionGroup)
-                _reportGenerated.value=Event(fileName)
-            } catch (_: Exception) {
-                //Setting empty string for filename will toast error in UI
-                _reportGenerated.value=Event("")
-            }
+            if (currentTransactions.isNotEmpty()) {
+                try {
+                    val fileName = report.createReport(transactionGroup)
+                    screen.showReportGeneratedDialog(fileName)
+                } catch (_: Exception) {
+                    screen.toastResource(R.string.error_in_creating_the_excel_file)
+                }
+            } else
+                screen.toastResource(R.string.add_at_least_one_transaction_to_export)
         }
     }
 
-    fun createBizzPay360Report(transactionGroup: TransactionGroup, time:Long){
-        viewModelScope.launch {
-            try {
-                val report = BizzPay360Report(getApplication(),db,time)
-                val fileName=report.createReport(transactionGroup)
-                _reportGenerated.value=Event(fileName)
-            } catch (_: Exception) {
-                //Setting empty string for filename will toast error in UI
-                _reportGenerated.value=Event("")
-            }
-        }
-    }
+    fun createCMSReport(transactionGroup: TransactionGroup, time: Long) =
+        createReport(CMSReport(application, db, time),transactionGroup)
+
+    fun createBizzPay360Report(transactionGroup: TransactionGroup, time: Long) =
+        createReport(BizzPay360Report(application,db,time),transactionGroup)
 
     fun shareFile(context: Context, filename: String) {
-
 
         val sd = context.cacheDir
         val fileLocation = File(sd, filename)
@@ -83,7 +88,7 @@ class TransactionListVM(application: Application) : AndroidViewModel(application
         emailIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         //emailIntent.setDataAndType(path,"file/*");
         //emailIntent.setType("vnd.android.cursor.dir/email");
-        emailIntent.setType("file/*")
+        emailIntent.type = "file/*"
         emailIntent.putExtra(Intent.EXTRA_STREAM, path)
         emailIntent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.email_subject_line))
         context.startActivity(
@@ -92,6 +97,5 @@ class TransactionListVM(application: Application) : AndroidViewModel(application
                 context.getString(R.string.share_report_chooser_heading)
             )
         )
-
     }
 }

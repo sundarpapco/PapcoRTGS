@@ -8,63 +8,66 @@ import com.papco.sundar.papcortgs.database.transaction.Transaction
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroup
 import jxl.Workbook
 import jxl.WorkbookSettings
-import jxl.format.*
 import jxl.format.Alignment
 import jxl.format.Border
 import jxl.format.BorderLineStyle
+import jxl.format.CellFormat
 import jxl.format.Colour
 import jxl.format.VerticalAlignment
-import jxl.write.*
+import jxl.write.Label
+import jxl.write.WritableCellFormat
+import jxl.write.WritableFont
+import jxl.write.WritableSheet
+import jxl.write.WritableWorkbook
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.Date
+import java.util.Locale
 import kotlin.math.max
 
-@Suppress("BlockingMethodInNonBlockingContext")
 class CMSReport(
-    private val context:Context,
+    private val context: Context,
     private val db: MasterDatabase,
-        time: Long
-) {
+    time: Long
+) : RTGSReport {
 
     private val columnWidths = ArrayList<ColumnWidth>(21)
-    private var transactionGroup:TransactionGroup?=null
+    private var transactionGroup: TransactionGroup? = null
 
-    private val filename by lazy{
-        val prefix=transactionGroup?.name ?: "papcoRtgs"
+    private val filename by lazy {
+        val prefix = transactionGroup?.name ?: "papcoRtgs"
         "${prefix}_auto.xls"
     }
 
-    private val date by lazy{
+    private val date by lazy {
         val dateFormat = SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault())
         dateFormat.format(Date(time)).uppercase(Locale.getDefault())
     }
 
-    private var rowSize:Int=0
+    private var rowSize: Int = 0
 
 
-    suspend fun createReport(transactionGroup: TransactionGroup): String
-        = withContext(Dispatchers.IO){
+    override suspend fun createReport(transactionGroup: TransactionGroup): String =
+        withContext(Dispatchers.IO) {
 
-        this@CMSReport.transactionGroup=transactionGroup
-        val transactions = loadTransactions(transactionGroup.id)
-        setDefaultColumnWidths()
-        val workbook = createWorkBook()
-        val sheet = workbook.createSheet("Sheet1", 0)
-        rowSize=sheet.getRowView(0).size
-        writeHeadings(sheet)
-        writeTransactions(sheet, transactions)
-        setColumnWidths(sheet)
+            this@CMSReport.transactionGroup = transactionGroup
+            val transactions = loadTransactions(transactionGroup.id)
+            setDefaultColumnWidths()
+            val workbook = createWorkBook()
+            val sheet = workbook.createSheet("Sheet1", 0)
+            rowSize = sheet.getRowView(0).size
+            writeHeadings(sheet)
+            writeTransactions(sheet, transactions)
+            setColumnWidths(sheet)
 
-        workbook.write()
-        workbook.close()
+            workbook.write()
+            workbook.close()
 
-        filename
+            filename
 
-    }
+        }
 
     private suspend fun loadTransactions(groupId: Int): List<Transaction> {
 
@@ -107,7 +110,6 @@ class CMSReport(
     }
 
 
-
     private fun createWorkBook(): WritableWorkbook {
 
         val workBookSettings = WorkbookSettings()
@@ -120,8 +122,8 @@ class CMSReport(
 
     private fun headingCellFormat(compulsoryField: Boolean = true): CellFormat {
 
-        val fontName=WritableFont.createFont("Calibri")
-        val font=WritableFont(fontName,11,WritableFont.BOLD)
+        val fontName = WritableFont.createFont("Calibri")
+        val font = WritableFont(fontName, 11, WritableFont.BOLD)
         if (compulsoryField)
             font.colour = Colour.RED
         return WritableCellFormat(font).apply {
@@ -133,8 +135,8 @@ class CMSReport(
 
     private fun contentCellFormat(): CellFormat {
 
-        val fontName=WritableFont.createFont("Calibri")
-        val font=WritableFont(fontName,11,WritableFont.NO_BOLD)
+        val fontName = WritableFont.createFont("Calibri")
+        val font = WritableFont(fontName, 11, WritableFont.NO_BOLD)
         return WritableCellFormat(font).apply {
             setBorder(Border.ALL, BorderLineStyle.THIN)
             alignment = Alignment.LEFT
@@ -146,7 +148,7 @@ class CMSReport(
     private fun writeHeadings(sheet: WritableSheet) {
 
         val compulsoryHeadingFormat = headingCellFormat(true)
-        val optionalHeadingFormat=headingCellFormat(false)
+        val optionalHeadingFormat = headingCellFormat(false)
 
         sheet.setColumnView(0, 12) //setting the column width
         sheet.addCell(Label(0, 0, "Debit Ac No", compulsoryHeadingFormat))
@@ -231,14 +233,19 @@ class CMSReport(
 
         val contentFormat = contentCellFormat()
         for ((index, transaction) in transactions.withIndex()) {
-            val currentRow=sheet.getRowView(index+1)
-            currentRow.size=rowSize
-            sheet.setRowView(index+1,currentRow)
+            val currentRow = sheet.getRowView(index + 1)
+            currentRow.size = rowSize
+            sheet.setRowView(index + 1, currentRow)
             writeTransaction(sheet, transaction, index + 1, contentFormat)
         }
     }
 
-    private fun writeTransaction(sheet: WritableSheet, transaction: Transaction, row: Int, format: CellFormat) {
+    private fun writeTransaction(
+        sheet: WritableSheet,
+        transaction: Transaction,
+        row: Int,
+        format: CellFormat
+    ) {
 
         val sender = transaction.sender!!
         val receiver = transaction.receiver!!
@@ -246,55 +253,55 @@ class CMSReport(
         sheet.addCell(Label(0, row, sender.accountNumber, format))
         calculateColumnWidth(0, sender.accountNumber)
 
-        sheet.addCell(Label(1, row, receiver.accountNumber,format))
+        sheet.addCell(Label(1, row, receiver.accountNumber, format))
         calculateColumnWidth(1, receiver.accountNumber)
 
-        sheet.addCell(Label(2, row, receiver.name,format))
+        sheet.addCell(Label(2, row, receiver.name, format))
         calculateColumnWidth(2, receiver.name)
 
-        sheet.addCell(Label(3, row, transaction.amount.toString(),format))
+        sheet.addCell(Label(3, row, transaction.amount.toString(), format))
         calculateColumnWidth(3, transaction.amount.toString())
 
-        sheet.addCell(Label(4, row, paymentMode(receiver.ifsc, transaction.amount),format))
+        sheet.addCell(Label(4, row, paymentMode(receiver.ifsc, transaction.amount), format))
         calculateColumnWidth(4, paymentMode(receiver.ifsc, transaction.amount))
 
-        sheet.addCell(Label(5, row, date,format))
+        sheet.addCell(Label(5, row, date, format))
         calculateColumnWidth(5, date)
 
-        sheet.addCell(Label(6, row, receiver.ifsc,format))
+        sheet.addCell(Label(6, row, receiver.ifsc, format))
         calculateColumnWidth(6, receiver.ifsc)
 
         //Writing nothing in the cell but drawing the border for the cells
-        sheet.addCell(Label(7,row,"",format))
-        sheet.addCell(Label(8,row,"",format))
+        sheet.addCell(Label(7, row, "", format))
+        sheet.addCell(Label(8, row, "", format))
 
-        if(receiver.mobileNumber!=null){
-        sheet.addCell(Label(9,row,receiver.mobileNumber,format))
-        calculateColumnWidth(9,receiver.mobileNumber)}
-        else{
-            sheet.addCell(Label(9,row,"",format))
-            calculateColumnWidth(9,"")
+        if (receiver.mobileNumber.isNotBlank()) {
+            sheet.addCell(Label(9, row, receiver.mobileNumber, format))
+            calculateColumnWidth(9, receiver.mobileNumber)
+        } else {
+            sheet.addCell(Label(9, row, "", format))
+            calculateColumnWidth(9, "")
         }
 
-        if(receiver.email!=null) {
+        if (receiver.email.isNotBlank()) {
             sheet.addCell(Label(10, row, receiver.email, format))
             calculateColumnWidth(10, receiver.email)
-        }else{
+        } else {
             sheet.addCell(Label(10, row, "", format))
             calculateColumnWidth(10, "")
         }
 
         //Writing nothing in the cell but drawing the border for the cells
-        sheet.addCell(Label(11,row,"",format))
-        sheet.addCell(Label(12,row,"",format))
-        sheet.addCell(Label(13,row,"",format))
-        sheet.addCell(Label(14,row,"",format))
-        sheet.addCell(Label(15,row,"",format))
-        sheet.addCell(Label(16,row,"",format))
-        sheet.addCell(Label(17,row,"",format))
-        sheet.addCell(Label(18,row,"",format))
-        sheet.addCell(Label(19,row,"",format))
-        sheet.addCell(Label(20,row,"",format))
+        sheet.addCell(Label(11, row, "", format))
+        sheet.addCell(Label(12, row, "", format))
+        sheet.addCell(Label(13, row, "", format))
+        sheet.addCell(Label(14, row, "", format))
+        sheet.addCell(Label(15, row, "", format))
+        sheet.addCell(Label(16, row, "", format))
+        sheet.addCell(Label(17, row, "", format))
+        sheet.addCell(Label(18, row, "", format))
+        sheet.addCell(Label(19, row, "", format))
+        sheet.addCell(Label(20, row, "", format))
 
     }
 
@@ -307,7 +314,10 @@ class CMSReport(
     private fun setColumnWidths(sheet: WritableSheet) {
 
         for ((index, columnDetail) in columnWidths.withIndex()) {
-            sheet.setColumnView(index, max(columnDetail.minimumWidth, columnDetail.recommendedWidth))
+            sheet.setColumnView(
+                index,
+                max(columnDetail.minimumWidth, columnDetail.recommendedWidth)
+            )
         }
 
     }

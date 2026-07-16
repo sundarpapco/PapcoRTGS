@@ -48,10 +48,10 @@ import com.papco.sundar.papcortgs.ui.backup.BackupScreenState.Dialog
 import com.papco.sundar.papcortgs.ui.components.MenuAction
 import com.papco.sundar.papcortgs.ui.components.OptionsMenu
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
-import com.papco.sundar.papcortgs.ui.components.ToastMessage
-import com.papco.sundar.papcortgs.ui.components.Toaster
 import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+import com.papco.sundar.papcortgs.ui.util.ToastMessage
+import com.papco.sundar.papcortgs.ui.util.Toaster
 
 fun EntryProviderScope<NavKey>.dropBoxScreenEntry(
     backStack: NavBackStack<NavKey>
@@ -155,7 +155,7 @@ fun BackupScreen(
         }
     }
 
-    Toaster(context,screenState.toaster)
+    Toaster(context,screenState)
 
 }
 

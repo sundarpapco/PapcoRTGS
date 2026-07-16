@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
@@ -58,12 +59,12 @@ import com.papco.sundar.papcortgs.ui.backup.BackupProgressDialog
 import com.papco.sundar.papcortgs.ui.components.MenuAction
 import com.papco.sundar.papcortgs.ui.components.OptionsMenu
 import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
-import com.papco.sundar.papcortgs.ui.components.ToastMessage
-import com.papco.sundar.papcortgs.ui.components.Toaster
 import com.papco.sundar.papcortgs.ui.dialogs.ConfirmationDialog
 import com.papco.sundar.papcortgs.ui.dialogs.PasswordDialog
 import com.papco.sundar.papcortgs.ui.dialogs.WaitDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+import com.papco.sundar.papcortgs.ui.util.ToastMessage
+import com.papco.sundar.papcortgs.ui.util.Toaster
 
 fun EntryProviderScope<NavKey>.excelFileListEntry(
     backStack: NavBackStack<NavKey>
@@ -110,6 +111,7 @@ fun ExcelFileListScreen(
     onClearPayments:()->Unit
 ) {
     val context = LocalContext.current
+    val list by state.excelFiles.collectAsStateWithLifecycle()
     val optionsMenu = remember {
         prepareOptionsMenu(context)
     }
@@ -163,7 +165,7 @@ fun ExcelFileListScreen(
         }
     }) {
         ExcelFileList(
-            list = state.list,
+            list = list,
             onClick = onExcelFileClicked,
             onLongClick = onExcelFileLongClicked,
             modifier = Modifier.padding(it)
@@ -235,7 +237,7 @@ fun ExcelFileListScreen(
         }
     }
 
-    Toaster(context, state.toaster)
+    Toaster(context, state)
 }
 
 
@@ -247,11 +249,13 @@ private fun ExcelFileList(
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(top=16.dp, bottom = 36.dp)
     ) {
         items(list, key = { it.transactionGroup.id }) { group ->
             ExcelFileListItem(
+                modifier = Modifier.animateItem(),
                 group = group,
                 onClick = { onClick(group) },
                 onLongClick = { onLongClick(group) })

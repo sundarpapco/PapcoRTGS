@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
@@ -72,7 +71,7 @@ fun SenderListScreen(
             LoadingScreen()
         else
             SearchablePartyList(modifier = Modifier.padding(paddingValues),
-            state = state.listState,
+            state = state,
             onPartyClicked = onSenderClicked,
             searchHint = stringResource(id = R.string.search_senders),
             onPartyLongClicked = {

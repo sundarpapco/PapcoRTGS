@@ -5,9 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.papco.sundar.papcortgs.dropbox.DropBoxAccount
 import com.papco.sundar.papcortgs.screens.backup.BackupUpdate
-import com.papco.sundar.papcortgs.ui.components.ToastMessage
-import com.papco.sundar.papcortgs.ui.components.ToasterState
-import com.papco.sundar.papcortgs.ui.components.toastMessage
+import com.papco.sundar.papcortgs.ui.util.ToastMessage
+import com.papco.sundar.papcortgs.ui.util.ToasterState
 
 class BackupScreenState: ToasterState() {
 
@@ -20,7 +19,7 @@ class BackupScreenState: ToasterState() {
         dialog=Dialog.RestoreConfirmation
     }
 
-    suspend fun showProgressDialog(progress: BackupUpdate){
+    fun showProgressDialog(progress: BackupUpdate){
         when(progress){
             is BackupUpdate.Progress ->{
                 dialog = Dialog.BackupStatus(progress.progress)
@@ -32,7 +31,7 @@ class BackupScreenState: ToasterState() {
 
             is BackupUpdate.Failed ->{
                 hideDialog()
-                toast((progress).error.toastMessage())
+                toastError((progress).error)
             }
         }
     }

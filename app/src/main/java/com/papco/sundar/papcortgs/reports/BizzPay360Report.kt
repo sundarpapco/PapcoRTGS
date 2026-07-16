@@ -34,7 +34,7 @@ class BizzPay360Report(
     private val context: Context,
     private val db: MasterDatabase,
     time: Long
-) {
+): RTGSReport {
 
     private val columnWidths = ArrayList<ColumnWidth>(21)
     private var transactionGroup: TransactionGroup? = null
@@ -61,7 +61,7 @@ class BizzPay360Report(
     private var rowSize: Int = 0
 
 
-    suspend fun createReport(transactionGroup: TransactionGroup): String =
+    override suspend fun createReport(transactionGroup: TransactionGroup): String =
         withContext(Dispatchers.IO) {
 
             this@BizzPay360Report.transactionGroup = transactionGroup

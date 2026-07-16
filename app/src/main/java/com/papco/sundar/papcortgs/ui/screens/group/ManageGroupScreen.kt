@@ -1,5 +1,6 @@
 package com.papco.sundar.papcortgs.ui.screens.group
 
+import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,14 +17,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
@@ -37,45 +40,33 @@ import com.papco.sundar.papcortgs.ui.components.TextInputField
 import com.papco.sundar.papcortgs.ui.dialogs.DeleteConfirmationDialog
 import com.papco.sundar.papcortgs.ui.dialogs.WaitDialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 
 fun EntryProviderScope<NavKey>.manageGroupEntry(
     backstack: NavBackStack<NavKey>
 ) {
 
     entry<ManageGroup> { key ->
-        val title = if (key.groupId != -1)
-            stringResource(R.string.update_xl_file)
-        else
-            stringResource(R.string.create_xl_file)
 
-        val viewModel: ManageTransactionGroupVM = viewModel()
-        var isAlreadyLoaded = rememberSaveable { false }
+        val application = LocalContext.current.applicationContext as Application
+
+        val viewModel: ManageTransactionGroupVM = viewModel(
+            factory = ManageTransactionGroupVM.factory(application, key.groupId)
+        )
 
         ManageGroupScreen(
-            title = title,
-            state = viewModel.screenState,
-            onSave = { if (key.groupId != -1) viewModel.updateGroup() else viewModel.addGroup() },
-            onCancel = { backstack.removeLastOrNull()},
+            title = stringResource(viewModel.screen.titleResource),
+            state = viewModel.screen,
+            onSave = { viewModel.onSave() },
+            onCancel = { backstack.removeLastOrNull() },
             onBackPressed = { backstack.removeLastOrNull() },
             onDelete = { viewModel.deleteGroup(key.groupId) })
 
-        if (key.groupId != -1)
-            LaunchedEffect(key1 = true) {
-                if (!isAlreadyLoaded) {
-                    viewModel.loadTransactionGroup(key.groupId)
-                    isAlreadyLoaded = true
-                }
-            }
-
 
         LaunchedEffect(key1 = true) {
-            viewModel.event.collect {
-                it?.let { event ->
-                    if (!event.isAlreadyHandled) {
-                        event.handleEvent()
-                        backstack.removeLastOrNull()
-                    }
-                }
+            viewModel.screen.popUpBackStack.collect {
+                if (it)
+                    backstack.removeLastOrNull()
             }
         }
     }
@@ -113,7 +104,7 @@ fun ManageGroupScreen(
         RenderDialog(
             dialogsState = it,
             onPositiveClick = onDelete,
-            onNegativeClick = { state.dialog = null }
+            onNegativeClick = { state.dismissDialog() }
         )
     }
 }
@@ -151,6 +142,9 @@ private fun ScreenContent(
     onCancel: () -> Unit,
     onDelete: () -> Unit
 ) {
+
+    val sendersList by state.sendersList.collectAsStateWithLifecycle()
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -177,7 +171,7 @@ private fun ScreenContent(
 
         SendersSpinner(
             selectedSender = state.selectedSender,
-            senders = state.sendersList,
+            senders = sendersList,
             onSenderClicked = { state.selectedSender = it })
 
         Spacer(modifier = Modifier.height(36.dp))
@@ -189,6 +183,11 @@ private fun ScreenContent(
             onDelete = onDelete,
             deletable = state.isEditingMode
         )
+    }
+
+    LaunchedEffect(sendersList) {
+        if (state.selectedSender == null && sendersList.isNotEmpty())
+            state.selectedSender = sendersList.first()
     }
 }
 
@@ -246,15 +245,14 @@ private fun Buttons(
 @Composable
 private fun PreviewManageGroupScreen() {
 
+    val sendersList = MutableStateFlow(
+        listOf(
+            Party(1, "Papco offset private limited", ""),
+            Party(2, "Papco offset printing works", "")
+        )
+    )
     val state = remember {
-        ManageGroupScreenState().apply {
-            loadSendersList(
-                listOf(
-                    Party(1, "Papco offset private limited", ""),
-                    Party(2, "Papco offset printing works", "")
-                )
-            )
-        }
+        ManageGroupScreenState(R.string.create_xl_file, sendersList)
     }
 
     RTGSTheme {

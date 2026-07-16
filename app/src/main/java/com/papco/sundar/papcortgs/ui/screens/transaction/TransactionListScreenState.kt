@@ -5,10 +5,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.papco.sundar.papcortgs.ui.util.ToasterState
+import kotlinx.coroutines.flow.StateFlow
 
-class TransactionListScreenState : ToasterState() {
-
-    var transactions:List<TransactionForList> by mutableStateOf(emptyList())
+class TransactionListScreenState(
+    val transactions: StateFlow<List<TransactionForList>>
+) : ToasterState() {
     var dialog:Dialog? by mutableStateOf(null)
 
     fun showReportGeneratedDialog(fileName: String){

@@ -76,7 +76,7 @@ fun ManageReceiversScreen(
         else
             SearchablePartyList(
                 modifier = Modifier.padding(paddingValues),
-                state = state.listState,
+                state = state,
                 onPartyClicked = onReceiverClicked,
                 searchHint = stringResource(id = R.string.search_receivers),
                 onPartyLongClicked = {

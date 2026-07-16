@@ -9,8 +9,7 @@ import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.dropbox.DropBox
 import com.papco.sundar.papcortgs.settings.AppPreferences
 import com.papco.sundar.papcortgs.ui.backup.BackupScreenState
-import com.papco.sundar.papcortgs.ui.components.ToastMessage
-import com.papco.sundar.papcortgs.ui.components.toastMessage
+import com.papco.sundar.papcortgs.ui.util.ToastMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
@@ -80,17 +79,17 @@ class DropBoxFragmentVM(application: Application) : AndroidViewModel(application
 
                             is BackupUpdate.Success -> {
                                 screenState.hideDialog()
-                                screenState.toast(ToastMessage.Resource(R.string.backup_complete))
+                                screenState.toastResource(R.string.backup_complete)
                             }
 
                             is BackupUpdate.Failed -> {
                                 screenState.hideDialog()
-                                screenState.toast(it.error.toastMessage())
+                                screenState.toastError(it.error)
                             }
                         }
                     }
             } catch (e: Exception) {
-                screenState.toast(e.toastMessage())
+                screenState.toastError(e)
             }
         }
 
@@ -112,16 +111,15 @@ class DropBoxFragmentVM(application: Application) : AndroidViewModel(application
 
                         is BackupUpdate.Success -> {
                             screenState.hideDialog()
-                            screenState.toast(ToastMessage.Resource(R.string.restore_success))
+                            screenState.toastResource(R.string.restore_success)
                         }
 
                         is BackupUpdate.Failed -> {
                             screenState.hideDialog()
-                            screenState.toast(it.error.toastMessage())
+                            screenState.toastError(it.error)
                         }
                     }
                 }
-
         }
     }
 }

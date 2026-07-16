@@ -1,93 +1,90 @@
 package com.papco.sundar.papcortgs.screens.transactionGroup.manage
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.papco.sundar.papcortgs.common.Event
+import com.papco.sundar.papcortgs.R
 import com.papco.sundar.papcortgs.database.common.MasterDatabase
 import com.papco.sundar.papcortgs.database.pojo.Party
 import com.papco.sundar.papcortgs.ui.screens.group.ManageGroupScreenState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class ManageTransactionGroupVM(application: Application) : AndroidViewModel(application) {
+class ManageTransactionGroupVM(
+    application: Application,
+    val groupId: Int
+) : ViewModel() {
 
-    private val db=MasterDatabase.getInstance(getApplication())
-    private var isAlreadyLoaded=false
-    val screenState = ManageGroupScreenState()
-
-    private var _event: MutableStateFlow<Event<String>?> = MutableStateFlow(null)
-    val event:Flow<Event<String>?> = _event
-    init{
-        loadSenders()
-    }
-
-    fun loadTransactionGroup(groupId:Int){
-
-        if(isAlreadyLoaded)
-            return
-        else
-            isAlreadyLoaded=true
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val group=db.transactionGroupDao.getTransactionGroupListItem(groupId)
-            withContext(Dispatchers.Main){
-                screenState.loadGroup(group)
-            }
-        }
-
-    }
-
-    private fun loadSenders(){
-        viewModelScope.launch(Dispatchers.Main) {
-            db.senderDao.allSenders
-                .map {
-                    it.map {sender->
-                        Party(
-                            id=sender.id,
-                            name = sender.displayName,
-                            highlightWord = ""
-                        )
-                    }
-                }.flowOn(Dispatchers.IO)
-                .collect{
-                    screenState.loadSendersList(it)
+    companion object {
+        fun factory(application: Application, groupId: Int): ViewModelProvider.Factory {
+            return object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    if (modelClass.isAssignableFrom(ManageTransactionGroupVM::class.java))
+                        return ManageTransactionGroupVM(application, groupId) as T
+                    else
+                        error("Unknown ViewModel Class")
                 }
-        }
-    }
-
-    fun addGroup(){
-
-        viewModelScope.launch(Dispatchers.IO) {
-            screenState.getLoadedGroup()?.let{
-                db.transactionGroupDao.addTransactionGroup(it)
-                _event.value= Event("Success")
             }
         }
     }
 
-    fun updateGroup(){
+    private val db = MasterDatabase.getInstance(application)
+    private val _sendersList = db.senderDao.allSenders
+        .map {
+            it.map { sender -> Party(id = sender.id, name = sender.displayName, highlightWord = "") }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val screen = ManageGroupScreenState(
+        titleResource = if (groupId == -1) R.string.create_xl_file else R.string.update_xl_file,
+        sendersList = _sendersList
+    )
+
+    init {
+        if (groupId != -1)
+            loadTransactionGroup(groupId)
+    }
+
+    fun loadTransactionGroup(groupId: Int) {
 
         viewModelScope.launch(Dispatchers.IO) {
-            screenState.getLoadedGroup()?.let{
-                db.transactionGroupDao.updateTransactionGroup(it)
-                _event.value= Event("Success")
+            val group = db.transactionGroupDao.getTransactionGroupListItem(groupId)
+            withContext(Dispatchers.Main) {
+                screen.loadGroup(group)
             }
         }
 
     }
 
-    fun deleteGroup(groupId:Int){
+    fun onSave() {
 
-        viewModelScope.launch(Dispatchers.IO){
-            screenState.dialog=ManageGroupScreenState.Dialog.WaitDialog
+        viewModelScope.launch(Dispatchers.IO) {
+            screen.getLoadedGroup()?.let {
+                if (groupId != -1)
+                    db.transactionGroupDao.updateTransactionGroup(it)
+                else
+                    db.transactionGroupDao.addTransactionGroup(it)
+                screen.popUpBackStack()
+            }
+        }
+    }
+
+    fun deleteGroup(groupId: Int) {
+
+        viewModelScope.launch(Dispatchers.IO) {
+            screen.showWaitDialog()
             db.transactionGroupDao.deleteTransactionGroup(groupId)
-            _event.value= Event("Success")
+            screen.dismissDialog()
+            screen.popUpBackStack()
         }
 
     }

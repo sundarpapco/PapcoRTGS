@@ -4,11 +4,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.papco.sundar.papcortgs.database.pojo.Party
+import com.papco.sundar.papcortgs.database.pojo.PartyListItem
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 
-class SearchablePartyListState {
+open class SearchablePartyListState{
 
-    var query = MutableStateFlow("")
-    var data:List<Party>? by mutableStateOf(null)
+    val query = MutableStateFlow("")
+    var data:List<PartyListItem>? by mutableStateOf(null)
 
 }

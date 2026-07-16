@@ -4,12 +4,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.papco.sundar.papcortgs.database.transactionGroup.TransactionGroupListItem
-import com.papco.sundar.papcortgs.ui.components.ToastMessage
-import com.papco.sundar.papcortgs.ui.components.ToasterState
+import com.papco.sundar.papcortgs.ui.util.ToastMessage
+import com.papco.sundar.papcortgs.ui.util.ToasterState
+import kotlinx.coroutines.flow.StateFlow
 
-class ExcelFileListScreenState: ToasterState(){
+class ExcelFileListScreenState(
+    val excelFiles: StateFlow<List<TransactionGroupListItem>>
+): ToasterState(){
 
-    var list:List<TransactionGroupListItem> by mutableStateOf(emptyList())
     var dialogState:Dialog? by mutableStateOf(null)
     private set
 
@@ -33,7 +35,7 @@ class ExcelFileListScreenState: ToasterState(){
         dialogState= Dialog.BackUpSharingDialog(filePath)
     }
 
-    fun updateBackupProgress(progress:ToastMessage) {
+    fun updateBackupProgress(progress: ToastMessage) {
         dialogState=Dialog.BackupProgress(progress)
     }
 
@@ -42,16 +44,16 @@ class ExcelFileListScreenState: ToasterState(){
     }
 
 
-    sealed class Dialog{
-        data object SendersPasswordDialog:Dialog()
-        data object ReceiversPasswordDialog:Dialog()
+    sealed interface Dialog{
+        data object SendersPasswordDialog:Dialog
+        data object ReceiversPasswordDialog:Dialog
 
-        data class BackUpSharingDialog(val filePath:String): Dialog()
+        data class BackUpSharingDialog(val filePath:String): Dialog
 
-        data object WaitDialog:Dialog()
+        data object WaitDialog:Dialog
 
-        data class BackupProgress(val progress: ToastMessage):Dialog()
-        data object DeleteAllPaymentsConfirmation:Dialog()
+        data class BackupProgress(val progress: ToastMessage):Dialog
+        data object DeleteAllPaymentsConfirmation:Dialog
     }
 
 }

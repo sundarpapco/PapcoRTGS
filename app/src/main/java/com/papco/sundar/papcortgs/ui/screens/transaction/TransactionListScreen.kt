@@ -1,8 +1,8 @@
 package com.papco.sundar.papcortgs.ui.screens.transaction
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,9 +21,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
@@ -54,18 +54,19 @@ import com.papco.sundar.papcortgs.ui.components.RTGSAppBar
 import com.papco.sundar.papcortgs.ui.dialogs.DeleteConfirmationDialog
 import com.papco.sundar.papcortgs.ui.screens.transaction.TransactionListScreenState.Dialog
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
+import com.papco.sundar.papcortgs.ui.util.Toaster
+import kotlinx.coroutines.flow.MutableStateFlow
 
-
-@SuppressLint("LocalContextGetResourceValueCall")
 fun EntryProviderScope<NavKey>.transactionListEntry(
     backStack: NavBackStack<NavKey>
 ){
     entry<TransactionList>{key->
 
-        val viewModel: TransactionListVM = viewModel()
         val context = LocalContext.current
+        val viewModel: TransactionListVM = viewModel(factory = TransactionListVM.factory(
+            context.applicationContext as Application,key.groupId
+        ))
 
-        var dataLoaded = rememberSaveable { false }
         val transactionGroup = remember {
             TransactionGroup().apply {
                 id = key.groupId
@@ -77,7 +78,7 @@ fun EntryProviderScope<NavKey>.transactionListEntry(
 
         TransactionListScreen(
             title = key.groupName,
-            screenState = viewModel.screenState,
+            screenState = viewModel.screen,
             onBackPressed = { backStack.removeLastOrNull() },
             onClick = {
                 backStack.add(ManageTransaction(key.groupId,it.id,key.defaultSenderId))
@@ -86,29 +87,9 @@ fun EntryProviderScope<NavKey>.transactionListEntry(
                 backStack.add(ManageTransaction(key.groupId, -1, key.defaultSenderId))
             },
             onDelete = { viewModel.deleteTransaction(it) },
-            onExportCMSFile = {
-                if (viewModel.screenState.transactions.isNotEmpty())
-                    viewModel.createCMSReport(transactionGroup, it)
-                else
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.add_at_least_one_transaction_to_export),
-                        Toast.LENGTH_SHORT
-                    ).show()
-            },
-            onExportBizzPayReport = {
-                if (viewModel.screenState.transactions.isNotEmpty())
-                    viewModel.createBizzPay360Report(transactionGroup, it)
-                else
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.add_at_least_one_transaction_to_export),
-                        Toast.LENGTH_SHORT
-                    ).show()
-            },
-            onDispatchMessages = {
-                backStack.add(MessageList(transactionGroup.id))
-            },
+            onExportCMSFile = { viewModel.createCMSReport(transactionGroup, it) },
+            onExportBizzPayReport = { viewModel.createBizzPay360Report(transactionGroup, it) },
+            onDispatchMessages = { backStack.add(MessageList(transactionGroup.id)) },
             onDispatchMails = {
                 if (!gmailUtil.isConnected())
                     backStack.add(
@@ -128,30 +109,6 @@ fun EntryProviderScope<NavKey>.transactionListEntry(
                     )
             },
             onShareFile = { viewModel.shareFile(context, it) })
-
-        LaunchedEffect(true) {
-            if (!dataLoaded)
-                viewModel.loadTransactions(key.groupId)
-            dataLoaded = true
-        }
-
-        LaunchedEffect(key1 = true) {
-            viewModel.reportGenerated.collect {
-                it?.let { event ->
-                    if (event.isAlreadyHandled) return@collect
-                    val fileName = event.handleEvent()
-                    if (fileName.isEmpty()) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.error_in_creating_the_excel_file),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } else {
-                        viewModel.screenState.showReportGeneratedDialog(fileName)
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -175,6 +132,7 @@ fun TransactionListScreen(
     val optionsMenuItems = remember {
         prepareOptionsMenu(context)
     }
+    val transactions by screenState.transactions.collectAsStateWithLifecycle()
 
     Scaffold(topBar = {
         RTGSAppBar(
@@ -200,15 +158,15 @@ fun TransactionListScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
-            val totalAmount = remember(screenState.transactions) {
-                val tot = screenState.transactions.sumOf { it.amount }
+            val totalAmount = remember(transactions) {
+                val tot = transactions.sumOf { it.amount }
                 Transaction.formatAmountAsString(tot)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
             TotalField(amount = totalAmount)
             TransactionList(
-                transactions = screenState.transactions,
+                transactions = transactions,
                 onClick = onClick,
                 onLongClick = {
                     screenState.dialog = Dialog.DeleteConfirmation(it.id)
@@ -259,6 +217,7 @@ fun TransactionListScreen(
         }
     }
 
+    Toaster(context,screenState)
 }
 
 @SuppressLint("LocalContextGetResourceValueCall")
@@ -413,9 +372,8 @@ private fun PreviewTransactionListScreen() {
     }
 
     val screenState = remember {
-        TransactionListScreenState().apply {
-            this.transactions = transactions
-        }
+        val flow = MutableStateFlow(transactions)
+        TransactionListScreenState(flow)
     }
 
     RTGSTheme {
