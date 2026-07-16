@@ -33,19 +33,17 @@ class SendersListVM(application: Application) : AndroidViewModel(application) {
     private fun loadSenders(){
         viewModelScope.launch(Dispatchers.IO) {
             db.senderDao.allSenders
-                .combine(screenState.query){ senders, query->
-                    if(query.isBlank())
-                        return@combine senders.map {
-                            Party(id = it.id, name = it.displayName, highlightWord = "")
-                        }
-
-                    senders.filter { receiversToFilter ->
-                        receiversToFilter.displayName.contains(query, true)
-                    }.map { receiver ->
-                        Party(receiver.id, receiver.displayName, highlightWord = query)
+                .combine(screenState.query){senders,query->
+                    val trimmedQuery = query.trim()
+                    val filteredList = if(trimmedQuery.isBlank())
+                        senders
+                    else
+                        senders.filter { it.displayName.contains(trimmedQuery,true) }
+                    filteredList.map {
+                        Party(it.id,it.displayName,trimmedQuery)
                     }
-
-                }.collect{
+                }
+                .collect{
                     screenState.loadData(it)
                 }
         }

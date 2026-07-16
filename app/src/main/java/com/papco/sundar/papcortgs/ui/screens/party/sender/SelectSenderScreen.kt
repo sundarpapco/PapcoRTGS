@@ -78,7 +78,7 @@ private fun PreviewScreen(){
 
     val screenState = remember { SearchablePartyListState().apply {
         data = listOf(
-            Party(1,"Sundaravel","Sundar")
+            Party(id=1, name = "Sundaravel", highlightWord = "")
         )
     } }
 

@@ -24,7 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.papco.sundar.papcortgs.database.pojo.PartyListItem
+import com.papco.sundar.papcortgs.database.pojo.Party
 import com.papco.sundar.papcortgs.ui.components.RTGSSearchBar
 import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 
@@ -32,9 +32,9 @@ import com.papco.sundar.papcortgs.ui.theme.RTGSTheme
 fun SearchablePartyList(
     state:SearchablePartyListState,
     searchHint:String,
-    onPartyClicked:(PartyListItem)->Unit,
+    onPartyClicked:(Party)->Unit,
     modifier: Modifier = Modifier,
-    onPartyLongClicked:(PartyListItem)->Unit={}
+    onPartyLongClicked:(Party)->Unit={}
 ){
 
     val query by state.query.collectAsStateWithLifecycle()
@@ -61,10 +61,10 @@ fun SearchablePartyList(
 
 @Composable
 private fun PartyList(
-    list: List<PartyListItem>,
-    onClick: (PartyListItem) -> Unit,
+    list: List<Party>,
+    onClick: (Party) -> Unit,
     modifier: Modifier = Modifier,
-    onLongClick:(PartyListItem)->Unit={}
+    onLongClick:(Party)->Unit={}
 ) {
     LazyColumn(
         modifier = modifier,
@@ -85,10 +85,10 @@ private fun PartyList(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PartyListItem(
-    party: PartyListItem,
-    onClick:(PartyListItem)->Unit,
+    party: Party,
+    onClick:(Party)->Unit,
     modifier: Modifier = Modifier,
-    onLongClick: (PartyListItem) -> Unit={}
+    onLongClick: (Party) -> Unit={}
 ){
 
     val highlightColor = MaterialTheme.colorScheme.primaryContainer
@@ -130,12 +130,7 @@ private fun PartyListItem(
 private fun PreviewPartyListItem(){
 
     val party = remember{
-        object:PartyListItem {
-            override var id: Int = 1
-            override var displayName: String = "Sundaravel AM"
-            override var searchText: String = "dar"
-            override var disabled: Boolean = false
-        }
+        Party(1,"Sundaravel AM","")
     }
 
     RTGSTheme {
@@ -157,12 +152,7 @@ private fun PreviewScreen(){
 
     val screenState = remember { SearchablePartyListState().apply {
         data = listOf(
-            object:PartyListItem {
-                override var id: Int = 1
-                override var displayName: String = "Sundaravel AM"
-                override var searchText: String = "dar"
-                override var disabled: Boolean = false
-            }
+            Party(1,"Sundaravel AM","")
         )
     } }
 

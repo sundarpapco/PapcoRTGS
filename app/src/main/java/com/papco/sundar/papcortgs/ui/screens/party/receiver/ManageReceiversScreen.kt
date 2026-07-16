@@ -146,10 +146,10 @@ private fun PreviewManageReceiversScreen() {
 
         ManagePartyScreenState().apply {
             val list = listOf(
-                Party(1, "Sundaravel", ""),
-                Party(2, "Madhana", ""),
-                Party(3, "Rithanya", ""),
-                Party(4, "Saatvik", "")
+                Party(id=1, name = "Sundaravel", highlightWord = ""),
+                Party(id=1, name = "Madhana", highlightWord = ""),
+                Party(id=1, name = "Rithanya", highlightWord = ""),
+                Party(id=1, name = "Saatvik", highlightWord = "")
             )
             loadData(list)
         }

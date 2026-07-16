@@ -14,11 +14,11 @@ class ReceiverSelectionVM(application: Application) : AndroidViewModel(applicati
 
     private val db = MasterDatabase.getInstance(application)
     val screenState = SearchablePartyListState()
-    private var isAlreadyLoaded =false
+    private var isAlreadyLoaded = false
 
-    fun loadReceivers(groupId: Int){
-        if(isAlreadyLoaded){
-            isAlreadyLoaded=true
+    fun loadReceivers(groupId: Int) {
+        if (isAlreadyLoaded) {
+            isAlreadyLoaded = true
             return
         }
 
@@ -27,23 +27,23 @@ class ReceiverSelectionVM(application: Application) : AndroidViewModel(applicati
             val receiversIdsAlreadyInGroup = db.transactionDao.getReceiverIdsOfGroup(groupId)
 
             db.receiverDao.allReceivers
-                .combine(screenState.query){receivers,query->
-                    receivers
-                        .filter {
-                            if(query.isBlank())
-                                true
-                            else
-                                it.displayName.contains(query,true)
-                        }.map {
-                            Party(
-                                id = it.id,
-                                name = it.displayName,
-                                highlightWord = query,
-                                disabled = receiversIdsAlreadyInGroup.contains(it.id)
-                            )
-                        }
-                }.collect{
-                    screenState.data=it
+                .combine(screenState.query) { senders, query ->
+                    val trimmedQuery = query.trim()
+                    val filteredList = if (trimmedQuery.isBlank())
+                        senders
+                    else
+                        senders.filter { it.displayName.contains(trimmedQuery, true) }
+                    filteredList.map {
+                        Party(
+                            it.id,
+                            it.displayName,
+                            trimmedQuery,
+                            disabled = receiversIdsAlreadyInGroup.contains(it.id)
+                        )
+                    }
+                }
+                .collect {
+                    screenState.data = it
                 }
         }
     }

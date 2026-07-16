@@ -4,16 +4,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.papco.sundar.papcortgs.database.pojo.Party
-import com.papco.sundar.papcortgs.database.pojo.PartyListItem
 
 class ManagePartyScreenState: SearchablePartyListState() {
     var dialogState:ManagePartyScreenDialogs? by mutableStateOf(null)
 
-    fun loadData(data:List<PartyListItem>){
+    fun loadData(data:List<Party>){
         this.data=data
     }
 
-    fun showDeleteConfirmationDialog(party:Party){
+    fun showDeleteConfirmationDialog(party: Party){
         dialogState=ManagePartyScreenDialogs.DeletePartyDialog(party)
     }
 
